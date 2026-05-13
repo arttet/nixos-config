@@ -1,0 +1,21 @@
+# /etc/nftables.d/tproxy.nft
+# Intercepts all LAN TCP/UDP and redirects to xray tproxy port
+
+table inet tproxy {
+  chain prerouting {
+    type filter hook prerouting priority mangle; policy accept;
+
+    # Skip local traffic and already-marked packets
+    meta mark 0x00000001 return
+    iifname "br-lan" jump tproxy_rules
+  }
+
+  chain tproxy_rules {
+    # Skip private destinations (go direct)
+    ip daddr { 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16, 127.0.0.0/8 } return
+
+    # Intercept TCP and UDP → xray tproxy
+    ip protocol tcp  tproxy ip to 127.0.0.1:1080 meta mark set 0x00000001
+    ip protocol udp  tproxy ip to 127.0.0.1:1080 meta mark set 0x00000001
+  }
+}
