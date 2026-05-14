@@ -12,3 +12,16 @@ to the documented storage model, and rebuild from the repository flake.
 
 Any command that repartitions, formats, or encrypts a real disk is destructive.
 Review the disk device with `lsblk` before running such commands.
+
+The operating system is intended to be rebuilt rather than imaged. User data,
+local overlays, and secrets require backups; `/nix/store`, VM runtime state, and
+build artifacts do not. See [Backups](backups.md).
+
+Useful boot and log diagnostics after a recovery boot:
+
+```sh
+systemd-analyze
+systemd-analyze critical-chain
+journalctl -b -p warning
+journalctl --disk-usage
+```

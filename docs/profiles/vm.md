@@ -16,6 +16,10 @@ before applying them to future real hardware.
 The VM keeps QEMU storage settings in the VM target. It does not apply the
 workstation storage layout during normal runtime commands.
 
+The VM disables the real-hardware `platform.tuning` layer. Boot, power, ZRAM,
+earlyoom, fstrim, and network tuning are validated through workstation
+evaluation, not by making the local QEMU workflow heavier.
+
 The VM may enable SSH for local validation. The workstation profile disables SSH
 by default.
 

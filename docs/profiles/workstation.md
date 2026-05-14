@@ -13,6 +13,11 @@ is prepared as an opt-in installation path with a parameterized disk device,
 GPT, a 512 MiB ESP mounted at `/boot/efi`, a 512 MiB unencrypted ext4 `/boot`,
 LUKS2 encrypted root, Btrfs subvolumes, and swapfile support.
 
+The profile enables the conservative `platform.tuning` layer for real hardware:
+fast console boot, powersave CPU governor, ZRAM, BBR with fq, periodic trim,
+bounded journald, and predictable Nix rebuild resource use. The `vm` profile
+disables this layer to keep local QEMU runtime simple.
+
 The profile does not include a GUI, Hyprland, desktop managers, Home Manager,
 VPN targets, TPM unlock, YubiKey unlock, Secure Boot, enabled SSH by default, or
 machine-specific hardware state.
@@ -44,7 +49,8 @@ local and uncommitted.
 Storage application is destructive and must only happen after reviewing the disk
 device from the official NixOS ISO environment. See
 [Workstation Installation](../installation/workstation.md) and
-[Storage Model](../architecture/storage-model.md).
+[Storage Model](../architecture/storage-model.md). See
+[Workstation Tuning](../architecture/tuning.md) for runtime tuning details.
 
 ## Validation
 
@@ -58,4 +64,10 @@ Run the CI-safe profile validation:
 
 ```sh
 just workstation test
+```
+
+Print the real-hardware validation commands:
+
+```sh
+just workstation runtime-checks
 ```

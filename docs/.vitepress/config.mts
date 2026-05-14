@@ -45,6 +45,7 @@ const platformSidebar = [
       { text: "Secrets Model", link: "/architecture/secrets-model" },
       { text: "Storage Model", link: "/architecture/storage-model" },
       { text: "Disk Encryption", link: "/architecture/disk-encryption" },
+      { text: "Tuning", link: "/architecture/tuning" },
       { text: "Kernel Policy", link: "/architecture/kernel-policy" },
       { text: "Build Model", link: "/architecture/build-model" },
       { text: "Targets", link: "/architecture/targets" },
@@ -59,6 +60,7 @@ const platformSidebar = [
       { text: "Cleanup", link: "/operations/cleanup" },
       { text: "Recovery", link: "/operations/recovery" },
       { text: "Rollback", link: "/operations/rollback" },
+      { text: "Backups", link: "/operations/backups" },
     ],
   },
   {
