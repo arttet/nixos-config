@@ -19,7 +19,7 @@ features:
     details: Public infrastructure, local overlays, generated artifacts, and machine identity remain intentionally separated.
   - icon: 🔁
     title: Disposable Systems
-    details: Rebuild isolated NixOS guests locally before applying changes to real hardware.
+    details: Rebuild the local NixOS VM mirror before applying changes to real hardware.
   - icon: 🔐
     title: Local Identity
     details: Real users, SSH keys, hardware state, and secrets never enter the repository.
@@ -31,6 +31,6 @@ features:
     details: Architecture, operating contracts, and workflows evolve beside the implementation instead of drifting separately.
   - icon: 🧭
     title: Incremental Platform
-    details: The system grows milestone by milestone from guest VMs toward laptops, encryption, CI, and future infrastructure targets.
+    details: The system grows milestone by milestone from VM validation toward workstation installs, encryption, CI, and future infrastructure targets.
 
 ---

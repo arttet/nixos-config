@@ -18,6 +18,41 @@ defaults:
     shell: bash
 
 jobs:
+  security:
+    name: Security
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Secret scanning
+        uses: trufflesecurity/trufflehog@main
+        with:
+          extra_args: --results=verified,unknown
+
+      - name: Trivy filesystem scan
+        # Pinned from aquasecurity/trivy-action@v0.36.0
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25
+        with:
+          scan-type: fs
+          scanners: secret,misconfig
+          exit-code: "1"
+          severity: HIGH,CRITICAL
+          cache: "true"
+
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.x"
+
+      - name: Install Semgrep
+        run: pip install --quiet semgrep
+
+      - name: Semgrep
+        run: semgrep scan --config p/default --error
+
   validate:
     name: Validate
     runs-on: ubuntu-latest
@@ -37,12 +72,10 @@ jobs:
       - name: Check flake
         run: nix flake check
 
-      - name: Build guest VM
-        run: nix build .#nixosConfigurations.guest.config.system.build.vm
-
   docs:
-    name: Build Documentation
+    name: Documentation
     runs-on: ubuntu-latest
+    needs: [validate, security]
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -82,17 +115,95 @@ jobs:
           name: github-pages
           path: docs/.vitepress/dist
 
+  build-vm:
+    name: Build VM
+    runs-on: ubuntu-latest
+    needs: [validate, security]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Install Nix
+        uses: cachix/install-nix-action@v31
+        with:
+          extra_nix_config: |
+            experimental-features = nix-command flakes
+
+      - name: Build VM
+        run: nix build .#nixosConfigurations.vm.config.system.build.vm
+
+  build-workstation:
+    name: Build Workstation
+    runs-on: ubuntu-latest
+    needs: [validate, security]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Install Nix
+        uses: cachix/install-nix-action@v31
+        with:
+          extra_nix_config: |
+            experimental-features = nix-command flakes
+
+      - name: Build workstation
+        run: nix build .#nixosConfigurations.workstation.config.system.build.toplevel
+
+  test-vm:
+    name: Test VM
+    runs-on: ubuntu-latest
+    needs: [build-vm]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Install Nix
+        uses: cachix/install-nix-action@v31
+        with:
+          extra_nix_config: |
+            experimental-features = nix-command flakes
+
+      - name: Test VM configuration
+        run: |
+          nix eval .#nixosConfigurations.vm.config.services.qemuGuest.enable --apply 'enabled: if enabled then "ok" else throw "vm must enable qemuGuest"'
+          nix eval .#nixosConfigurations.vm.config.boot.kernelParams --apply 'params: if builtins.elem "console=ttyS0,115200n8" params then "ok" else throw "vm must include serial console settings"'
+          nix eval .#nixosConfigurations.vm.config.virtualisation.vmVariant.virtualisation.graphics --apply 'graphics: if graphics then throw "vm must be headless" else "ok"'
+
+  test-workstation:
+    name: Test Workstation
+    runs-on: ubuntu-latest
+    needs: [build-workstation]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Install Nix
+        uses: cachix/install-nix-action@v31
+        with:
+          extra_nix_config: |
+            experimental-features = nix-command flakes
+
+      - name: Test workstation configuration
+        run: |
+          nix eval .#nixosConfigurations.workstation.config.services.qemuGuest.enable --apply 'enabled: if enabled then throw "workstation must not enable qemuGuest" else "ok"'
+          nix eval .#nixosConfigurations.workstation.config.boot.kernelParams --apply 'params: if builtins.elem "console=ttyS0,115200n8" params then throw "workstation must not include VM serial console settings" else "ok"'
+
   deploy-gh-pages:
     name: Deploy GitHub Pages
     if: |
       !cancelled() &&
       needs.validate.result == 'success' &&
+      needs.security.result == 'success' &&
       needs.docs.result == 'success' &&
+      needs['build-vm'].result == 'success' &&
+      needs['build-workstation'].result == 'success' &&
+      needs['test-vm'].result == 'success' &&
+      needs['test-workstation'].result == 'success' &&
       github.event_name == 'push' &&
       github.ref == 'refs/heads/main' &&
       github.actor != 'dependabot[bot]'
     runs-on: ubuntu-latest
-    needs: [validate, docs]
+    needs: [validate, security, docs, build-vm, build-workstation, test-vm, test-workstation]
 
     permissions:
       contents: read
@@ -115,10 +226,15 @@ jobs:
     if: |
       !cancelled() &&
       needs.validate.result == 'success' &&
+      needs.security.result == 'success' &&
       needs.docs.result == 'success' &&
+      needs['build-vm'].result == 'success' &&
+      needs['build-workstation'].result == 'success' &&
+      needs['test-vm'].result == 'success' &&
+      needs['test-workstation'].result == 'success' &&
       github.actor != 'dependabot[bot]'
     runs-on: ubuntu-latest
-    needs: [validate, docs]
+    needs: [validate, security, docs, build-vm, build-workstation, test-vm, test-workstation]
 
     permissions:
       contents: read

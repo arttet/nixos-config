@@ -1,7 +1,7 @@
 { lib, ... }:
 {
   imports = [
-    ./base.nix
+    ./workstation.nix
   ];
 
   services.qemuGuest.enable = true;
@@ -12,6 +12,8 @@
   ];
 
   systemd.services."serial-getty@ttyS0".enable = true;
+
+  services.openssh.settings.PasswordAuthentication = lib.mkForce true;
 
   services.xserver.enable = lib.mkForce false;
 }

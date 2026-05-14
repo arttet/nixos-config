@@ -30,16 +30,21 @@ Available recipes:
     fmt     # Format code
     check   # Run repository checks
 
-    [Guest User]
-    guest:
-        build  # Build the guest VM
-        run    # Run the guest VM
-        daemon # Start the guest VM in the background
-        status # Show guest VM status
-        ssh    # Open an SSH session into the guest VM
-        stop   # Stop the background guest VM
-        test   # Validate daemon startup, SSH reachability, and guest network
-        clean  # Remove guest VM state
+    [VM Runtime]
+    vm:
+        build  # Build the VM
+        run    # Run the VM
+        daemon # Start the VM in the background
+        status # Show VM status
+        ssh    # Open an SSH session into the VM
+        stop   # Stop the background VM
+        test   # Validate daemon startup, SSH reachability, and VM network
+        clean  # Remove VM state
+
+    [Workstation]
+    workstation:
+        build # Build the workstation system closure
+        test  # Validate the workstation profile
 
     [Documentation]
     docs:

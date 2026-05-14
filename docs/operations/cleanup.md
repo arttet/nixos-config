@@ -1,9 +1,9 @@
 # Cleanup
 
-Guest VM state is disposable.
+VM state is disposable.
 
 ```sh
-just guest clean
+just vm clean
 ```
 
 Build outputs are kept under `target/` by default and should remain outside git.

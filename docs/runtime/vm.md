@@ -1,25 +1,25 @@
-# Guest VM
+# VM
 
-The `guest` target is a minimal headless NixOS VM for local infrastructure
-validation. It is designed to be built, booted, discarded, and rebuilt without
-carrying identity or secrets in the repository.
+The `vm` target is a local headless QEMU mirror of the `workstation` profile. It
+is designed to be built, booted, discarded, and rebuilt without carrying identity
+or secrets in the repository.
 
 ## Build
 
 ```sh
-just guest build
+just vm build
 ```
 
 Expected result:
 
 - Nix builds the VM derivation.
-- The VM runner appears under `target/guest-vm/result/bin/run-nixos-vm`.
+- The VM runner appears under `target/vm-build/result/bin/run-nixos-vm`.
 - Existing Nix store paths are reused when possible.
 
 ## Interactive Run
 
 ```sh
-just guest run
+just vm run
 ```
 
 Expected result:
@@ -40,25 +40,25 @@ If QEMU is attached to the terminal and the VM does not exit cleanly, press
 ## Daemon Run
 
 ```sh
-just guest daemon
+just vm daemon
 ```
 
 Expected result:
 
 - The VM starts in the background.
-- PID and log files are written under `target/guest/runtime/`.
+- PID and log files are written under `target/vm/runtime/`.
 - SSH is forwarded to `localhost:2222`.
 
 ## Status
 
 ```sh
-just guest status
+just vm status
 ```
 
 Expected result when running:
 
 ```txt
-running pid=<pid> ssh=user@localhost:2222 log=target/guest/runtime/guest.log
+running pid=<pid> ssh=user@localhost:2222 log=target/vm/runtime/vm.log
 ```
 
 Expected result when stopped:
@@ -70,7 +70,7 @@ stopped
 ## SSH
 
 ```sh
-just guest ssh
+just vm ssh
 ```
 
 Expected result:
@@ -87,23 +87,23 @@ ssh user@localhost -p 2222
 ## Test
 
 ```sh
-just guest test
+just vm test
 ```
 
 Expected result:
 
 - The daemon starts if it is not already running.
 - SSH becomes reachable on `localhost:2222`.
-- The guest can reach the network with `curl -4 https://ifconfig.me`.
+- The VM can reach the network with `curl -4 https://ifconfig.me`.
 
-The automated test uses `sshpass` because milestone 002 keeps the guest identity
-generic and password-based. If `sshpass` is missing, install it in the Linux host
-environment and rerun the command.
+The automated test uses `sshpass` because the local VM keeps a generic
+password-based test identity. If `sshpass` is missing, install it in the Linux
+host environment and rerun the command.
 
 ## Stop
 
 ```sh
-just guest stop
+just vm stop
 ```
 
 Expected result:
@@ -114,18 +114,18 @@ Expected result:
 ## Clean
 
 ```sh
-just guest clean
+just vm clean
 ```
 
 Expected result:
 
-- Runtime state under `target/guest/` is removed.
-- The VM build output link under `target/guest-vm/` is removed.
+- Runtime state under `target/vm/` is removed.
+- The VM build output link under `target/vm-build/` is removed.
 - The Nix store is not cleaned.
 
 ## Network Notes
 
-The guest uses QEMU user-mode networking. TCP workflows such as SSH and HTTPS are
+The VM uses QEMU user-mode networking. TCP workflows such as SSH and HTTPS are
 the runtime acceptance signal.
 
 ICMP ping may fail even when DNS and TCP networking work. Prefer:

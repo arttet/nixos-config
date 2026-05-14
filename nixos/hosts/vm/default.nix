@@ -1,7 +1,7 @@
 { pkgs, ... }:
 {
   imports = [
-    ../../profiles/guest.nix
+    ../../profiles/vm.nix
   ];
 
   networking.hostName = "nixos";
