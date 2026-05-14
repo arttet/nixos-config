@@ -5,7 +5,10 @@ identity. Real users, hostnames, keys, hardware state, and secrets remain local.
 
 | Profile | Purpose | State model | GUI | Status |
 | --- | --- | --- | --- | --- |
-| `guest` | Minimal reproducible VM for local testing and development. | Disposable | No | Active |
+| `workstation` | Personal development environment for future real hardware. | Persistent | No | Active build target |
+| `vm` | Local QEMU mirror of `workstation` for runtime validation. | Disposable | No | Active runtime target |
 
-Milestone 002 keeps the active surface intentionally small. Laptop, VPN, desktop,
-and encrypted installation profiles remain out of scope.
+Stage 003 keeps the workstation console-only. Laptop-specific, desktop, VPN, and
+encrypted installation profiles remain out of scope.
+
+Continue with [Workstation](workstation.md) and [VM](vm.md).

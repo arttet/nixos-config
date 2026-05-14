@@ -6,19 +6,22 @@ const platformSidebar = [
     items: [
       { text: "Overview", link: "/installation/" },
       { text: "Windows WSL2", link: "/installation/windows-wsl2" },
+      { text: "VM", link: "/installation/vm" },
     ],
   },
   {
     text: "Runtime",
     items: [
       { text: "Overview", link: "/runtime/" },
-      { text: "Guest VM", link: "/runtime/guest-vm" },
+      { text: "VM", link: "/runtime/vm" },
     ],
   },
   {
     text: "Profiles",
     items: [
       { text: "Overview", link: "/profiles/" },
+      { text: "Workstation", link: "/profiles/workstation" },
+      { text: "VM", link: "/profiles/vm" },
     ],
   },
   {

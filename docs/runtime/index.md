@@ -8,10 +8,10 @@ systems.
 
 ## Active Runtime
 
-Milestone 002 keeps one active runtime target:
+Stage 003 keeps one active runtime target:
 
 | Target | Purpose | State |
 | --- | --- | --- |
-| `guest` | Minimal reproducible VM for local testing and development. | Disposable |
+| `vm` | Local QEMU mirror of `workstation` for runtime validation. | Disposable |
 
-Continue with [Guest VM](guest-vm.md).
+Continue with [VM](vm.md).

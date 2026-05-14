@@ -8,17 +8,24 @@ Core checks:
 just check
 ```
 
-Guest VM:
+VM:
 
 ```sh
-just guest build
-just guest run
-just guest daemon
-just guest ssh
-just guest status
-just guest stop
-just guest clean
-just guest test
+just vm build
+just vm run
+just vm daemon
+just vm ssh
+just vm status
+just vm stop
+just vm clean
+just vm test
+```
+
+Workstation:
+
+```sh
+just workstation build
+just workstation test
 ```
 
 Documentation:

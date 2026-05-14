@@ -24,16 +24,24 @@
     {
       formatter.${system} = treefmtEval.config.build.wrapper;
 
-      nixosConfigurations.guest = nixpkgs.lib.nixosSystem {
+      nixosConfigurations.vm = nixpkgs.lib.nixosSystem {
         inherit system;
         modules = [
-          ./nixos/hosts/guest/default.nix
+          ./nixos/hosts/vm/default.nix
+        ];
+      };
+
+      nixosConfigurations.workstation = nixpkgs.lib.nixosSystem {
+        inherit system;
+        modules = [
+          ./nixos/hosts/workstation/default.nix
         ];
       };
 
       checks.${system} = {
         formatting = treefmtEval.config.build.check self;
-        guest-vm = self.nixosConfigurations.guest.config.system.build.vm;
+        vm = self.nixosConfigurations.vm.config.system.build.vm;
+        workstation = self.nixosConfigurations.workstation.config.system.build.toplevel;
       };
     };
 }

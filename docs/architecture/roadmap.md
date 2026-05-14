@@ -2,7 +2,7 @@
 
 The platform grows incrementally.
 
-1. Local guest VM.
+1. Local VM mirror.
 2. Documentation portal.
 3. CI validation.
 4. Documentation deployment.

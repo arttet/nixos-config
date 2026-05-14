@@ -6,13 +6,15 @@ The root `justfile` imports modules from `misc/justfiles/`, so commands can be
 grouped by domain:
 
 ```sh
-just guest build
-just guest run
-just guest daemon
-just guest status
-just guest ssh
-just guest stop
-just guest test
-just guest clean
+just vm build
+just vm run
+just vm daemon
+just vm status
+just vm ssh
+just vm stop
+just vm test
+just vm clean
+just workstation build
+just workstation test
 just docs build
 ```

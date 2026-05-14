@@ -139,4 +139,4 @@ At this point the host environment is ready.
 
 Continue with the runtime workflow:
 
-[Guest VM Runtime](../runtime/guest-vm.md)
+[VM Runtime](../runtime/vm.md)

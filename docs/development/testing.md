@@ -2,21 +2,28 @@
 
 Testing starts with the smallest useful validation.
 
-Run the flake checks and build the guest VM:
+Run the flake checks and build the VM and workstation closures:
 
 ```sh
 just check
-just guest build
+just vm build
+just workstation build
 ```
 
 Validate runtime behavior from a Linux environment that can run QEMU:
 
 ```sh
-just guest test
+just vm test
 ```
 
-The guest target is intentionally disposable, so runtime validation can be
+The VM target is intentionally disposable, so runtime validation can be
 repeated without protecting local VM state.
+
+Workstation validation is CI-safe and does not require real hardware:
+
+```sh
+just workstation test
+```
 
 Agents cannot validate the Windows WSL2/QEMU runtime directly. Runtime success is
 confirmed by the user after running the commands locally.
