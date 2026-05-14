@@ -68,8 +68,9 @@ def main [
   print "  }"
   print "  EOF"
   print "  # disko will prompt for the LUKS2 passphrase."
-  print "  sudo nix run .#disko -- --mode disko /tmp/workstation-disko.nix"
-  print "  sudo nixos-generate-config --root /mnt"
+  print "  # Run the remaining commands as root from the official NixOS ISO."
+  print "  nix run .#disko -- --mode disko /tmp/workstation-disko.nix"
+  print "  nixos-generate-config --root /mnt"
   print "  test -f /mnt/etc/nixos/hardware-configuration.nix"
-  print "  sudo --preserve-env=NIX_CONFIG_LOCAL_USER,NIX_CONFIG_LOCAL_HARDWARE nixos-install --impure --flake .#workstation"
+  print "  nixos-install --impure --flake .#workstation"
 }

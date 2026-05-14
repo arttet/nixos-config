@@ -154,6 +154,7 @@ current V0/V1 baseline.
 Journald is bounded:
 
 ```ini
+Storage=persistent
 SystemMaxUse=4G
 RuntimeMaxUse=512M
 MaxRetentionSec=1month
@@ -185,6 +186,10 @@ sysctl net.ipv4.tcp_fastopen
 sysctl vm.swappiness
 sysctl vm.vfs_cache_pressure
 journalctl --disk-usage
+resolvectl status
+resolvectl query example.com
+timedatectl status
+nft list ruleset
 ```
 
 From the repository, print the same command list with:

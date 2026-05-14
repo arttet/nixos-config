@@ -5,7 +5,7 @@ future real hardware targets: laptop, mini-PC, or desktop.
 
 It is console-only for now. It enables NetworkManager and keeps OpenSSH disabled
 by default. The package set is intentionally small: `git`, `curl`, `wget`, `jq`,
-`just`, `nushell`, `vim`, `htop`, `pciutils`, `usbutils`, and basic archive
+`just`, `nushell`, `helix`, `btop`, `pciutils`, `usbutils`, and basic archive
 tools.
 
 The profile uses a UEFI/GRUB2 boot model with systemd initrd. Its storage layout
@@ -17,6 +17,19 @@ The profile enables the conservative `platform.tuning` layer for real hardware:
 fast console boot, powersave CPU governor, ZRAM, BBR with fq, periodic trim,
 bounded journald, and predictable Nix rebuild resource use. The `vm` profile
 disables this layer to keep local QEMU runtime simple.
+
+The profile enables the conservative `platform.security` layer: protected kernel
+image, unprivileged user namespace restriction through the upstream sysctl,
+forced page table isolation, and basic perf event restrictions.
+
+The profile enables explicit DNS through NetworkManager and `systemd-resolved`
+with Cloudflare DNS-over-TLS fallback servers. It uses a default-deny firewall
+with no inbound ports open by default.
+
+The platform is usable without private dotfiles. `nushell` is available as an
+operational tool, repository scripts use Nushell where applicable, and the local
+overlay may choose the real user's shell. Locale defaults to `en_US.UTF-8`,
+console keymap defaults to `us`, and timezone belongs to local configuration.
 
 The profile does not include a GUI, Hyprland, desktop managers, Home Manager,
 VPN targets, TPM unlock, YubiKey unlock, Secure Boot, enabled SSH by default, or
@@ -51,6 +64,9 @@ device from the official NixOS ISO environment. See
 [Workstation Installation](../installation/workstation.md) and
 [Storage Model](../architecture/storage-model.md). See
 [Workstation Tuning](../architecture/tuning.md) for runtime tuning details.
+See [DNS Policy](../architecture/dns-policy.md) and
+[Security Baseline](../architecture/security.md) for network and security
+contracts.
 
 ## Validation
 

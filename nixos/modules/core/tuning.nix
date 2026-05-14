@@ -101,6 +101,7 @@ in
 
       (lib.mkIf cfg.logs.enable {
         services.journald.extraConfig = lib.mkDefault ''
+          Storage=persistent
           SystemMaxUse=4G
           RuntimeMaxUse=512M
           MaxRetentionSec=1month
