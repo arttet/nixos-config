@@ -8,7 +8,8 @@ identity. Real users, hostnames, keys, hardware state, and secrets remain local.
 | `workstation` | Personal development environment for future real hardware. | Persistent | No | Active build target |
 | `vm` | Local QEMU mirror of `workstation` for runtime validation. | Disposable | No | Active runtime target |
 
-Stage 003 keeps the workstation console-only. Laptop-specific, desktop, VPN, and
-encrypted installation profiles remain out of scope.
+The workstation remains console-only. Laptop-specific, desktop, and VPN profiles
+remain out of scope. Disk encryption is documented for the future install path
+but is not enabled by default.
 
 Continue with [Workstation](workstation.md) and [VM](vm.md).

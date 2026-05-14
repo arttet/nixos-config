@@ -6,6 +6,7 @@ const platformSidebar = [
     items: [
       { text: "Overview", link: "/installation/" },
       { text: "Windows WSL2", link: "/installation/windows-wsl2" },
+      { text: "Workstation", link: "/installation/workstation" },
       { text: "VM", link: "/installation/vm" },
     ],
   },
@@ -41,6 +42,8 @@ const platformSidebar = [
       { text: "Layering", link: "/architecture/layering" },
       { text: "Overlays", link: "/architecture/overlays" },
       { text: "Secrets Model", link: "/architecture/secrets-model" },
+      { text: "Storage Model", link: "/architecture/storage-model" },
+      { text: "Disk Encryption", link: "/architecture/disk-encryption" },
       { text: "Build Model", link: "/architecture/build-model" },
       { text: "Targets", link: "/architecture/targets" },
       { text: "Roadmap", link: "/architecture/roadmap" },

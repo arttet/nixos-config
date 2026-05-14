@@ -25,6 +25,9 @@ Workstation validation is CI-safe and does not require real hardware:
 just workstation test
 ```
 
+The workstation storage layout is evaluated with an example disk path only.
+Tests do not partition, format, encrypt, or otherwise modify real disks.
+
 Agents cannot validate the Windows WSL2/QEMU runtime directly. Runtime success is
 confirmed by the user after running the commands locally.
 

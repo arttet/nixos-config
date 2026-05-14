@@ -2,9 +2,16 @@
 {
   imports = [
     ./base.nix
+    ../modules/storage/disko.nix
+    ../modules/storage/swap.nix
   ];
 
   networking.networkmanager.enable = true;
+
+  boot.loader = {
+    systemd-boot.enable = true;
+    efi.canTouchEfiVariables = true;
+  };
 
   services.openssh = {
     enable = true;

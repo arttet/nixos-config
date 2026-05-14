@@ -8,8 +8,12 @@ base development and diagnostics tools such as `git`, `curl`, `wget`, `jq`,
 `just`, `nushell`, `iproute2`, `iputils`, `tcpdump`, `lsof`, and hardware
 inspection utilities.
 
+The profile uses a UEFI/systemd-boot boot model. Its storage layout is prepared
+as an opt-in installation path with a parameterized disk device, GPT, a 1 GiB
+ESP mounted at `/boot`, ext4 root, and swapfile support.
+
 The profile does not include a GUI, Hyprland, desktop managers, Home Manager,
-VPN targets, disk encryption, or machine-specific hardware state.
+VPN targets, enabled disk encryption, or machine-specific hardware state.
 
 ## Install Model
 
@@ -25,6 +29,11 @@ The future install flow is:
 
 Real users, hostnames, SSH keys, hardware configuration, and secrets must remain
 local and uncommitted.
+
+Storage application is destructive and must only happen after reviewing the disk
+device from the official NixOS ISO environment. See
+[Workstation Installation](../installation/workstation.md) and
+[Storage Model](../architecture/storage-model.md).
 
 ## Validation
 
