@@ -11,5 +11,7 @@
 
   networking.firewall.enable = true;
 
-  system.stateVersion = "25.05";
+  users.users.root.hashedPassword = "!";
+
+  system.stateVersion = "25.11";
 }

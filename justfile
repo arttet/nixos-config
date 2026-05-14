@@ -8,6 +8,7 @@ default: help
 [doc('List all commands')]
 help:
     @just --list --unsorted --list-submodules
+
 # ==============================================================================
 # Development
 # ==============================================================================
@@ -19,10 +20,12 @@ fmt:
     just --fmt
     nix fmt
     @echo "✅ Code formatted!"
+
 [doc('Run repository checks')]
 [group('Development')]
 check:
     nix flake check
+
 # ==============================================================================
 # VM Runtime
 # ==============================================================================
@@ -36,6 +39,13 @@ mod vm 'misc/justfiles/vm.just'
 
 [group: 'Workstation']
 mod workstation 'misc/justfiles/workstation.just'
+
+# ==============================================================================
+# Local Overlay
+# ==============================================================================
+
+[group: 'Local Overlay']
+mod overlay 'misc/justfiles/overlay.just'
 
 # ==============================================================================
 # Documentation

@@ -8,13 +8,36 @@
 
   networking.networkmanager.enable = true;
 
+  boot.kernelPackages = pkgs.linuxPackages_latest;
+  boot.initrd.systemd.enable = true;
+
   boot.loader = {
-    systemd-boot.enable = true;
+    grub = {
+      enable = true;
+      device = "nodev";
+      efiSupport = true;
+      useOSProber = false;
+    };
     efi.canTouchEfiVariables = true;
   };
 
+  hardware.enableRedistributableFirmware = true;
+  hardware.cpu.intel.updateMicrocode = true;
+  hardware.cpu.amd.updateMicrocode = true;
+
+  services.timesyncd.enable = lib.mkDefault true;
+
+  nix = {
+    gc = {
+      automatic = true;
+      dates = "weekly";
+      options = "--delete-older-than 14d";
+    };
+    settings.auto-optimise-store = true;
+  };
+
   services.openssh = {
-    enable = true;
+    enable = lib.mkDefault false;
     settings = {
       PermitRootLogin = "no";
       PasswordAuthentication = lib.mkDefault false;
@@ -22,27 +45,21 @@
   };
 
   environment.systemPackages = with pkgs; [
+    bzip2
     curl
-    dnsutils
     git
+    gzip
     htop
-    inetutils
-    iproute2
-    iputils
     jq
     just
-    lsof
-    ncdu
     nushell
     pciutils
-    ripgrep
-    smartmontools
-    tcpdump
-    traceroute
-    tree
+    unzip
     usbutils
     vim
     wget
+    xz
+    zip
   ];
 
   services.xserver.enable = lib.mkForce false;

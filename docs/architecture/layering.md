@@ -15,5 +15,8 @@ settings out of the hardware profile.
 Destructive disk operations belong to the installation path, not to default
 build, CI, or VM runtime workflows.
 
+Local overlays and generated hardware configuration form the private hardware
+layer. They are imported from local paths and must not be committed.
+
 This keeps the repository useful without turning it into a record of one
 machine's accidental state.

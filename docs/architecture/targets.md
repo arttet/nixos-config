@@ -5,7 +5,7 @@ The active runtime target is `vm`.
 The active real-hardware profile target is `workstation`.
 
 `workstation` is the reusable personal development environment for future real
-hardware. It owns the UEFI/systemd-boot model and the opt-in storage
+hardware. It owns the UEFI/GRUB2 model and the opt-in storage
 installation path.
 
 `vm` imports `workstation` and adds only local QEMU runtime settings. VM state is
