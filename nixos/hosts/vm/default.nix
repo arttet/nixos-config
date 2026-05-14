@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ ... }:
 {
   imports = [
     ../../profiles/vm.nix
@@ -16,7 +16,6 @@
   users.users.user = {
     isNormalUser = true;
     home = "/home/user";
-    shell = pkgs.nushell;
     extraGroups = [ "wheel" ];
     initialPassword = "user";
   };

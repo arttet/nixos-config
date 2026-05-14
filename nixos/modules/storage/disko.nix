@@ -1,6 +1,11 @@
 { config, lib, ... }:
 let
   cfg = config.platform.storage;
+  btrfsMountOptions = [
+    "compress=zstd"
+    "noatime"
+    "discard=async"
+  ];
 
   workstationDiskLayout = {
     disk.workstation = {
@@ -10,24 +15,67 @@ let
         type = "gpt";
         partitions = {
           ESP = {
-            size = "1G";
+            size = "512M";
             type = "EF00";
             content = {
               type = "filesystem";
               format = "vfat";
-              mountpoint = "/boot";
+              mountpoint = "/boot/efi";
               mountOptions = [
                 "umask=0077"
               ];
             };
           };
 
-          root = {
-            size = "100%";
+          boot = {
+            size = "512M";
             content = {
               type = "filesystem";
               format = "ext4";
-              mountpoint = "/";
+              mountpoint = "/boot";
+            };
+          };
+
+          luks = {
+            size = "100%";
+            content = {
+              type = "luks";
+              name = "cryptroot";
+              extraFormatArgs = [
+                "--type"
+                "luks2"
+              ];
+              settings.allowDiscards = true;
+              content = {
+                type = "btrfs";
+                extraArgs = [ "-f" ];
+                subvolumes = {
+                  "@root" = {
+                    mountpoint = "/";
+                    mountOptions = btrfsMountOptions;
+                  };
+
+                  "@nix" = {
+                    mountpoint = "/nix";
+                    mountOptions = btrfsMountOptions;
+                  };
+
+                  "@home" = {
+                    mountpoint = "/home";
+                    mountOptions = btrfsMountOptions;
+                  };
+
+                  "@log" = {
+                    mountpoint = "/var/log";
+                    mountOptions = btrfsMountOptions;
+                  };
+
+                  "@swap" = {
+                    mountpoint = "/swap";
+                    mountOptions = btrfsMountOptions;
+                  };
+                };
+              };
             };
           };
         };
@@ -62,5 +110,6 @@ in
     ];
 
     platform.storage.diskoLayout = lib.mkIf cfg.enable workstationDiskLayout;
+    disko.devices = lib.mkIf cfg.enable workstationDiskLayout;
   };
 }

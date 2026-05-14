@@ -9,7 +9,7 @@ identity. Real users, hostnames, keys, hardware state, and secrets remain local.
 | `vm` | Local QEMU mirror of `workstation` for runtime validation. | Disposable | No | Active runtime target |
 
 The workstation remains console-only. Laptop-specific, desktop, and VPN profiles
-remain out of scope. Disk encryption is documented for the future install path
-but is not enabled by default.
+remain out of scope. Disk encryption is part of the workstation storage layout,
+while TPM, YubiKey, and Secure Boot unlock paths remain deferred.
 
 Continue with [Workstation](workstation.md) and [VM](vm.md).

@@ -3,6 +3,8 @@
 
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
+    disko.url = "github:nix-community/disko";
+    disko.inputs.nixpkgs.follows = "nixpkgs";
     treefmt-nix.url = "github:numtide/treefmt-nix";
     treefmt-nix.inputs.nixpkgs.follows = "nixpkgs";
   };
@@ -10,6 +12,7 @@
   outputs =
     {
       self,
+      disko,
       nixpkgs,
       treefmt-nix,
       ...
@@ -20,9 +23,37 @@
       treefmtEval = import ./nix/formatter.nix {
         inherit pkgs treefmt-nix;
       };
+      localPathOrNull =
+        path:
+        if path == "" then
+          null
+        else if nixpkgs.lib.hasPrefix "/" path then
+          /. + path
+        else
+          ./. + "/${path}";
+      localOverlayArgs =
+        let
+          home = builtins.getEnv "HOME";
+          envUserOverlay = builtins.getEnv "NIX_CONFIG_LOCAL_USER";
+          envSystemOverlay = builtins.getEnv "NIX_CONFIG_LOCAL_SYSTEM";
+          envHardwareConfig = builtins.getEnv "NIX_CONFIG_LOCAL_HARDWARE";
+          defaultUserOverlay = if home == "" then "" else "${home}/.nix-config-local/user.nix";
+          defaultSystemOverlay = if home == "" then "" else "${home}/.nix-config-local/system.nix";
+        in
+        {
+          localUserOverlay = localPathOrNull (
+            if envUserOverlay != "" then envUserOverlay else defaultUserOverlay
+          );
+          localSystemOverlay = localPathOrNull (
+            if envSystemOverlay != "" then envSystemOverlay else defaultSystemOverlay
+          );
+          localHardwareConfig = localPathOrNull envHardwareConfig;
+        };
       workstationStorageExample = nixpkgs.lib.nixosSystem {
         inherit system;
+        specialArgs = localOverlayArgs;
         modules = [
+          disko.nixosModules.disko
           ./nixos/hosts/workstation/default.nix
           {
             platform.storage = {
@@ -37,16 +68,26 @@
     {
       formatter.${system} = treefmtEval.config.build.wrapper;
 
+      apps.${system}.disko = {
+        type = "app";
+        program = "${disko.packages.${system}.disko}/bin/disko";
+        meta.description = "Run the locked nix-community disko CLI";
+      };
+
       nixosConfigurations.vm = nixpkgs.lib.nixosSystem {
         inherit system;
+        specialArgs = localOverlayArgs;
         modules = [
+          disko.nixosModules.disko
           ./nixos/hosts/vm/default.nix
         ];
       };
 
       nixosConfigurations.workstation = nixpkgs.lib.nixosSystem {
         inherit system;
+        specialArgs = localOverlayArgs;
         modules = [
+          disko.nixosModules.disko
           ./nixos/hosts/workstation/default.nix
         ];
       };
@@ -58,11 +99,29 @@
         workstation-storage-layout = pkgs.writeText "workstation-storage-layout.json" (
           assert workstationStorageLayout.disk.workstation.device == "/dev/disk/by-id/workstation-example";
           assert workstationStorageLayout.disk.workstation.content.type == "gpt";
-          assert workstationStorageLayout.disk.workstation.content.partitions.ESP.size == "1G";
+          assert workstationStorageLayout.disk.workstation.content.partitions.ESP.size == "512M";
           assert
-            workstationStorageLayout.disk.workstation.content.partitions.ESP.content.mountpoint == "/boot";
-          assert workstationStorageLayout.disk.workstation.content.partitions.root.size == "100%";
-          assert workstationStorageLayout.disk.workstation.content.partitions.root.content.format == "ext4";
+            workstationStorageLayout.disk.workstation.content.partitions.ESP.content.mountpoint == "/boot/efi";
+          assert workstationStorageLayout.disk.workstation.content.partitions.boot.size == "512M";
+          assert
+            workstationStorageLayout.disk.workstation.content.partitions.boot.content.mountpoint == "/boot";
+          assert workstationStorageLayout.disk.workstation.content.partitions.luks.size == "100%";
+          assert workstationStorageLayout.disk.workstation.content.partitions.luks.content.type == "luks";
+          assert
+            workstationStorageLayout.disk.workstation.content.partitions.luks.content.name == "cryptroot";
+          assert
+            workstationStorageLayout.disk.workstation.content.partitions.luks.content.extraFormatArgs == [
+              "--type"
+              "luks2"
+            ];
+          assert
+            workstationStorageLayout.disk.workstation.content.partitions.luks.content.content.type == "btrfs";
+          assert
+            workstationStorageLayout.disk.workstation.content.partitions.luks.content.content.subvolumes."@root".mountpoint
+            == "/";
+          assert
+            workstationStorageLayout.disk.workstation.content.partitions.luks.content.content.subvolumes."@swap".mountpoint
+            == "/swap";
           builtins.toJSON workstationStorageLayout
         );
       };

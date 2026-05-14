@@ -12,6 +12,12 @@ or from `NIX_CONFIG_LOCAL_USER`.
 
 Overlay files are local state. They must not be committed.
 
+The NixOS module layer does not read environment variables directly. The public
+flake resolves local overlay paths at the flake boundary and passes them into
+NixOS through `specialArgs`. Normal CI evaluation does not depend on local
+overlay files. Local workstation installation uses `--impure` explicitly so the
+selected local overlay and generated hardware configuration can be imported.
+
 ## User Overlay
 
 The user overlay should define the real local user, shell, wheel membership,
@@ -52,4 +58,5 @@ After install it is expected at:
 ```
 
 Use `NIX_CONFIG_LOCAL_HARDWARE` to import the generated file during installation
-or local validation. Do not commit it.
+or local validation. Do not commit it. Commands that rely on these environment
+variables must use `--impure` explicitly.

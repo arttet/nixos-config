@@ -26,7 +26,6 @@ Workstation:
 ```sh
 just workstation build
 just workstation test
-just workstation plan-install /dev/disk/by-id/<reviewed-disk>
 ```
 
 Local overlay:
