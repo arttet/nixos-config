@@ -8,7 +8,7 @@ systems.
 
 ## Active Runtime
 
-Stage 003 keeps one active runtime target:
+The repository currently keeps one active runtime target:
 
 | Target | Purpose | State |
 | --- | --- | --- |

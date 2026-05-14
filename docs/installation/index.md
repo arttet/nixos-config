@@ -14,7 +14,9 @@ This section does not describe VM runtime commands. Runtime workflows live in
 4. Enter the repository.
 5. Continue to the runtime documentation.
 
-Continue with [Windows WSL2](windows-wsl2.md).
+Continue with [Windows WSL2](windows-wsl2.md) for local VM validation, or
+[Workstation Installation](workstation.md) for the future real-hardware install
+model.
 
 Future workstation installs use the official NixOS ISO, network access, this
 repository flake, and a local identity overlay. No custom ISO is required for

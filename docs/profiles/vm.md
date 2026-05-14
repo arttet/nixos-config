@@ -13,4 +13,7 @@ It imports `workstation`, then adds VM-only behavior:
 VM state is disposable. The profile exists to validate workstation changes
 before applying them to future real hardware.
 
+The VM keeps QEMU storage settings in the VM target. It does not apply the
+workstation storage layout during normal runtime commands.
+
 Runtime commands are documented in [Runtime / VM](../runtime/vm.md).

@@ -17,4 +17,10 @@ build:
 test: build
     nix eval .#nixosConfigurations.workstation.config.services.qemuGuest.enable --apply 'enabled: if enabled then throw "workstation must not enable qemuGuest" else "ok"'
     nix eval .#nixosConfigurations.workstation.config.boot.kernelParams --apply 'params: if builtins.elem "console=ttyS0,115200n8" params then throw "workstation must not include VM serial console settings" else "ok"'
-    @echo "Workstation evaluation, closure build, and VM-only separation passed."
+    nix eval .#nixosConfigurations.workstation.config.boot.loader.systemd-boot.enable --apply 'enabled: if enabled then "ok" else throw "workstation must enable systemd-boot"'
+    nix eval .#nixosConfigurations.workstation.config.boot.loader.efi.canTouchEfiVariables --apply 'enabled: if enabled then "ok" else throw "workstation must allow EFI variable updates"'
+    nix eval .#nixosConfigurations.workstation.config.platform.storage.enable --apply 'enabled: if enabled then throw "workstation storage layout must stay opt-in" else "ok"'
+    nix eval .#nixosConfigurations.workstation.config.platform.storage.swapFilePath --apply 'path: if path == "/var/lib/swapfile" then "ok" else throw "unexpected workstation swapfile path"'
+    nix eval .#nixosConfigurations.workstation.config.platform.storage.swapSizeMiB --apply 'size: if size == 8192 then "ok" else throw "unexpected workstation swapfile size"'
+    nix build .#checks.x86_64-linux.workstation-storage-layout
+    @echo "Workstation evaluation, closure build, boot model, storage options, and VM-only separation passed."

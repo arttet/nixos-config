@@ -6,10 +6,8 @@
 
   networking.hostName = "workstation";
 
-  fileSystems."/" = {
+  fileSystems."/" = lib.mkDefault {
     device = "/dev/disk/by-label/nixos";
     fsType = "ext4";
   };
-
-  boot.loader.grub.devices = lib.mkDefault [ "nodev" ];
 }
