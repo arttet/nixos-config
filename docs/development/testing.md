@@ -25,8 +25,43 @@ Workstation validation is CI-safe and does not require real hardware:
 just workstation test
 ```
 
+For a full local validation pass before opening or merging a change, run:
+
+```sh
+just check
+just vm build
+just vm test
+just workstation build
+just workstation test
+just docs build
+```
+
 The workstation storage layout is evaluated with an example disk path only.
 Tests do not partition, format, encrypt, or otherwise modify real disks.
+
+## Real Hardware Runtime Checks
+
+After installing the workstation target on real hardware, validate boot and
+tuning behavior on the installed machine:
+
+```sh
+systemd-analyze
+systemd-analyze blame
+systemd-analyze critical-chain
+sysctl net.ipv4.tcp_congestion_control
+sysctl net.core.default_qdisc
+sysctl net.ipv4.tcp_fastopen
+sysctl vm.swappiness
+sysctl vm.vfs_cache_pressure
+journalctl --disk-usage
+```
+
+The helper command prints the same list without executing hardware-specific
+checks:
+
+```sh
+just workstation runtime-checks
+```
 
 Agents cannot validate the Windows WSL2/QEMU runtime directly. Runtime success is
 confirmed by the user after running the commands locally.

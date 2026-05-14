@@ -60,6 +60,14 @@ test: _require_sshpass daemon
     sshpass -p user ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=5 user@localhost -p {{ vm_ssh_port }} 'curl -4 --fail --silent --show-error --output /dev/null https://ifconfig.me'
     @echo "VM daemon, SSH, and VM network validation passed."
 
+[doc('Validate the VM profile without starting QEMU')]
+[no-cd]
+validate:
+    nix eval .#nixosConfigurations.vm.config.services.qemuGuest.enable --apply 'enabled: if enabled then "ok" else throw "vm must enable qemuGuest"'
+    nix eval .#nixosConfigurations.vm.config.boot.kernelParams --apply 'params: if builtins.elem "console=ttyS0,115200n8" params then "ok" else throw "vm must include serial console settings"'
+    nix eval .#nixosConfigurations.vm.config.virtualisation.vmVariant.virtualisation.graphics --apply 'graphics: if graphics then throw "vm must be headless" else "ok"'
+    @echo "VM profile validation passed."
+
 _require_sshpass:
     @if ! command -v sshpass >/dev/null 2>&1; then echo "Missing host dependency: sshpass"; echo "Install it in the Linux environment, then rerun: just vm test"; exit 1; fi
 

@@ -26,6 +26,7 @@ Workstation:
 ```sh
 just workstation build
 just workstation test
+just workstation runtime-checks
 ```
 
 Local overlay:

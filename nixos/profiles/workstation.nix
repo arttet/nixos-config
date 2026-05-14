@@ -2,9 +2,12 @@
 {
   imports = [
     ./base.nix
+    ../modules/core/tuning.nix
     ../modules/storage/disko.nix
     ../modules/storage/swap.nix
   ];
+
+  platform.tuning.enable = true;
 
   networking.networkmanager.enable = true;
 
@@ -33,7 +36,6 @@
       dates = "weekly";
       options = "--delete-older-than 14d";
     };
-    settings.auto-optimise-store = true;
   };
 
   services.openssh = {

@@ -60,6 +60,10 @@ Btrfs NOCOW preparation through the `prepare-btrfs-swap` systemd service before
 the swap unit starts. The install plan does not ask the user to run `chattr`
 manually.
 
+Periodic trim is enabled by the workstation tuning layer. The storage layout
+also uses `discard=async` for Btrfs mountpoints. This keeps SSD/NVMe behavior
+safe without adding synchronous discard overhead.
+
 ## Encryption
 
 The root container uses LUKS2 with manual passphrase unlock. TPM, YubiKey, and

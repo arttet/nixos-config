@@ -8,5 +8,5 @@ artifacts, and machine identity are different layers with different ownership.
 Read [Layering](layering.md), [Overlays](overlays.md),
 [Hardware Layer](hardware-layer.md), [Secrets Model](secrets-model.md),
 [Storage Model](storage-model.md), [Disk Encryption](disk-encryption.md),
-[Kernel Policy](kernel-policy.md), [Build Model](build-model.md),
+[Tuning](tuning.md), [Kernel Policy](kernel-policy.md), [Build Model](build-model.md),
 [Targets](targets.md), and [Roadmap](roadmap.md).

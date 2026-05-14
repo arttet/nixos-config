@@ -24,7 +24,6 @@
     virtualisation = {
       diskSize = 4096;
       memorySize = 1024;
-      graphics = false;
       forwardPorts = [
         {
           from = "host";
