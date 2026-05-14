@@ -23,6 +23,10 @@ The repository can import a local hardware configuration through:
 NIX_CONFIG_LOCAL_HARDWARE=/mnt/etc/nixos/hardware-configuration.nix
 ```
 
+This local path is passed into NixOS through flake `specialArgs`. The NixOS
+module tree does not call `builtins.getEnv` directly. Local install commands
+that import generated hardware configuration must use `--impure` explicitly.
+
 The local user and host policy lives in the local overlay. The default overlay
 path is:
 

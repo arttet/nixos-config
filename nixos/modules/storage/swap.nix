@@ -1,4 +1,9 @@
-{ config, lib, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 let
   cfg = config.platform.storage;
 in
@@ -6,7 +11,7 @@ in
   options.platform.storage = {
     swapFilePath = lib.mkOption {
       type = lib.types.str;
-      default = "/var/lib/swapfile";
+      default = "/swap/swapfile";
       description = "Path to the swapfile used by workstation-style installs.";
     };
 
@@ -24,4 +29,19 @@ in
       size = cfg.swapSizeMiB;
     }
   ];
+
+  config.systemd.services.prepare-btrfs-swap = lib.mkIf cfg.enable {
+    description = "Prepare Btrfs NOCOW directory for swapfile";
+    before = [ "swap-swapfile.swap" ];
+    wantedBy = [ "swap-swapfile.swap" ];
+    path = [
+      pkgs.coreutils
+      pkgs.e2fsprogs
+    ];
+    serviceConfig.Type = "oneshot";
+    script = ''
+      mkdir -p /swap
+      chattr +C /swap || true
+    '';
+  };
 }

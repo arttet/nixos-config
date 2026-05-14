@@ -6,9 +6,9 @@ VM validation.
 The workstation does not require a custom ISO right now. Use the official NixOS
 ISO as the bootstrap environment.
 
-This V0 install is console-only and unencrypted. It uses UEFI GRUB2 with systemd
-initrd, which keeps the boot path compatible with future LUKS root encryption
-and later GRUB customization.
+This install is console-only and encrypted. It uses UEFI GRUB2 with systemd
+initrd, an unencrypted `/boot`, and LUKS2 manual passphrase unlock for the root
+container.
 
 ## Flow
 
@@ -70,10 +70,12 @@ The example path is not a real committed workstation device.
 
 ## Plan
 
-Print a safe plan before running destructive commands:
+Print a safe plan before running destructive commands. This is intentionally not
+exposed as a default `just` command; run the Nushell script explicitly after
+reviewing the disk device:
 
 ```sh
-just workstation plan-install /dev/disk/by-id/<reviewed-disk>
+nu scripts/install/workstation.nu /dev/disk/by-id/<reviewed-disk>
 ```
 
 Expected result:
@@ -83,6 +85,21 @@ Expected result:
 - A destructive warning is printed.
 - Exact manual commands are printed.
 - No disk is partitioned or formatted by the plan command.
+
+The plan uses the repository's locked `nix-community/disko` flake input through
+`nix run .#disko`. The storage layout source of truth remains
+`nixos/modules/storage/disko.nix`.
+
+The final `nixos-install` command uses `--impure` intentionally. That is the
+local install boundary that lets the flake read `NIX_CONFIG_LOCAL_USER` and
+`NIX_CONFIG_LOCAL_HARDWARE`, then pass those paths into the NixOS configuration
+through `specialArgs`.
+
+If the local overlay is not at the default path, pass it explicitly:
+
+```sh
+nu scripts/install/workstation.nu /dev/disk/by-id/<reviewed-disk> --overlay /path/to/user.nix
+```
 
 ## Hardware Configuration
 
@@ -109,8 +126,10 @@ The public repository must not contain this file.
 
 ## Encryption
 
-The current workstation install is unencrypted. The next storage stage will add
-LUKS root encryption. The current layout and systemd initrd are intentionally
-compatible with a future encrypted boot flow.
+The root filesystem is encrypted with LUKS2. The first supported unlock model is
+manual passphrase entry at boot.
+
+TPM unlock, YubiKey unlock, Secure Boot, automatic snapshots, GRUB snapshot boot
+entries, impermanence, and hibernation are deferred.
 
 Secure Boot is not supported yet.

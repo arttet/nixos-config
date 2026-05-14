@@ -10,10 +10,11 @@ tools.
 
 The profile uses a UEFI/GRUB2 boot model with systemd initrd. Its storage layout
 is prepared as an opt-in installation path with a parameterized disk device,
-GPT, a 1 GiB ESP mounted at `/boot`, ext4 root, and swapfile support.
+GPT, a 512 MiB ESP mounted at `/boot/efi`, a 512 MiB unencrypted ext4 `/boot`,
+LUKS2 encrypted root, Btrfs subvolumes, and swapfile support.
 
 The profile does not include a GUI, Hyprland, desktop managers, Home Manager,
-VPN targets, enabled disk encryption, enabled SSH by default, or
+VPN targets, TPM unlock, YubiKey unlock, Secure Boot, enabled SSH by default, or
 machine-specific hardware state.
 
 The workstation uses `pkgs.linuxPackages_latest`. The actual kernel version is

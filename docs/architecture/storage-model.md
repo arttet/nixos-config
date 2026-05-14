@@ -1,7 +1,7 @@
 # Storage Model
 
-The workstation storage foundation is prepared but not applied to real hardware
-by default.
+The workstation storage foundation is production-grade and encrypted, but it is
+not applied to real hardware by default.
 
 The intended workstation install model is:
 
@@ -9,10 +9,12 @@ The intended workstation install model is:
 - GRUB2.
 - systemd initrd.
 - GPT partitioning.
-- 1 GiB EFI System Partition mounted at `/boot`.
-- Root partition using the remaining disk.
-- ext4 root filesystem for now.
-- Swapfile-based swap at `/var/lib/swapfile`.
+- 512 MiB EFI System Partition mounted at `/boot/efi`.
+- 512 MiB unencrypted ext4 `/boot` partition.
+- Remaining disk as a LUKS2 encrypted root container.
+- Btrfs inside LUKS.
+- Btrfs subvolumes for `/`, `/nix`, `/home`, `/var/log`, and `/swap`.
+- Swapfile-based swap at `/swap/swapfile`.
 - Default swapfile size of 8192 MiB.
 
 The disk device is always a parameter. The repository must not hardcode a real
@@ -26,15 +28,57 @@ Storage options live under `platform.storage`:
 | --- | --- | --- |
 | `platform.storage.enable` | Enables the workstation storage layout for an install path. | `false` |
 | `platform.storage.diskDevice` | Disk device to partition. Required when storage is enabled. | `null` |
-| `platform.storage.swapFilePath` | Swapfile path. | `/var/lib/swapfile` |
+| `platform.storage.swapFilePath` | Swapfile path. | `/swap/swapfile` |
 | `platform.storage.swapSizeMiB` | Swapfile size in MiB. | `8192` |
 
-The generated layout is exposed as `platform.storage.diskoLayout`. It is
-disko-compatible data for the destructive install path, not a default CI or
-local runtime command.
+The generated layout is exposed as `platform.storage.diskoLayout` and wired into
+`disko.devices` when `platform.storage.enable = true`. The repository uses the
+locked `nix-community/disko` flake input as the install implementation.
 
-The current V0 workstation install is unencrypted. Disk encryption is deferred
-to the next storage stage.
+## Btrfs
+
+All Btrfs mountpoints use:
+
+```txt
+compress=zstd
+noatime
+discard=async
+```
+
+The subvolume model is:
+
+| Subvolume | Mountpoint |
+| --- | --- |
+| `@root` | `/` |
+| `@nix` | `/nix` |
+| `@home` | `/home` |
+| `@log` | `/var/log` |
+| `@swap` | `/swap` |
+
+The `@swap` subvolume hosts `/swap/swapfile`. The NixOS swap module owns the
+Btrfs NOCOW preparation through the `prepare-btrfs-swap` systemd service before
+the swap unit starts. The install plan does not ask the user to run `chattr`
+manually.
+
+## Encryption
+
+The root container uses LUKS2 with manual passphrase unlock. TPM, YubiKey, and
+Secure Boot integration are explicitly deferred.
+
+## Partition Size Rationale
+
+The 512 MiB ESP is reserved for UEFI boot files, GRUB assets, kernels, future
+bootloader growth, and recovery scenarios.
+
+The 512 MiB `/boot` partition is reserved for workstation generation management,
+multiple kernels and initrds during rebuild transitions, and the encrypted root
+boot flow.
+
+## Explicitly Deferred
+
+The layout does not implement automatic snapshots, Timeshift integration, GRUB
+snapshot boot entries, impermanence, hibernation, TPM unlock, YubiKey unlock, or
+Secure Boot.
 
 ## VM Boundary
 
@@ -46,6 +90,6 @@ evaluation-only examples instead of increasing normal VM runtime cost.
 
 ## Destructive Operations
 
-Any future command that applies the disk layout to a real device is destructive.
-It must require an explicit disk device review and must not become part of
-default `just`, CI, or VM runtime workflows.
+Any command that applies the disk layout to a real device is destructive. It
+must require an explicit disk device review and must not become part of default
+CI or VM runtime workflows.

@@ -21,12 +21,7 @@ test: build
     nix eval .#nixosConfigurations.workstation.config.nix.gc.automatic --apply 'enabled: if enabled then "ok" else throw "workstation must enable automatic nix gc"'
     nix eval .#nixosConfigurations.workstation.config.nix.settings.auto-optimise-store --apply 'enabled: if enabled then "ok" else throw "workstation must enable store optimisation"'
     nix eval .#nixosConfigurations.workstation.config.platform.storage.enable --apply 'enabled: if enabled then throw "workstation storage layout must stay opt-in" else "ok"'
-    nix eval .#nixosConfigurations.workstation.config.platform.storage.swapFilePath --apply 'path: if path == "/var/lib/swapfile" then "ok" else throw "unexpected workstation swapfile path"'
+    nix eval .#nixosConfigurations.workstation.config.platform.storage.swapFilePath --apply 'path: if path == "/swap/swapfile" then "ok" else throw "unexpected workstation swapfile path"'
     nix eval .#nixosConfigurations.workstation.config.platform.storage.swapSizeMiB --apply 'size: if size == 8192 then "ok" else throw "unexpected workstation swapfile size"'
     nix build .#checks.x86_64-linux.workstation-storage-layout
     @echo "Workstation evaluation, closure build, boot model, storage options, and VM-only separation passed."
-
-[doc('Print a safe bare-metal install plan')]
-[no-cd]
-plan-install disk_device:
-    nu scripts/install/workstation.nu "{{ disk_device }}"
