@@ -4,11 +4,11 @@
 
 Personal reproducible NixOS infrastructure for machines that can be destroyed and rebuilt at any time.
 
-## 📚 Documentation
+## 📚 Project Resources
 
-Read the documentation here:
+Useful project resources:
 
-| Site | URL |
+| Resource | URL |
 | --- | --- |
 | Documentation | <https://nix.arttet.dev> |
 
