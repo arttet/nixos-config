@@ -2,14 +2,16 @@
 {
   imports = [
     ./base.nix
+    ../modules/core/network.nix
+    ../modules/core/security.nix
     ../modules/core/tuning.nix
     ../modules/storage/disko.nix
     ../modules/storage/swap.nix
   ];
 
+  platform.network.enable = true;
+  platform.security.enable = true;
   platform.tuning.enable = true;
-
-  networking.networkmanager.enable = true;
 
   boot.kernelPackages = pkgs.linuxPackages_latest;
   boot.initrd.systemd.enable = true;
@@ -29,12 +31,20 @@
   hardware.cpu.amd.updateMicrocode = true;
 
   services.timesyncd.enable = lib.mkDefault true;
+  system.autoUpgrade.enable = lib.mkDefault false;
+  console.keyMap = lib.mkDefault "us";
 
   nix = {
     gc = {
-      automatic = true;
-      dates = "weekly";
-      options = "--delete-older-than 14d";
+      automatic = lib.mkDefault true;
+      dates = lib.mkDefault "weekly";
+      options = lib.mkDefault "--delete-older-than 14d";
+    };
+    settings = {
+      trusted-users = [
+        "root"
+        "@wheel"
+      ];
     };
   };
 
@@ -48,17 +58,17 @@
 
   environment.systemPackages = with pkgs; [
     bzip2
+    btop
     curl
     git
     gzip
-    htop
+    helix
     jq
     just
     nushell
     pciutils
     unzip
     usbutils
-    vim
     wget
     xz
     zip

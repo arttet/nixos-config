@@ -9,6 +9,7 @@ Important directories:
 - `docs/` contains the VitePress documentation portal.
 - `examples/` contains fake-only examples.
 - `misc/justfiles/` contains reusable `just` modules.
+- `formatter.nix` defines the repository formatter.
 - `target/` contains local build output and is ignored by git.
 
 Future milestone files may exist outside the active target, but they should not

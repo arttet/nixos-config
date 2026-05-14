@@ -29,11 +29,11 @@ For a full local validation pass before opening or merging a change, run:
 
 ```sh
 just check
+just docs build
 just vm build
 just vm test
 just workstation build
 just workstation test
-just docs build
 ```
 
 The workstation storage layout is evaluated with an example disk path only.
@@ -48,12 +48,21 @@ tuning behavior on the installed machine:
 systemd-analyze
 systemd-analyze blame
 systemd-analyze critical-chain
+resolvectl status
+resolvectl query example.com
+timedatectl status
 sysctl net.ipv4.tcp_congestion_control
 sysctl net.core.default_qdisc
 sysctl net.ipv4.tcp_fastopen
 sysctl vm.swappiness
 sysctl vm.vfs_cache_pressure
+nft list ruleset
 journalctl --disk-usage
+journalctl -b -p warning
+doas true
+doas id
+doas nixos-rebuild switch --flake .#workstation
+doas nixos-rebuild switch --rollback
 ```
 
 The helper command prints the same list without executing hardware-specific

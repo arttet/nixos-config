@@ -20,7 +20,7 @@
     let
       system = "x86_64-linux";
       pkgs = nixpkgs.legacyPackages.${system};
-      treefmtEval = import ./nix/formatter.nix {
+      treefmtEval = import ./formatter.nix {
         inherit pkgs treefmt-nix;
       };
       localPathOrNull =
@@ -96,6 +96,12 @@
         formatting = treefmtEval.config.build.check self;
         vm = self.nixosConfigurations.vm.config.system.build.vm;
         workstation = self.nixosConfigurations.workstation.config.system.build.toplevel;
+        workstation-kernel-policy = pkgs.writeText "workstation-kernel-policy.txt" (
+          assert
+            self.nixosConfigurations.workstation.config.boot.kernelPackages.kernel.outPath
+            == pkgs.linuxPackages_latest.kernel.outPath;
+          "workstation uses pkgs.linuxPackages_latest\n"
+        );
         workstation-storage-layout = pkgs.writeText "workstation-storage-layout.json" (
           assert workstationStorageLayout.disk.workstation.device == "/dev/disk/by-id/workstation-example";
           assert workstationStorageLayout.disk.workstation.content.type == "gpt";

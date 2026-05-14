@@ -4,6 +4,8 @@
     ./workstation.nix
   ];
 
+  platform.network.enable = lib.mkForce false;
+  platform.security.enable = lib.mkForce false;
   platform.tuning.enable = lib.mkForce false;
 
   services.qemuGuest.enable = true;

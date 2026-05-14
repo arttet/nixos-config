@@ -9,7 +9,7 @@ After booting a known-good generation, inspect the failed change and rebuild fro
 the repository:
 
 ```sh
-sudo nixos-rebuild switch --flake .#workstation
+doas nixos-rebuild switch --flake .#workstation
 ```
 
 Disk layout and encryption changes are different from normal system rebuilds.

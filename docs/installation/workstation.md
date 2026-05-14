@@ -10,6 +10,9 @@ This install is console-only and encrypted. It uses UEFI GRUB2 with systemd
 initrd, an unencrypted `/boot`, and LUKS2 manual passphrase unlock for the root
 container.
 
+For the full pre-GUI installation rehearsal, see
+[Workstation Install Rehearsal](workstation-rehearsal.md).
+
 ## Flow
 
 1. Boot the official NixOS ISO in UEFI mode.
@@ -95,6 +98,10 @@ local install boundary that lets the flake read `NIX_CONFIG_LOCAL_USER` and
 `NIX_CONFIG_LOCAL_HARDWARE`, then pass those paths into the NixOS configuration
 through `specialArgs`.
 
+The official NixOS ISO is a bootstrap environment. Privileged install commands
+there may run from a root shell or use the ISO's own `sudo` tooling. After the
+workstation is installed, routine privilege escalation uses `doas`, not `sudo`.
+
 If the local overlay is not at the default path, pass it explicitly:
 
 ```sh
@@ -107,7 +114,7 @@ After disko creates and mounts the target filesystem under `/mnt`, generate
 hardware configuration:
 
 ```sh
-sudo nixos-generate-config --root /mnt
+nixos-generate-config --root /mnt
 ```
 
 The generated install-time path is:

@@ -20,6 +20,14 @@ The VM disables the real-hardware `platform.tuning` layer. Boot, power, ZRAM,
 earlyoom, fstrim, and network tuning are validated through workstation
 evaluation, not by making the local QEMU workflow heavier.
 
+The VM also disables the real-hardware `platform.security` layer. Security
+policy is validated through workstation evaluation, while the VM remains a fast
+disposable runtime target.
+
+The VM disables the real-hardware `platform.network` DNS policy. QEMU user
+networking remains simple; DNS policy is validated through workstation
+evaluation and real hardware checks.
+
 The VM may enable SSH for local validation. The workstation profile disables SSH
 by default.
 

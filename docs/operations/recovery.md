@@ -25,3 +25,27 @@ systemd-analyze critical-chain
 journalctl -b -p warning
 journalctl --disk-usage
 ```
+
+## Security Policy Recovery
+
+Security changes are part of the runtime contract. If firewall, login, doas, or
+kernel hardening policy prevents normal access, recover from a known-good NixOS
+generation first.
+
+Recommended order:
+
+1. Select an older generation from GRUB.
+2. Log in as the local overlay user.
+3. Inspect the failed generation and logs.
+4. Rebuild from the repository after reverting or overriding the broken policy.
+
+If no installed generation is usable, boot the official NixOS ISO in UEFI mode,
+unlock the root filesystem, mount the system, provide the local overlay and
+hardware configuration, then rebuild or reinstall from the repository flake.
+
+Do not disable security mitigations globally as a recovery shortcut. Use a local
+override only for the specific policy that caused the failure, and document it.
+
+If `doas` policy itself breaks, recover through GRUB first. If no generation is
+usable, use the official NixOS ISO, mount the system, fix the local overlay or
+security module, and rebuild from the repository flake.

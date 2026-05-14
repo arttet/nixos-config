@@ -27,6 +27,9 @@ Workstation:
 just workstation build
 just workstation test
 just workstation runtime-checks
+just workstation dns-report
+just workstation network-report
+just workstation logs-report
 ```
 
 Local overlay:
