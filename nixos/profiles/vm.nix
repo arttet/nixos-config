@@ -13,7 +13,13 @@
 
   systemd.services."serial-getty@ttyS0".enable = true;
 
-  services.openssh.settings.PasswordAuthentication = lib.mkForce true;
+  services.openssh = {
+    enable = true;
+    settings = {
+      PermitRootLogin = "no";
+      PasswordAuthentication = lib.mkForce true;
+    };
+  };
 
   services.xserver.enable = lib.mkForce false;
 }

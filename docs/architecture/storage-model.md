@@ -6,7 +6,8 @@ by default.
 The intended workstation install model is:
 
 - UEFI-only boot.
-- `systemd-boot`.
+- GRUB2.
+- systemd initrd.
 - GPT partitioning.
 - 1 GiB EFI System Partition mounted at `/boot`.
 - Root partition using the remaining disk.
@@ -29,8 +30,11 @@ Storage options live under `platform.storage`:
 | `platform.storage.swapSizeMiB` | Swapfile size in MiB. | `8192` |
 
 The generated layout is exposed as `platform.storage.diskoLayout`. It is
-disko-compatible data for the future destructive install path, not a default CI
-or local runtime command.
+disko-compatible data for the destructive install path, not a default CI or
+local runtime command.
+
+The current V0 workstation install is unencrypted. Disk encryption is deferred
+to the next storage stage.
 
 ## VM Boundary
 

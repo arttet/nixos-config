@@ -27,7 +27,7 @@
           {
             platform.storage = {
               enable = true;
-              diskDevice = "/dev/disk/by-id/stage004-example";
+              diskDevice = "/dev/disk/by-id/workstation-example";
             };
           }
         ];
@@ -56,7 +56,7 @@
         vm = self.nixosConfigurations.vm.config.system.build.vm;
         workstation = self.nixosConfigurations.workstation.config.system.build.toplevel;
         workstation-storage-layout = pkgs.writeText "workstation-storage-layout.json" (
-          assert workstationStorageLayout.disk.workstation.device == "/dev/disk/by-id/stage004-example";
+          assert workstationStorageLayout.disk.workstation.device == "/dev/disk/by-id/workstation-example";
           assert workstationStorageLayout.disk.workstation.content.type == "gpt";
           assert workstationStorageLayout.disk.workstation.content.partitions.ESP.size == "1G";
           assert

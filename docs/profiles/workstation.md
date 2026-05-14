@@ -3,17 +3,25 @@
 The `workstation` profile is the reusable personal development environment for
 future real hardware targets: laptop, mini-PC, or desktop.
 
-It is console-only for now. It enables NetworkManager and OpenSSH, and includes
-base development and diagnostics tools such as `git`, `curl`, `wget`, `jq`,
-`just`, `nushell`, `iproute2`, `iputils`, `tcpdump`, `lsof`, and hardware
-inspection utilities.
+It is console-only for now. It enables NetworkManager and keeps OpenSSH disabled
+by default. The package set is intentionally small: `git`, `curl`, `wget`, `jq`,
+`just`, `nushell`, `vim`, `htop`, `pciutils`, `usbutils`, and basic archive
+tools.
 
-The profile uses a UEFI/systemd-boot boot model. Its storage layout is prepared
-as an opt-in installation path with a parameterized disk device, GPT, a 1 GiB
-ESP mounted at `/boot`, ext4 root, and swapfile support.
+The profile uses a UEFI/GRUB2 boot model with systemd initrd. Its storage layout
+is prepared as an opt-in installation path with a parameterized disk device,
+GPT, a 1 GiB ESP mounted at `/boot`, ext4 root, and swapfile support.
 
 The profile does not include a GUI, Hyprland, desktop managers, Home Manager,
-VPN targets, enabled disk encryption, or machine-specific hardware state.
+VPN targets, enabled disk encryption, enabled SSH by default, or
+machine-specific hardware state.
+
+The workstation uses `pkgs.linuxPackages_latest`. The actual kernel version is
+controlled by `flake.lock`, and rollback uses NixOS generations from GRUB.
+
+Project status is V0/development. `system.stateVersion` is pinned to `25.11` as
+a NixOS compatibility marker. It must change only through a deliberate migration,
+not as part of routine package upgrades.
 
 ## Install Model
 
@@ -25,7 +33,9 @@ The future install flow is:
 2. Connect the network.
 3. Clone or otherwise provide this repository flake.
 4. Create a local user overlay outside git.
-5. Install the `workstation` target.
+5. Review the disk device and install plan.
+6. Generate local hardware configuration.
+7. Install the `workstation` target.
 
 Real users, hostnames, SSH keys, hardware configuration, and secrets must remain
 local and uncommitted.
