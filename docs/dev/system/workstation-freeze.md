@@ -165,6 +165,12 @@ CI is intentionally headless. It does not launch Hyprland, require GPU
 acceleration, test real DNS performance, validate battery behavior, partition
 disks, or prove real hardware installation success.
 
+Heavy system closures are built by dedicated jobs rather than through
+`nix flake check`. This keeps validation deterministic and avoids building the
+large graphical closure twice on GitHub's limited ephemeral runner disk.
+Nix jobs use Magic Nix Cache, and the graphical workstation job frees
+preinstalled GitHub runner toolchains before building the full desktop closure.
+
 ## Freeze Decision
 
 The current repository is a V1 workstation freeze candidate when the following

@@ -48,6 +48,15 @@ just overlay path
 just overlay check
 ```
 
+Install scripts:
+
+```sh
+nu scripts/install/bootstrap.nu
+nu scripts/install/bootstrap.nu --dry-run
+nu scripts/install/bootstrap.nu --apply
+nu scripts/install/disko.nu "/dev/disk/by-id/<reviewed-disk>"
+```
+
 Documentation:
 
 ```sh

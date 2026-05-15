@@ -12,7 +12,7 @@ available.
 The boot UX layer enables:
 
 - Plymouth.
-- The `splash` kernel parameter.
+- The `splash` kernel parameter through the NixOS Plymouth module.
 - Compatibility with the existing GRUB2, UEFI, and systemd initrd model.
 - Manual LUKS passphrase unlock.
 
@@ -38,7 +38,7 @@ underlying model simple:
 
 ## Diagnostics
 
-The platform adds `splash` but does not force `quiet`.
+The NixOS Plymouth module adds `splash`. The platform does not force `quiet`.
 
 This keeps boot diagnostics easier to access during the first real hardware
 install. If a host-specific overlay later wants a quieter boot, it can add
@@ -89,4 +89,3 @@ Expected result:
 - The LUKS passphrase prompt is visible.
 - Entering the passphrase unlocks the root filesystem.
 - The system continues to the normal login flow.
-
