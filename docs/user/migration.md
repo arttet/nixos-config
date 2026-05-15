@@ -48,7 +48,7 @@ The physical installation is the "ceremony" where you commit your hardware to th
 1. **Boot the Installer:** Use a standard NixOS ISO.
 2. **Partitioning:** We use a LUKS2 + Btrfs layout. Btrfs subvolumes (`@root`, `@home`, `@nix`, `@log`, `@swap`) are natural fits for the NixOS generation model.
 3. **Generate Hardware Config:** Run `nixos-generate-config` to capture the physical device IDs, then move them into your repository's hardware layer.
-4. **Clone & Install:** Clone your platform repository and run `nixos-install --flake .#workstation`.
+4. **Clone & Install:** Clone your platform repository and run `nixos-install --impure --flake "path:/absolute/path/to/nixos-config#workstation-gui"`.
 5. **Reboot:** You are now running a declarative system.
 
 ## 🔄 Iterative Codification

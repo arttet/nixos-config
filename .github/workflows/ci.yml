@@ -66,6 +66,9 @@ jobs:
           extra_nix_config: |
             experimental-features = nix-command flakes
 
+      - name: Magic Nix Cache
+        uses: DeterminateSystems/magic-nix-cache-action@v13
+
       - name: Check formatting
         run: nix fmt -- --ci
 
@@ -129,6 +132,9 @@ jobs:
           extra_nix_config: |
             experimental-features = nix-command flakes
 
+      - name: Magic Nix Cache
+        uses: DeterminateSystems/magic-nix-cache-action@v13
+
       - name: Setup Just
         uses: extractions/setup-just@v4
 
@@ -152,6 +158,9 @@ jobs:
           extra_nix_config: |
             experimental-features = nix-command flakes
 
+      - name: Magic Nix Cache
+        uses: DeterminateSystems/magic-nix-cache-action@v13
+
       - name: Setup Just
         uses: extractions/setup-just@v4
 
@@ -166,11 +175,22 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
+      - name: Free Disk Space for GUI Workstation
+        uses: endersonmenezes/free-disk-space@v3
+        with:
+          remove_android: true
+          remove_dotnet: true
+          remove_haskell: true
+          rm_cmd: "rmz"
+
       - name: Install Nix
         uses: cachix/install-nix-action@v31
         with:
           extra_nix_config: |
             experimental-features = nix-command flakes
+
+      - name: Magic Nix Cache
+        uses: DeterminateSystems/magic-nix-cache-action@v13
 
       - name: Setup Just
         uses: extractions/setup-just@v4

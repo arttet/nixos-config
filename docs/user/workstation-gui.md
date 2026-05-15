@@ -90,7 +90,8 @@ target desktop shell direction.
 
 The GUI target sets only minimal defaults:
 
-- Brave for web links
+- Zen Browser for web links
+- Brave as the stable fallback browser
 - Thunar for directories
 - Zathura for PDF files
 

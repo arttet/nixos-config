@@ -43,6 +43,14 @@ If no installed generation is usable, boot the official NixOS ISO in UEFI mode,
 unlock the root filesystem, mount the system, provide the local overlay and
 hardware configuration, then rebuild or reinstall from the repository flake.
 
+The install environment can pass local paths inline:
+
+```sh
+NIX_CONFIG_LOCAL_USER="/tmp/nix-config-install/pc/user.nix" \
+NIX_CONFIG_LOCAL_HARDWARE="/mnt/etc/nixos/hardware-configuration.nix" \
+nixos-install --impure --flake "path:/absolute/path/to/nixos-config#workstation-gui"
+```
+
 If the Plymouth graphical prompt fails before root unlock, use the GRUB editor
 for the selected generation and remove `splash` from the kernel command line for
 that boot. After login, rebuild with a local override such as

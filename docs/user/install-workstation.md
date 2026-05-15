@@ -1,143 +1,213 @@
 # Workstation Installation
 
-The workstation install path targets real hardware. It is not required for local
-VM validation.
+This is the frozen first-install flow for real hardware.
 
-The workstation does not require a custom ISO right now. Use the official NixOS
-ISO as the bootstrap environment.
+The default install target is `workstation-gui`. The `workstation` target remains
+available as a headless fallback.
 
-This install is encrypted. It uses UEFI GRUB2 with systemd initrd, an
-unencrypted `/boot`, Plymouth for the graphical LUKS prompt, and LUKS2 manual
-passphrase unlock for the root container.
+The install is destructive once the disk layout is applied. Review the selected
+disk before running apply mode.
 
-For the full installation rehearsal, see
-[Workstation Install Rehearsal](install-rehearsal).
+## Prepare Boot Media
 
-## Flow
+Download the latest official NixOS ISO from the NixOS website.
 
-1. Boot the official NixOS ISO in UEFI mode.
-2. Connect the network.
-3. Clone or otherwise provide this repository flake.
-4. Create a local user overlay outside git.
-5. Validate the overlay.
-6. Choose and review the target disk device.
-7. Review the install plan.
-8. Run disko manually.
-9. Generate hardware configuration.
-10. Run `nixos-install`.
-11. Reboot.
-12. Log in as the local user.
-13. Validate network and rebuild.
+Ventoy may be used as a convenient USB boot manager:
 
-## Local Overlay
-
-Create a local overlay before installation:
-
-```sh
-mkdir -p ~/.nix-config-local
-cp examples/local/user.nix ~/.nix-config-local/user.nix
+```txt
+https://github.com/ventoy/Ventoy
 ```
 
-Edit the copied file with real local identity. Do not commit it.
+Ventoy is optional. It is not part of this repository and is not required by the
+configuration.
 
-Validate that the overlay exists:
+## Boot The ISO
 
-```sh
-just overlay check
-```
+Boot the official ISO in UEFI mode.
 
-## Disk Device Review
-
-Disk layout application is destructive. Before any future install command is
-run, inspect disks from the ISO environment:
+Confirm UEFI:
 
 ```sh
-lsblk -o NAME,SIZE,TYPE,MODEL,SERIAL
+test -d /sys/firmware/efi
 ```
 
-Use stable device paths such as `/dev/disk/by-id/...` when possible. Do not copy
-an example disk path without checking that it points to the intended device.
+## Connect Network
 
-Example configuration shape:
+Wired networking usually works automatically.
 
-```nix
-{
-  platform.storage = {
-    enable = true;
-    diskDevice = "/dev/disk/by-id/nvme-example";
-  };
-}
-```
-
-The example path is not a real committed workstation device.
-
-## Plan
-
-Print a safe plan before running destructive commands. This is intentionally not
-exposed as a default `just` command; run the Nushell script explicitly after
-reviewing the disk device:
+For Wi-Fi, use `iwctl`:
 
 ```sh
-nu scripts/install/workstation.nu /dev/disk/by-id/<reviewed-disk>
+iwctl
+device list
+station wlan0 scan
+station wlan0 get-networks
+station wlan0 connect <SSID>
+exit
+ping -c 3 nixos.org
+```
+
+Replace `wlan0` with the device shown by `device list`.
+
+## Enter Nushell
+
+Run the install from a root shell on the ISO. The official NixOS ISO usually
+starts in a root-capable environment; if not, switch to root before continuing.
+
+The ISO does not need to include Nushell. Enter a temporary root shell with
+Nushell and Git:
+
+```sh
+nix shell nixpkgs#nushell nixpkgs#git
+```
+
+If you started from a non-root shell, prefer becoming root before entering the
+Nix shell. If you must use `sudo`, preserve the environment explicitly:
+
+```sh
+sudo -E nu scripts/install/bootstrap.nu
+```
+
+Clone the repository:
+
+```sh
+git clone https://github.com/arttet/nixos-config.git
+cd nixos-config
+```
+
+## Run The Installer Wizard
+
+Start the guided installer:
+
+```sh
+nu scripts/install/bootstrap.nu
+```
+
+The wizard asks for:
+
+- install id, default `pc`;
+- target, default `workstation-gui`;
+- username, default `user`;
+- hostname, default `pc`;
+- timezone, default `UTC`;
+- disk device.
+
+The username must start with a lowercase letter or underscore and then use only
+lowercase letters, numbers, underscores, or dashes. It cannot be `root`.
+Administrative access is granted through the generated local user and `wheel`
+membership.
+
+The hostname must use letters, digits, and hyphens only. The timezone is
+validated against `/usr/share/zoneinfo` when that database is available in the
+ISO environment.
+
+Prompt controls:
+
+- Enter accepts the shown default.
+- A typed value overrides the default.
+- Invalid values are rejected at the current step without restarting the
+  wizard.
+- `r` goes back one step.
+- `q` exits.
+
+The wizard reads disk candidates from:
+
+```sh
+lsblk -J -o NAME,SIZE,TYPE,MODEL,SERIAL,MOUNTPOINTS,PATH
+```
+
+It shows a numbered disk list and also allows manual override. Prefer a stable
+`/dev/disk/by-id/...` path when choosing manually.
+
+## Dry Run
+
+Dry-run is the default. It generates local install files and prints commands,
+but does not partition or format disks:
+
+```sh
+nu scripts/install/bootstrap.nu --dry-run
+```
+
+Generated files use abstract local install state:
+
+```txt
+/tmp/nix-config-install/pc/user.nix
+/tmp/nix-config-install/pc/install.env
+/tmp/workstation-disko.nix
+```
+
+The generated `install.env` contains:
+
+```sh
+export NIX_CONFIG_LOCAL_USER="/tmp/nix-config-install/pc/user.nix"
+export NIX_CONFIG_LOCAL_HARDWARE="/mnt/etc/nixos/hardware-configuration.nix"
+```
+
+No `.envrc` or `direnv` is required.
+
+## Apply Install
+
+Run apply mode only after reviewing the selected disk:
+
+```sh
+nu scripts/install/bootstrap.nu --apply
+```
+
+Before destructive disk operations, the script requires typing the exact disk
+path. Pressing Enter is not enough.
+
+Apply mode runs:
+
+```sh
+nu "/absolute/path/to/nixos-config/scripts/install/disko.nu" "<selected-disk>"
+nixos-generate-config --root /mnt
+test -f /mnt/etc/nixos/hardware-configuration.nix
+NIX_CONFIG_LOCAL_USER="/tmp/nix-config-install/pc/user.nix" \
+NIX_CONFIG_LOCAL_HARDWARE="/mnt/etc/nixos/hardware-configuration.nix" \
+nixos-install --impure --flake "path:/absolute/path/to/nixos-config#workstation-gui"
+```
+
+The installer prints the exact absolute paths for the current checkout.
+
+## Disk-Only Helper
+
+To apply only the disk layout manually:
+
+```sh
+nu scripts/install/disko.nu /dev/disk/by-id/<reviewed-disk>
+```
+
+This runs disko only. It does not generate hardware configuration and does not
+run `nixos-install`.
+
+## First Boot
+
+After install:
+
+```sh
+reboot
 ```
 
 Expected result:
 
-- The selected disk is printed.
-- The local overlay path is printed.
-- A destructive warning is printed.
-- Exact manual commands are printed.
-- No disk is partitioned or formatted by the plan command.
+- GRUB shows NixOS generations.
+- Plymouth shows the LUKS passphrase prompt.
+- The local user can log in.
+- SSH is disabled by default.
+- Root password login is disabled.
 
-The plan uses the repository's locked `nix-community/disko` flake input through
-`nix run .#disko`. The storage layout source of truth remains
-`nixos/modules/storage/disko.nix`.
-
-The final `nixos-install` command uses `--impure` intentionally. That is the
-local install boundary that lets the flake read `NIX_CONFIG_LOCAL_USER` and
-`NIX_CONFIG_LOCAL_HARDWARE`, then pass those paths into the NixOS configuration
-through `specialArgs`.
-
-The official NixOS ISO is a bootstrap environment. Privileged install commands
-there may run from a root shell or use the ISO's own `sudo` tooling. After the
-workstation is installed, routine privilege escalation uses `doas`, not `sudo`.
-
-If the local overlay is not at the default path, pass it explicitly:
+Basic validation:
 
 ```sh
-nu scripts/install/workstation.nu /dev/disk/by-id/<reviewed-disk> --overlay /path/to/user.nix
+test -d /sys/firmware/efi
+findmnt
+swapon --show
+systemctl status NetworkManager
+doas true
+doas nixos-rebuild switch --impure --flake "path:/absolute/path/to/nixos-config#workstation-gui"
 ```
 
-## Hardware Configuration
+## Deferred
 
-After disko creates and mounts the target filesystem under `/mnt`, generate
-hardware configuration:
-
-```sh
-nixos-generate-config --root /mnt
-```
-
-The generated install-time path is:
-
-```txt
-/mnt/etc/nixos/hardware-configuration.nix
-```
-
-The runtime path after reboot is:
-
-```txt
-/etc/nixos/hardware-configuration.nix
-```
-
-The public repository must not contain this file.
-
-## Encryption
-
-The root filesystem is encrypted with LUKS2. The first supported unlock model is
-manual passphrase entry at boot. Plymouth provides the graphical prompt, but it
-does not change the unlock method.
-
-TPM unlock, YubiKey unlock, Secure Boot, automatic snapshots, GRUB snapshot boot
-entries, impermanence, and hibernation are deferred.
-
-Secure Boot is not supported yet.
+TPM unlock, YubiKey unlock, Secure Boot, automatic snapshots, impermanence, and
+hibernation are deferred.

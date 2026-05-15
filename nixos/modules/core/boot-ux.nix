@@ -9,11 +9,5 @@ in
 
   config = lib.mkIf cfg.enable {
     boot.plymouth.enable = lib.mkDefault true;
-
-    # Plymouth owns the early boot splash and LUKS prompt styling. Keep boot
-    # logs available by not adding "quiet" to the platform baseline.
-    boot.kernelParams = [
-      "splash"
-    ];
   };
 }

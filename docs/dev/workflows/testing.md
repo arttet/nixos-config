@@ -2,7 +2,7 @@
 
 Testing starts with the smallest useful validation.
 
-Run the flake checks and build the VM and workstation closures:
+Run the flake checks, then build the VM and workstation closures explicitly:
 
 ```sh
 just check
@@ -29,6 +29,8 @@ just workstation-gui test
 
 `workstation-gui test` is CI-safe. It validates the graphical configuration
 without launching Hyprland, requiring a GPU, or requiring real hardware.
+It still builds the graphical system closure, so CI runs it in a dedicated job
+with extra disk cleanup.
 
 For a full local validation pass before opening or merging a change, run:
 
@@ -115,3 +117,13 @@ artifact through GitHub Pages.
 The `deploy-cf-pages` job publishes production docs on pushes to `main`. For
 non-fork pull requests, it publishes a Cloudflare Pages preview and updates a
 sticky pull request comment with the preview URL.
+
+The `validate` job intentionally keeps `nix flake check` focused on formatting
+and lightweight policy checks. VM, headless workstation, and graphical
+workstation closures are built in dedicated jobs so the heavy GUI closure is
+not built twice on the same GitHub runner.
+
+Nix jobs use Magic Nix Cache to reduce repeated downloads and store pressure.
+The graphical workstation job also frees preinstalled runner toolchains before
+installing Nix because the full desktop closure includes large browser,
+Electron, GUI, and media packages.

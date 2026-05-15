@@ -109,9 +109,6 @@
 
       checks.${system} = {
         formatting = treefmtEval.config.build.check self;
-        vm = self.nixosConfigurations.vm.config.system.build.vm;
-        workstation = self.nixosConfigurations.workstation.config.system.build.toplevel;
-        workstation-gui = self.nixosConfigurations.workstation-gui.config.system.build.toplevel;
         workstation-kernel-policy = pkgs.writeText "workstation-kernel-policy.txt" (
           assert
             self.nixosConfigurations.workstation.config.boot.kernelPackages.kernel.outPath
