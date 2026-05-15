@@ -1,0 +1,23 @@
+# Installation
+
+Installation docs explain how to prepare a host Linux environment for NixOS
+Platform development.
+
+This section does not describe VM runtime commands. Runtime workflows live in
+[VM (Local Testing)](install-vm).
+
+## Path
+
+1. Prepare the host environment.
+2. Install Nix with flakes enabled.
+3. Install QEMU, OpenSSH, `sshpass`, and `just`.
+4. Enter the repository.
+5. Continue to the runtime documentation.
+
+Continue with [Windows WSL2](/dev/setup/wsl) for local VM validation, or
+[Workstation Installation](install-workstation) for the future real-hardware install
+model.
+
+Future workstation installs use the official NixOS ISO, network access, this
+repository flake, and a local identity overlay. No custom ISO is required for
+the current workstation model.

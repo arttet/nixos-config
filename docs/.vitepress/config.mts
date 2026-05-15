@@ -1,83 +1,94 @@
 import { defineConfig } from "vitepress";
 
-const platformSidebar = [
+const userSidebar = [
+  {
+    text: "Getting Started",
+    items: [
+      { text: "Migration Handbook", link: "/user/migration" },
+      { text: "Quick Start", link: "/user/installation" },
+    ],
+  },
   {
     text: "Installation",
     items: [
-      { text: "Overview", link: "/installation/" },
-      { text: "Windows WSL2", link: "/installation/windows-wsl2" },
-      { text: "Workstation", link: "/installation/workstation" },
-      { text: "Workstation Rehearsal", link: "/installation/workstation-rehearsal" },
-      { text: "VM", link: "/installation/vm" },
+      { text: "Workstation", link: "/user/install-workstation" },
+      { text: "Workstation GUI", link: "/user/workstation-gui" },
+      { text: "VM (Local Testing)", link: "/user/install-vm" },
+      { text: "Rehearsal", link: "/user/install-rehearsal" },
     ],
   },
   {
-    text: "Runtime",
+    text: "Daily Use",
     items: [
-      { text: "Overview", link: "/runtime/" },
-      { text: "VM", link: "/runtime/vm" },
+      { text: "Updates & Rebuilds", link: "/user/ops-rebuild" },
+      { text: "Maintenance & Cleanup", link: "/user/ops-cleanup" },
+      { text: "Backups", link: "/user/ops-backups" },
     ],
   },
   {
-    text: "Profiles",
+    text: "Disaster Recovery",
     items: [
-      { text: "Overview", link: "/profiles/" },
-      { text: "Workstation", link: "/profiles/workstation" },
-      { text: "VM", link: "/profiles/vm" },
+      { text: "Rollbacks", link: "/user/ops-rollback" },
+      { text: "System Recovery", link: "/user/ops-recovery" },
+    ],
+  },
+];
+
+const devSidebar = [
+  {
+    text: "Engineering Setup",
+    items: [
+      { text: "Development Environment", link: "/dev/setup/wsl" },
     ],
   },
   {
-    text: "Development",
+    text: "Platform Architecture",
     items: [
-      { text: "Overview", link: "/development/" },
-      { text: "Workflow", link: "/development/workflow" },
-      { text: "Commands", link: "/development/commands" },
-      { text: "Testing", link: "/development/testing" },
-      { text: "Repository Layout", link: "/development/repository-layout" },
+      { text: "System Architecture", link: "/dev/system/architecture" },
+      { text: "Security & Network", link: "/dev/system/security" },
+      { text: "Storage & Data", link: "/dev/system/storage" },
+      { text: "System Tuning", link: "/dev/system/tuning" },
+      { text: "Workstation Applications", link: "/dev/system/applications" },
+      { text: "Workstation Freeze", link: "/dev/system/workstation-freeze" },
     ],
   },
   {
-    text: "Architecture",
+    text: "Development Workflows",
     items: [
-      { text: "Overview", link: "/architecture/" },
-      { text: "Layering", link: "/architecture/layering" },
-      { text: "Overlays", link: "/architecture/overlays" },
-      { text: "Hardware Layer", link: "/architecture/hardware-layer" },
-      { text: "Secrets Model", link: "/architecture/secrets-model" },
-      { text: "Security Baseline", link: "/architecture/security" },
-      { text: "DNS Policy", link: "/architecture/dns-policy" },
-      { text: "Storage Model", link: "/architecture/storage-model" },
-      { text: "Disk Encryption", link: "/architecture/disk-encryption" },
-      { text: "Backup Policy", link: "/architecture/backup-policy" },
-      { text: "GUI Direction", link: "/architecture/gui-direction" },
-      { text: "GUI Boundary", link: "/architecture/gui-boundary" },
-      { text: "Pre-GUI Freeze", link: "/architecture/pre-gui-freeze" },
-      { text: "Tuning", link: "/architecture/tuning" },
-      { text: "Kernel Policy", link: "/architecture/kernel-policy" },
-      { text: "Build Model", link: "/architecture/build-model" },
-      { text: "Targets", link: "/architecture/targets" },
-      { text: "Roadmap", link: "/architecture/roadmap" },
+      { text: "Git Workflow", link: "/dev/workflows/git-workflow" },
+      { text: "Testing", link: "/dev/workflows/testing" },
+      { text: "Build Model", link: "/dev/workflows/build-model" },
+      { text: "Command Reference", link: "/dev/workflows/commands" },
     ],
   },
   {
-    text: "Operations",
+    text: "Roadmap",
     items: [
-      { text: "Overview", link: "/operations/" },
-      { text: "Rebuilding", link: "/operations/rebuilding" },
-      { text: "Cleanup", link: "/operations/cleanup" },
-      { text: "Recovery", link: "/operations/recovery" },
-      { text: "Rollback", link: "/operations/rollback" },
-      { text: "Backups", link: "/operations/backups" },
+      { text: "Overview", link: "/dev/roadmap/overview" },
+      { text: "GUI Stack", link: "/dev/roadmap/gui" },
+      { text: "Deferred Features", link: "/dev/roadmap/deferred-features" },
     ],
   },
+];
+
+const referenceSidebar = [
   {
-    text: "Reference",
+    text: "Technical Contracts",
     items: [
-      { text: "Overview", link: "/reference/" },
-      { text: "Just", link: "/reference/just" },
+      { text: "Just Commands", link: "/reference/just" },
+      { text: "Repository Layout", link: "/reference/layouts" },
+      { text: "Flakes", link: "/reference/flakes" },
       { text: "Nushell", link: "/reference/nushell" },
       { text: "QEMU", link: "/reference/qemu" },
-      { text: "Flakes", link: "/reference/flakes" },
+    ],
+  },
+];
+
+const evolutionSidebar = [
+  {
+    text: "History & Decisions",
+    items: [
+      { text: "Architecture Decisions", link: "/evolution/adr/" },
     ],
   },
 ];
@@ -103,18 +114,17 @@ export default defineConfig({
 
     nav: [
       { text: "Home", link: "/" },
-      { text: "Platform", link: "/installation/" },
+      { text: "User Guide", link: "/user/migration", activeMatch: "/user/" },
+      { text: "Engineering", link: "/dev/setup/wsl", activeMatch: "/dev/" },
+      { text: "Reference", link: "/reference/just", activeMatch: "/reference/" },
+      { text: "Evolution", link: "/evolution/adr/", activeMatch: "/evolution/" },
     ],
 
     sidebar: {
-      "/installation/": platformSidebar,
-      "/runtime/": platformSidebar,
-      "/profiles/": platformSidebar,
-      "/development/": platformSidebar,
-      "/architecture/": platformSidebar,
-      "/operations/": platformSidebar,
-      "/reference/": platformSidebar,
-      "/": platformSidebar,
+      "/user/": userSidebar,
+      "/dev/": devSidebar,
+      "/reference/": referenceSidebar,
+      "/evolution/": evolutionSidebar,
     },
 
     search: {

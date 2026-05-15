@@ -40,6 +40,9 @@ mod vm 'misc/justfiles/vm.just'
 [group: 'Workstation']
 mod workstation 'misc/justfiles/workstation.just'
 
+[group: 'Workstation GUI']
+mod workstation-gui 'misc/justfiles/workstation-gui.just'
+
 # ==============================================================================
 # Local Overlay
 # ==============================================================================

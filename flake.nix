@@ -7,6 +7,8 @@
     disko.inputs.nixpkgs.follows = "nixpkgs";
     treefmt-nix.url = "github:numtide/treefmt-nix";
     treefmt-nix.inputs.nixpkgs.follows = "nixpkgs";
+    zen-browser.url = "github:youwen5/zen-browser-flake";
+    zen-browser.inputs.nixpkgs.follows = "nixpkgs";
   };
 
   outputs =
@@ -15,6 +17,7 @@
       disko,
       nixpkgs,
       treefmt-nix,
+      zen-browser,
       ...
     }:
     let
@@ -49,9 +52,12 @@
           );
           localHardwareConfig = localPathOrNull envHardwareConfig;
         };
+      moduleArgs = localOverlayArgs // {
+        inherit zen-browser;
+      };
       workstationStorageExample = nixpkgs.lib.nixosSystem {
         inherit system;
-        specialArgs = localOverlayArgs;
+        specialArgs = moduleArgs;
         modules = [
           disko.nixosModules.disko
           ./nixos/hosts/workstation/default.nix
@@ -76,7 +82,7 @@
 
       nixosConfigurations.vm = nixpkgs.lib.nixosSystem {
         inherit system;
-        specialArgs = localOverlayArgs;
+        specialArgs = moduleArgs;
         modules = [
           disko.nixosModules.disko
           ./nixos/hosts/vm/default.nix
@@ -85,10 +91,19 @@
 
       nixosConfigurations.workstation = nixpkgs.lib.nixosSystem {
         inherit system;
-        specialArgs = localOverlayArgs;
+        specialArgs = moduleArgs;
         modules = [
           disko.nixosModules.disko
           ./nixos/hosts/workstation/default.nix
+        ];
+      };
+
+      nixosConfigurations.workstation-gui = nixpkgs.lib.nixosSystem {
+        inherit system;
+        specialArgs = moduleArgs;
+        modules = [
+          disko.nixosModules.disko
+          ./nixos/hosts/workstation-gui/default.nix
         ];
       };
 
@@ -96,6 +111,7 @@
         formatting = treefmtEval.config.build.check self;
         vm = self.nixosConfigurations.vm.config.system.build.vm;
         workstation = self.nixosConfigurations.workstation.config.system.build.toplevel;
+        workstation-gui = self.nixosConfigurations.workstation-gui.config.system.build.toplevel;
         workstation-kernel-policy = pkgs.writeText "workstation-kernel-policy.txt" (
           assert
             self.nixosConfigurations.workstation.config.boot.kernelPackages.kernel.outPath

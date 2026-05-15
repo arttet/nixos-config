@@ -7,11 +7,11 @@ hero:
   tagline: Declarative systems, disposable machines, and local identity without turning the repository into snowflake state.
   actions:
     - theme: brand
-      text: How To Use
-      link: /installation/
+      text: 🚀 User Guide
+      link: /user/migration
     - theme: alt
-      text: Platform Architecture
-      link: /architecture/
+      text: 🏗 Engineering Guide
+      link: /dev/setup/wsl
 
 features:
   - icon: 🧱
