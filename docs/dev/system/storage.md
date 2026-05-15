@@ -7,6 +7,7 @@ The intended workstation install model is:
 - UEFI-only boot.
 - GRUB2.
 - systemd initrd.
+- Plymouth graphical LUKS prompt.
 - GPT partitioning.
 - 512 MiB EFI System Partition mounted at `/boot/efi`.
 - 512 MiB unencrypted ext4 `/boot` partition.
@@ -57,7 +58,9 @@ Periodic trim is enabled by the workstation tuning layer. The storage layout als
 
 ## Encryption
 
-The root container uses LUKS2 with manual passphrase unlock. TPM, YubiKey, and Secure Boot integration are explicitly deferred.
+The root container uses LUKS2 with manual passphrase unlock. Plymouth provides
+the graphical prompt, but the unlock method remains passphrase-based. TPM,
+YubiKey, and Secure Boot integration are explicitly deferred.
 
 ### Install Boundary
 

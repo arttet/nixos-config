@@ -18,6 +18,7 @@ The V1 workstation composition freezes these contracts:
 - GUI software lives under `nixos/profiles/workstation/`.
 - Boot, storage, security, DNS, firewall, logging, GC, and upgrade policy are
   core platform responsibilities.
+- Plymouth owns early boot UX and the graphical LUKS passphrase prompt.
 - Personal UX, editor settings, shell aliases, AGS widgets, browser profiles,
   themes, and wallpapers are outside this repository.
 

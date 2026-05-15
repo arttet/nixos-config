@@ -43,6 +43,11 @@ If no installed generation is usable, boot the official NixOS ISO in UEFI mode,
 unlock the root filesystem, mount the system, provide the local overlay and
 hardware configuration, then rebuild or reinstall from the repository flake.
 
+If the Plymouth graphical prompt fails before root unlock, use the GRUB editor
+for the selected generation and remove `splash` from the kernel command line for
+that boot. After login, rebuild with a local override such as
+`platform.bootUx.enable = false;` if the issue persists on the target hardware.
+
 Do not disable security mitigations globally as a recovery shortcut. Use a local
 override only for the specific policy that caused the failure, and document it.
 
