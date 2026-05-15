@@ -47,6 +47,7 @@ const devSidebar = [
       { text: "System Architecture", link: "/dev/system/architecture" },
       { text: "Security & Network", link: "/dev/system/security" },
       { text: "Storage & Data", link: "/dev/system/storage" },
+      { text: "Boot UX", link: "/dev/system/boot-ux" },
       { text: "System Tuning", link: "/dev/system/tuning" },
       { text: "Workstation Applications", link: "/dev/system/applications" },
       { text: "Workstation Freeze", link: "/dev/system/workstation-freeze" },

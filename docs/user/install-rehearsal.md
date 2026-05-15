@@ -1,7 +1,7 @@
 # Workstation Install Rehearsal
 
-This rehearsal validates the workstation installation flow before any GUI,
-Home Manager, or desktop-specific layer is introduced.
+This rehearsal validates the workstation installation flow before the first
+real hardware install.
 
 The rehearsal uses the official NixOS ISO and the repository flake. It is a real
 bare-metal installation exercise, not a VM test.
@@ -12,6 +12,7 @@ Validate:
 
 - bare-metal installation flow
 - LUKS2 and Btrfs layout
+- Plymouth graphical LUKS prompt
 - GRUB2 and UEFI boot
 - rollback and rebuild
 - local overlay architecture
@@ -20,7 +21,6 @@ Validate:
 
 Keep out of scope:
 
-- GUI
 - Home Manager
 - SSH enabled by default
 - root login
@@ -125,7 +125,7 @@ Do not commit the generated hardware configuration.
 
 After reboot:
 
-1. Unlock LUKS2 with the manual passphrase.
+1. Unlock LUKS2 with the manual passphrase through the Plymouth prompt.
 2. Confirm GRUB shows NixOS generations.
 3. Log in as the local overlay user.
 4. Confirm SSH is not enabled by default.
@@ -153,7 +153,7 @@ Expected result:
 
 - rebuild completes
 - a new NixOS generation appears
-- system remains console-only
+- system remains on the selected workstation target
 - SSH remains disabled unless explicitly enabled by local override
 
 ## Rollback
@@ -167,8 +167,9 @@ doas nixos-rebuild boot --impure --flake .#workstation
 Reboot and confirm GRUB allows selecting older generations.
 
 If a generation fails later, select a known-good generation in GRUB, then inspect
-and rebuild from the repository. Do not rerun destructive disk commands during a
-normal rollback.
+and rebuild from the repository. If the graphical boot prompt fails, edit the
+GRUB entry once and remove `splash` from the kernel command line. Do not rerun
+destructive disk commands during a normal rollback.
 
 ## Recovery
 

@@ -5,10 +5,12 @@
     ../../modules/core/network.nix
     ../../modules/core/security.nix
     ../../modules/core/tuning.nix
+    ../../modules/core/boot-ux.nix
     ../../modules/storage/disko.nix
     ../../modules/storage/swap.nix
   ];
 
+  platform.bootUx.enable = true;
   platform.network.enable = true;
   platform.security.enable = true;
   platform.tuning.enable = true;

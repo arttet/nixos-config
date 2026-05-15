@@ -139,7 +139,7 @@ jobs:
         run: just vm validate
 
   workstation:
-    name: Validate Headless Workstation
+    name: Headless Workstation
     runs-on: ubuntu-latest
     needs: [validate, security]
     steps:
@@ -159,7 +159,7 @@ jobs:
         run: just workstation test
 
   workstation-gui:
-    name: Validate GUI Workstation
+    name: GUI Workstation
     runs-on: ubuntu-latest
     needs: [validate, security]
     steps:

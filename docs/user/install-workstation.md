@@ -6,11 +6,11 @@ VM validation.
 The workstation does not require a custom ISO right now. Use the official NixOS
 ISO as the bootstrap environment.
 
-This install is console-only and encrypted. It uses UEFI GRUB2 with systemd
-initrd, an unencrypted `/boot`, and LUKS2 manual passphrase unlock for the root
-container.
+This install is encrypted. It uses UEFI GRUB2 with systemd initrd, an
+unencrypted `/boot`, Plymouth for the graphical LUKS prompt, and LUKS2 manual
+passphrase unlock for the root container.
 
-For the full pre-GUI installation rehearsal, see
+For the full installation rehearsal, see
 [Workstation Install Rehearsal](install-rehearsal).
 
 ## Flow
@@ -134,7 +134,8 @@ The public repository must not contain this file.
 ## Encryption
 
 The root filesystem is encrypted with LUKS2. The first supported unlock model is
-manual passphrase entry at boot.
+manual passphrase entry at boot. Plymouth provides the graphical prompt, but it
+does not change the unlock method.
 
 TPM unlock, YubiKey unlock, Secure Boot, automatic snapshots, GRUB snapshot boot
 entries, impermanence, and hibernation are deferred.
