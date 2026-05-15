@@ -1,7 +1,7 @@
 { lib, ... }:
 {
   imports = [
-    ../../profiles/workstation/base.nix
+    ../../profiles/workstation
   ];
 
   networking.hostName = "workstation";

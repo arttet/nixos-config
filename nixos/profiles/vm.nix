@@ -1,7 +1,7 @@
 { lib, ... }:
 {
   imports = [
-    ./workstation.nix
+    ./workstation/base.nix
   ];
 
   platform.network.enable = lib.mkForce false;

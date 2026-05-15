@@ -1,0 +1,53 @@
+{ pkgs, lib, ... }:
+let
+  tuigreet = if builtins.hasAttr "tuigreet" pkgs then pkgs.tuigreet else pkgs.greetd.tuigreet;
+  hyprlandCommand = lib.getExe pkgs.hyprland;
+in
+{
+  hardware.graphics.enable = lib.mkDefault true;
+
+  services.dbus.enable = lib.mkDefault true;
+  security.polkit.enable = lib.mkDefault true;
+
+  services.greetd = {
+    enable = lib.mkDefault true;
+    settings.default_session = {
+      command = "${lib.getExe tuigreet} --time --remember --cmd ${hyprlandCommand}";
+      user = "greeter";
+    };
+  };
+
+  services.pipewire = {
+    enable = lib.mkDefault true;
+    alsa.enable = lib.mkDefault true;
+    pulse.enable = lib.mkDefault true;
+    wireplumber.enable = lib.mkDefault true;
+  };
+
+  programs.thunar = {
+    enable = lib.mkDefault true;
+    plugins = with pkgs; [
+      thunar-archive-plugin
+    ];
+  };
+
+  xdg.portal = {
+    enable = lib.mkDefault true;
+    xdgOpenUsePortal = lib.mkDefault true;
+    extraPortals = [
+      pkgs.xdg-desktop-portal-gtk
+    ];
+  };
+
+  xdg.mime = {
+    enable = lib.mkDefault true;
+    defaultApplications."inode/directory" = lib.mkDefault "thunar.desktop";
+  };
+
+  environment.systemPackages = [
+    tuigreet
+    pkgs.hyprpolkitagent
+    pkgs.rofi
+    pkgs.xdg-user-dirs
+  ];
+}
