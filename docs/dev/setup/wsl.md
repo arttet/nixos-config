@@ -139,4 +139,4 @@ At this point the host environment is ready.
 
 Continue with the runtime workflow:
 
-[VM](/user/install-vm)
+[VM](/user/installation/vm)

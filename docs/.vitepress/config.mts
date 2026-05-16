@@ -4,33 +4,36 @@ const userSidebar = [
   {
     text: "Getting Started",
     items: [
-      { text: "Overview", link: "/user/installation" },
+      { text: "Overview", link: "/user/" },
+      { text: "Quick Start", link: "/user/installation/" },
     ],
   },
   {
     text: "Installation",
     items: [
-      { text: "Install Workstation", link: "/user/install-workstation" },
-      { text: "VM", link: "/user/install-vm" },
+      { text: "Install Workstation", link: "/user/installation/workstation" },
+      { text: "VM", link: "/user/installation/vm" },
     ],
   },
   {
     text: "Daily Use",
     items: [
-      { text: "Updates & Rebuilds", link: "/user/ops-rebuild" },
-      { text: "Maintenance & Cleanup", link: "/user/ops-cleanup" },
-      { text: "Backups", link: "/user/ops-backups" },
-      { text: "Recovery & Rollbacks", link: "/user/ops-recovery" },
+      { text: "Operations Overview", link: "/user/operations/" },
+      { text: "Updates & Rebuilds", link: "/user/operations/rebuild" },
+      { text: "Maintenance & Cleanup", link: "/user/operations/cleanup" },
+      { text: "Backups", link: "/user/operations/backups" },
+      { text: "Recovery & Rollbacks", link: "/user/operations/recovery" },
     ],
   },
   {
     text: "Diagnostics",
     items: [
-      { text: "GRUB & Early Boot", link: "/user/diag-grub" },
-      { text: "Boot Time", link: "/user/diag-boot" },
-      { text: "Disk Space", link: "/user/diag-disk" },
-      { text: "Security & Auditing", link: "/user/diag-security" },
-      { text: "Networking", link: "/user/diag-network" },
+      { text: "Diagnostics Overview", link: "/user/diagnostics/" },
+      { text: "GRUB & Early Boot", link: "/user/diagnostics/grub" },
+      { text: "Boot Time", link: "/user/diagnostics/boot" },
+      { text: "Disk Space", link: "/user/diagnostics/disk" },
+      { text: "Security & Auditing", link: "/user/diagnostics/security" },
+      { text: "Networking", link: "/user/diagnostics/network" },
     ],
   },
 ];
@@ -39,13 +42,16 @@ const devSidebar = [
   {
     text: "Engineering Setup",
     items: [
-      { text: "Development Environment", link: "/dev/setup/wsl" },
+      { text: "Overview", link: "/dev/" },
+      { text: "Host Configuration", link: "/dev/setup/" },
+      { text: "Windows WSL2", link: "/dev/setup/wsl" },
     ],
   },
   {
     text: "Platform Architecture",
     items: [
-      { text: "System Architecture", link: "/dev/system/architecture" },
+      { text: "Architecture Overview", link: "/dev/system/" },
+      { text: "System Design", link: "/dev/system/architecture" },
       { text: "Security & Network", link: "/dev/system/security" },
       { text: "Storage & Data", link: "/dev/system/storage" },
       { text: "Boot UX", link: "/dev/system/boot-ux" },
@@ -57,6 +63,7 @@ const devSidebar = [
   {
     text: "Development Workflows",
     items: [
+      { text: "Workflow Overview", link: "/dev/workflows/" },
       { text: "Git Workflow", link: "/dev/workflows/git-workflow" },
       { text: "Testing", link: "/dev/workflows/testing" },
       { text: "Build Model", link: "/dev/workflows/build-model" },
@@ -66,7 +73,7 @@ const devSidebar = [
   {
     text: "Roadmap",
     items: [
-      { text: "Overview", link: "/dev/roadmap/overview" },
+      { text: "Roadmap Overview", link: "/dev/roadmap/" },
       { text: "GUI Stack", link: "/dev/roadmap/gui" },
       { text: "Deferred Features", link: "/dev/roadmap/deferred-features" },
     ],
@@ -74,8 +81,9 @@ const devSidebar = [
   {
     text: "Reference",
     items: [
-      { text: "Repository Layout", link: "/reference/layouts" },
-      { text: "Just Commands", link: "/reference/just" },
+      { text: "Reference Overview", link: "/dev/reference/" },
+      { text: "Repository Layout", link: "/dev/reference/layouts" },
+      { text: "Just Commands", link: "/dev/reference/just" },
     ],
   },
 ];
@@ -110,15 +118,14 @@ export default defineConfig({
 
     nav: [
       { text: "Home", link: "/" },
-      { text: "User Guide", link: "/user/installation", activeMatch: "/user/" },
-      { text: "Engineering", link: "/dev/setup/wsl", activeMatch: "/dev/|/reference/" },
+      { text: "User Guide", link: "/user/", activeMatch: "/user/" },
+      { text: "Engineering", link: "/dev/", activeMatch: "/dev/" },
       { text: "Evolution", link: "/evolution/adr/", activeMatch: "/evolution/" },
     ],
 
     sidebar: {
       "/user/": userSidebar,
       "/dev/": devSidebar,
-      "/reference/": devSidebar,
       "/evolution/": evolutionSidebar,
     },
 
