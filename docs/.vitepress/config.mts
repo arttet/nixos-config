@@ -5,20 +5,20 @@ const userSidebar = [
     text: "Getting Started",
     items: [
       { text: "Overview", link: "/user/" },
-      { text: "Quick Start", link: "/user/installation/" },
+      { text: "Quick Start", link: "/user/quickstart" },
     ],
   },
   {
     text: "Installation",
     items: [
-      { text: "Install Workstation", link: "/user/installation/workstation" },
+      { text: "Workstation", link: "/user/installation/workstation" },
       { text: "VM", link: "/user/installation/vm" },
     ],
   },
   {
     text: "Daily Use",
     items: [
-      { text: "Operations Overview", link: "/user/operations/" },
+      { text: "Overview", link: "/user/operations/" },
       { text: "Updates & Rebuilds", link: "/user/operations/rebuild" },
       { text: "Maintenance & Cleanup", link: "/user/operations/cleanup" },
       { text: "Backups", link: "/user/operations/backups" },
@@ -28,7 +28,7 @@ const userSidebar = [
   {
     text: "Diagnostics",
     items: [
-      { text: "Diagnostics Overview", link: "/user/diagnostics/" },
+      { text: "Overview", link: "/user/diagnostics/" },
       { text: "GRUB & Early Boot", link: "/user/diagnostics/grub" },
       { text: "Boot Time", link: "/user/diagnostics/boot" },
       { text: "Disk Space", link: "/user/diagnostics/disk" },
@@ -39,71 +39,70 @@ const userSidebar = [
 ];
 
 const devSidebar = [
+  { text: "Overview", link: "/dev/" },
   {
-    text: "Engineering Setup",
+    text: "Local Environment",
     items: [
-      { text: "Overview", link: "/dev/" },
-      { text: "Host Configuration", link: "/dev/setup/" },
-      { text: "Windows WSL2", link: "/dev/setup/wsl" },
+      { text: "Overview", link: "/dev/setup/" },
+      { text: "Mutable Linux", link: "/dev/setup/mutable_linux" },
+      { text: "WSL2", link: "/dev/setup/wsl" },
     ],
   },
   {
-    text: "Platform Architecture",
+    text: "Development Guide",
     items: [
-      { text: "Architecture Overview", link: "/dev/system/" },
-      { text: "System Design", link: "/dev/system/architecture" },
-      { text: "Security & Network", link: "/dev/system/security" },
-      { text: "Storage & Data", link: "/dev/system/storage" },
-      { text: "Boot UX", link: "/dev/system/boot-ux" },
-      { text: "System Tuning", link: "/dev/system/tuning" },
-      { text: "Workstation Applications", link: "/dev/system/applications" },
-      { text: "Workstation Freeze", link: "/dev/system/workstation-freeze" },
+      { text: "Overview", link: "/dev/guide/" },
+      { text: "Nix Style & Best Practices", link: "/dev/standards/nix-style" },
+      { text: "Automated Validation", link: "/dev/reference/validation" },
     ],
   },
   {
-    text: "Development Workflows",
+    text: "Architecture & Design",
     items: [
-      { text: "Workflow Overview", link: "/dev/workflows/" },
-      { text: "Git Workflow", link: "/dev/workflows/git-workflow" },
-      { text: "Testing", link: "/dev/workflows/testing" },
-      { text: "Build Model", link: "/dev/workflows/build-model" },
-      { text: "Command Reference", link: "/dev/workflows/commands" },
-    ],
-  },
-  {
-    text: "Roadmap",
-    items: [
-      { text: "Roadmap Overview", link: "/dev/roadmap/" },
-      { text: "GUI Stack", link: "/dev/roadmap/gui" },
-      { text: "Deferred Features", link: "/dev/roadmap/deferred-features" },
+      { text: "Architecture Overview", link: "/dev/architecture/layers" },
+      { text: "System Composition", link: "/dev/architecture/composition" },
+      { text: "Security & Network", link: "/dev/architecture/security" },
+      { text: "Storage & Data", link: "/dev/architecture/storage" },
+      { text: "Boot UX", link: "/dev/architecture/boot" },
+      { text: "System Tuning", link: "/dev/architecture/tuning" },
+      { text: "Product Freeze", link: "/dev/architecture/freeze" },
     ],
   },
   {
     text: "Reference",
     items: [
-      { text: "Reference Overview", link: "/dev/reference/" },
+      { text: "Overview", link: "/dev/reference/" },
       { text: "Repository Layout", link: "/dev/reference/layouts" },
       { text: "Just Commands", link: "/dev/reference/just" },
+      { text: "CI/CD Pipeline", link: "/dev/reference/cicd" },
     ],
   },
 ];
 
 const evolutionSidebar = [
+  { text: "Overview", link: "/evolution/" },
   {
-    text: "History & Decisions",
+    text: "Roadmap",
     items: [
-      { text: "Architecture Decisions", link: "/evolution/adr/" },
+      { text: "Overview", link: "/evolution/roadmap/" },
+      { text: "Deferred Features", link: "/evolution/roadmap/deferred-features" },
+    ],
+  },
+  {
+    text: "Architecture Decisions",
+    items: [
+      { text: "Overview", link: "/evolution/adr/" },
     ],
   },
 ];
 
 export default defineConfig({
-  title: "NixOS Platform",
+  title: "NixOS Configuration",
   description: "Personal NixOS Infrastructure",
   cleanUrls: true,
   lastUpdated: true,
 
-  head: [["meta", { name: "theme-color", content: "#2563eb" }]],
+  head: [["meta", { name: "theme-color", content: "#6366f1" }]],
 
   markdown: {
     theme: {
@@ -114,13 +113,13 @@ export default defineConfig({
 
   themeConfig: {
     logo: "/logo.svg",
-    siteTitle: "NixOS Platform",
+    siteTitle: "NixOS Configuration",
 
     nav: [
       { text: "Home", link: "/" },
       { text: "User Guide", link: "/user/", activeMatch: "/user/" },
       { text: "Engineering", link: "/dev/", activeMatch: "/dev/" },
-      { text: "Evolution", link: "/evolution/adr/", activeMatch: "/evolution/" },
+      { text: "Evolution", link: "/evolution/", activeMatch: "/evolution/" },
     ],
 
     sidebar: {

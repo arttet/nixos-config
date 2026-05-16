@@ -17,7 +17,7 @@ Look for the usage percentage of `/` (root), `/nix`, and `/home`.
 To find the largest directories where user data or logs typically accumulate:
 
 ```sh
-doas du -sh /home /var /root /tmp | sort -hr | head -n 15
+doas du -sh /home/* /var/* /root/* /tmp/* | sort -hr | head -n 15
 ```
 
 Avoid running `du -sh /*` as root; traversing the entire `/nix/store` or virtual filesystems like `/proc` is extremely slow and may hang your session.

@@ -1,4 +1,4 @@
-# NixOS Platform
+# NixOS Configuration
 
 [![CI](https://github.com/arttet/nixos-config/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/arttet/nixos-config/actions/workflows/ci.yml)
 
