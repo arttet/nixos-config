@@ -33,6 +33,10 @@ def generated-paths [root: string] {
   }
 }
 
+def test-disk-path [] {
+  "/dev/nixos-config-test-disk"
+}
+
 def assert-file [path: string] {
   assert ($path | path exists) $"expected generated file to exist: ($path)"
 }
@@ -40,6 +44,18 @@ def assert-file [path: string] {
 def assert-nix-parses [path: string] {
   let result = (nix-instantiate --parse $path | complete)
   assert-command-ok $"parse ($path)" $result
+}
+
+def assert-generated-disko-shape [path: string] {
+  let device_check = (
+    nix eval --file $path --apply $'cfg: if cfg.disko.devices.disk.workstation.device == "(test-disk-path)" then "ok" else throw "generated disko device was not applied"' | complete
+  )
+  assert-command-ok "generated disko device shape" $device_check
+
+  let mount_check = (
+    nix eval --file $path --apply 'cfg: if cfg.disko.devices.disk.workstation.content.partitions.luks.content.content.subvolumes."@root".mountpoint == "/" then "ok" else throw "generated disko root subvolume is missing"' | complete
+  )
+  assert-command-ok "generated disko root subvolume shape" $mount_check
 }
 
 def write-hardware-stub [path: string] {
@@ -126,7 +142,7 @@ def main [] {
         NIX_CONFIG_INSTALL_TMP: $paths.temp
         NO_COLOR: "1"
       } {
-        nu scripts/install/bootstrap.nu --dry-run --session vm --profile default --user-description User --user user --password ci-password --hostname vm --timezone UTC --disk /dev/vda | complete
+        nu scripts/install/bootstrap.nu --dry-run --session vm --profile default --user-description User --user user --password ci-password --hostname vm --timezone UTC --disk (test-disk-path) | complete
       }
     )
 
@@ -156,17 +172,18 @@ def main [] {
     assert ($env_file | str contains 'export NIX_CONFIG_LOCAL_HARDWARE="/mnt/etc/nixos/hardware-configuration.nix"')
 
     let disko = (open $paths.disko)
-    assert ($disko | str contains 'platform.storage =')
-    assert ($disko | str contains 'diskDevice = "/dev/vda";')
+    assert ($disko | str contains 'disko.devices =')
+    assert ($disko | str contains $"device = \"(test-disk-path)\";")
 
     assert-nix-parses $paths.overlay
     assert-nix-parses $paths.disko
     assert-nix-parses $paths.hardware
+    assert-generated-disko-shape $paths.disko
     assert-generated-config-imports $paths
     assert-generated-config-build-plans $paths
 
     print "install-generate.nu tests passed"
   } finally {
-    rm -rf $root
+    rm --recursive --force $root
   }
 }
