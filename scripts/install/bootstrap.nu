@@ -5,9 +5,10 @@ use common.nu *
 def default-state [] {
   {
     install_id: "pc"
-    target: "default"
+    profile: "default"
     user: "user"
     password: ""
+    password_hash: ""
     hostname: "pc"
     timezone: "UTC"
     disk: ""
@@ -15,12 +16,39 @@ def default-state [] {
   }
 }
 
+def state-root [] {
+  $env.NIX_CONFIG_INSTALL_STATE_DIR? | default (join-path [ $env.HOME ".cache" "nixos-config-installer" "state" ])
+}
+
 def install-dir [install_id: string] {
-  join-path [ (temp-root) "nix-config-install" $install_id ]
+  join-path [ (state-root) $install_id ]
+}
+
+def ensure-private-install-dir [install_id: string] {
+  let dir = (install-dir $install_id)
+  ensure-dir $dir
+  chmod 700 $dir
+  $dir
 }
 
 def overlay-path [install_id: string] {
   join-path [ (install-dir $install_id) "user.nix" ]
+}
+
+def password-path [install_id: string] {
+  join-path [ (install-dir $install_id) "user.passwd" ]
+}
+
+def target-local-dir [] {
+  "/mnt/root/.nix-config-local"
+}
+
+def target-password-path [] {
+  "/root/.nix-config-local/user.passwd"
+}
+
+def mounted-target-password-path [] {
+  join-path [ (target-local-dir) "user.passwd" ]
 }
 
 def env-path [install_id: string] {
@@ -35,11 +63,11 @@ def disko-config-path [] {
   join-path [ (temp-root) "workstation-disko.nix" ]
 }
 
-def flake-uri [target: string] {
-  if $target == "default" {
+def flake-uri [profile: string] {
+  if $profile == "default" {
     $"path:(repo-root)#"
   } else {
-    $"path:(repo-root)#($target)"
+    $"path:(repo-root)#($profile)"
   }
 }
 
@@ -101,6 +129,64 @@ def validate-password [value: string] {
   }
 }
 
+def hash-password [password: string] {
+  if (which mkpasswd | length) > 0 {
+    let result = ($password | mkpasswd -m sha-512 -s | complete)
+    let hash = ($result.stdout | str trim)
+
+    if $result.exit_code == 0 and ($hash | str starts-with '$6$') {
+      return $hash
+    }
+  }
+
+  if (which openssl | length) > 0 {
+    let result = ($password | openssl passwd -6 -stdin | complete)
+    let hash = ($result.stdout | str trim)
+
+    if $result.exit_code == 0 and ($hash | str starts-with '$6$') {
+      return $hash
+    }
+  }
+
+  error make { msg: "mkpasswd or openssl is required to generate hashedPasswordFile content" }
+}
+
+def require-password-hash-tool [] {
+  if (which mkpasswd | length) == 0 and (which openssl | length) == 0 {
+    error make { msg: "mkpasswd or openssl is required to generate the initial user password hash" }
+  }
+}
+
+def require-file-permission-tools [] {
+  for command in [ "chmod" "install" ] {
+    if (which $command | length) == 0 {
+      error make { msg: $"($command) is required to create local installer files with restrictive permissions" }
+    }
+  }
+}
+
+def with-password-hash [state: record] {
+  let existing_hash = ($state.password_hash? | default "")
+
+  if $existing_hash != "" {
+    $state
+  } else {
+    validate-password $state.password
+    $state | upsert password_hash (hash-password $state.password)
+  }
+}
+
+def require-root [] {
+  if (which id | length) == 0 {
+    error make { msg: "id command is required to verify root privileges before apply" }
+  }
+
+  let uid = (id -u | str trim)
+  if $uid != "0" {
+    error make { msg: "apply mode must run as root; rerun the installer from a root shell" }
+  }
+}
+
 def validate-hostname [value: string] {
   if not ($value =~ '^[A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?$') {
     error make { msg: "hostname must use RFC 1123 labels: letters, digits, and hyphens only" }
@@ -130,9 +216,9 @@ def validate-timezone [value: string] {
   }
 }
 
-def validate-target [value: string] {
+def validate-profile [value: string] {
   if not ($value in [ "default" "workstation" "workstation-gui" ]) {
-    error make { msg: "target must be default, workstation, or workstation-gui" }
+    error make { msg: "profile must be default, workstation, or workstation-gui" }
   }
 }
 
@@ -288,8 +374,7 @@ def choose-disk [current: string] {
 }
 
 def write-overlay [state: record] {
-  let dir = (install-dir $state.install_id)
-  ensure-dir $dir
+  ensure-private-install-dir $state.install_id | ignore
 
   let overlay = $"
 { pkgs, lib, ... }:
@@ -300,13 +385,22 @@ def write-overlay [state: record] {
   users.users.\"($state.user)\" = {
     isNormalUser = true;
     shell = pkgs.nushell;
-    initialPassword = \"($state.password)\";
+    hashedPasswordFile = \"(target-password-path)\";
     extraGroups = [ \"wheel\" ];
   };
 }
 "
 
   $overlay | save --force (overlay-path $state.install_id)
+}
+
+def write-password-file [state: record] {
+  ensure-private-install-dir $state.install_id | ignore
+
+  let path = (password-path $state.install_id)
+  install -m 600 /dev/null $path
+  $state.password_hash | save --force $path
+  chmod 600 $path
 }
 
 def write-env [state: record] {
@@ -322,23 +416,25 @@ def print-summary [state: record] {
   print ""
   print "Install summary"
   print $"  install id:       ($state.install_id)"
-  print $"  target:           ($state.target)"
+  print $"  profile:          ($state.profile)"
   print $"  user:             ($state.user)"
   print $"  hostname:         ($state.hostname)"
   print $"  timezone:         ($state.timezone)"
   print $"  disk:             ($state.disk)"
   print $"  local overlay:    (overlay-path $state.install_id)"
+  print $"  password hash:    (password-path $state.install_id)"
   print $"  install env:      (env-path $state.install_id)"
   print $"  hardware config:  (hardware-config-path)"
 }
 
 def print-next-commands [state: record] {
   let repo = (repo-root)
-  let flake = (flake-uri $state.target)
+  let flake = (flake-uri $state.profile)
 
   print ""
   print "Generated files:"
   print $"  (overlay-path $state.install_id)"
+  print $"  (password-path $state.install_id)"
   print $"  (env-path $state.install_id)"
   print $"  (disko-config-path)"
   print ""
@@ -368,8 +464,10 @@ def confirm-disk [disk_device: string] {
 }
 
 def run-apply [state: record] {
+  require-root
+
   let repo = (repo-root)
-  let flake = (flake-uri $state.target)
+  let flake = (flake-uri $state.profile)
 
   confirm-disk $state.disk
 
@@ -390,9 +488,11 @@ def run-apply [state: record] {
   }
 
   print "Persisting local overlay to target system..."
-  let persistent_user_dir = "/mnt/root/.nix-config-local"
+  let persistent_user_dir = (target-local-dir)
   mkdir $persistent_user_dir
+  chmod 700 $persistent_user_dir
   cp (overlay-path $state.install_id) $"($persistent_user_dir)/user.nix"
+  install -m 600 (password-path $state.install_id) (mounted-target-password-path)
 
   print "Installing NixOS..."
   with-env {
@@ -430,10 +530,10 @@ def run-wizard [initial: record] {
       $state = ($state | upsert install_id $value | upsert hostname $next_hostname)
       $step = 1
     } else if $step == 1 {
-      let value = (prompt-validated "Target" $state.target {|input| validate-target $input })
+      let value = (prompt-validated "Profile" $state.profile {|input| validate-profile $input })
       if $value == "q" { exit 0 }
       if $value == "r" { $step = 0 } else {
-        $state = ($state | upsert target $value)
+        $state = ($state | upsert profile $value)
         $step = 2
       }
     } else if $step == 2 {
@@ -498,6 +598,7 @@ def run-wizard [initial: record] {
 def main [
   --dry-run
   --apply
+  --profile: string = ""
   --target: string = ""
   --install-id: string = ""
   --user: string = ""
@@ -506,15 +607,23 @@ def main [
   --timezone: string = ""
   --disk: string = ""
 ] {
+  require-password-hash-tool
+  require-file-permission-tools
+
   if $dry_run and $apply {
     error make { msg: "use either --dry-run or --apply, not both" }
   }
 
   mut initial = (default-state)
 
-  if $target != "" {
-    validate-target $target
-    $initial = ($initial | upsert target $target)
+  if $profile != "" and $target != "" {
+    error make { msg: "use either --profile or deprecated --target, not both" }
+  }
+
+  let selected_profile = if $profile != "" { $profile } else { $target }
+  if $selected_profile != "" {
+    validate-profile $selected_profile
+    $initial = ($initial | upsert profile $selected_profile)
   }
 
   if $install_id != "" {
@@ -554,7 +663,7 @@ def main [
     $initial = ($initial | upsert action "dry-run")
   }
 
-  let final = if $dry_run or $apply {
+  let selected = if $dry_run or $apply {
     if $initial.disk == "" {
       run-wizard $initial
     } else {
@@ -563,8 +672,10 @@ def main [
   } else {
     run-wizard $initial
   }
+  let final = (with-password-hash $selected)
 
   write-overlay $final
+  write-password-file $final
   write-env $final
   write-disko-config $final.disk (disko-config-path)
   print-summary $final

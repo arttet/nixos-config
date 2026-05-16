@@ -40,7 +40,7 @@
   };
 
   environment.etc."motd".text = ''
-    NixOS Platform VM
+    NixOS Configuration VM
 
     This disposable VM uses the public user "user" with password "user".
     Real users must be provided through a local overlay outside git.
