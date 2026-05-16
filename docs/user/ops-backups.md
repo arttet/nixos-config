@@ -1,69 +1,95 @@
-# Backups
+# 💾 Backups
 
-The backup policy is:
+Use this page for manual backups from an installed workstation.
 
-```txt
-System is reproducible.
-Data is valuable.
-Back up data, not the full OS image.
-```
+The operating system is reproducible from the repository. The important backup
+targets are personal data, local machine identity, and secrets.
 
-NixOS generations, the repository flake, and local overlays should be enough to
-rebuild the operating system. User data and private local state are the important
-backup targets.
+## 📦 What to Back Up
 
-## Do Not Back Up
+Back up these categories:
 
-Do not back up:
+| Category | Why it matters | Example paths |
+| --- | --- | --- |
+| Documents | Personal files | `~/Documents`, `~/Desktop`, selected media folders |
+| Local overlay | Hostname, timezone, local user, private host settings | `/root/.nix-config-local/user.nix` |
+| Secrets | Private credentials and key material | selected SSH, GPG, password manager, or token files |
+| App state | Only when intentionally needed | selected browser, editor, or profile data |
+| LUKS2 Header | Vital if the primary header is corrupted | Explicitly collected file (see below) |
 
-- `/nix/store`
-- system closures
-- build artifacts
-- VM runtime state
-- caches
-- `target/`
-- `docs/.vitepress/cache`
-- `docs/.vitepress/dist`
-- `docs/node_modules`
+Do not upload local overlays, secrets, or LUKS headers to remote storage unless the
+backup is encrypted.
 
-These can be rebuilt or regenerated.
+## 📁 Create a Backup Workspace
 
-## Back Up
-
-Back up:
-
-- user documents
-- projects
-- local overlays
-- local secrets
-- SSH, GPG, and YubiKey-related metadata if applicable
-- browser or profile data only if explicitly selected
-
-Local overlays and secrets must remain encrypted at rest in any remote backup.
-
-## Logs
-
-System logs are local by default. They are not backed up automatically.
-
-Collect diagnostic bundles explicitly when needed. Sensitive logs must not be
-uploaded unencrypted.
-
-Useful commands:
+Create a timestamped local workspace:
 
 ```sh
-journalctl -b
-journalctl -b -p warning
-journalctl --disk-usage
+backup_dir="$HOME/workstation-backup-$(date +%Y%m%d-%H%M%S)"
 ```
 
-## Future Direction
+```sh
+mkdir -p "$backup_dir"
+```
 
-Automated backups are deferred. Future work may add:
+## 🔐 Back Up the Local Overlay
 
-- encrypted backups
-- remote untrusted storage
-- restic with rclone
-- Yandex Disk as a possible remote target
-- YubiKey-backed encryption later
+The installer stores the machine-local overlay under root. Copy it into the backup workspace:
 
-This stage only defines policy. It does not implement automated backups.
+```sh
+doas cp /root/.nix-config-local/user.nix "$backup_dir/user.nix"
+```
+
+```sh
+doas chown "$USER:$(id -gn)" "$backup_dir/user.nix"
+```
+
+```sh
+chmod 600 "$backup_dir/user.nix"
+```
+
+## 🛡️ Back Up the LUKS2 Header
+
+If the LUKS header on your encrypted drive becomes corrupted, you will lose access to all data, even if you know the password. Backing it up is critical.
+
+Identify your LUKS container partition (e.g., `/dev/nvme0n1p3` or `/dev/sda3`):
+
+```sh
+lsblk
+```
+
+Run the backup command (replace `<partition>` with your actual encrypted partition, not the mapped `/dev/mapper/...` device):
+
+```sh
+doas cryptsetup luksHeaderBackup /dev/<partition> --header-backup-file "$backup_dir/luks-header-backup.img"
+```
+
+**WARNING:** The header file contains your encryption keys. Treat it exactly like an unencrypted private key.
+
+## 🗂️ Back Up Selected User Data
+
+Copy only directories you intentionally want to keep. Example:
+
+```sh
+mkdir -p "$backup_dir/home"
+```
+
+```sh
+rsync -a --info=progress2 "$HOME/Documents/" "$backup_dir/home/Documents/"
+```
+
+## 🤐 Create and Encrypt an Archive
+
+Create a compressed archive:
+
+```sh
+tar -C "$HOME" -caf "$backup_dir.tar.zst" "$(basename "$backup_dir")"
+```
+
+Encrypt the archive before remote storage:
+
+```sh
+gpg --symmetric --cipher-algo AES256 "$backup_dir.tar.zst"
+```
+
+The `"$backup_dir.tar.zst.gpg"` file can now be stored remotely. Remember to safely delete the unencrypted `$backup_dir` and the `.tar.zst` file.

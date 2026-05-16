@@ -50,7 +50,7 @@ Tests do not partition, format, encrypt, or otherwise modify real disks.
 
 ## Real Hardware Runtime Checks
 
-After installing the workstation target on real hardware, validate boot and
+After installing the default workstation on real hardware, validate boot and
 tuning behavior on the installed machine:
 
 ```sh
@@ -70,7 +70,7 @@ journalctl --disk-usage
 journalctl -b -p warning
 doas true
 doas id
-doas nixos-rebuild switch --flake .#workstation
+doas nixos-rebuild switch --flake .#
 doas nixos-rebuild switch --rollback
 ```
 

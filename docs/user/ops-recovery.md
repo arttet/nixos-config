@@ -1,49 +1,65 @@
-# Recovery
+# 🚑 Recovery & Rollbacks
 
-The recovery model is rebuild-first.
+The recovery policy is:
 
-If a VM is broken, delete its state and rebuild it. If a real machine is
-broken in a future milestone, the platform should provide enough documented
-state to recreate it rather than preserve unknown drift.
-
-For workstation installs, recovery starts from the official NixOS ISO: boot the
-ISO in UEFI mode, review the disk state, mount or recreate the system according
-to the documented storage model, and rebuild from the repository flake.
-
-Any command that repartitions, formats, or encrypts a real disk is destructive.
-Review the disk device with `lsblk` before running such commands.
-
-The operating system is intended to be rebuilt rather than imaged. User data,
-local overlays, and secrets require backups; `/nix/store`, VM runtime state, and
-build artifacts do not. See [Backups](ops-backups).
-
-Useful boot and log diagnostics after a recovery boot:
-
-```sh
-systemd-analyze
-systemd-analyze critical-chain
-journalctl -b -p warning
-journalctl --disk-usage
+```txt
+System state is immutable.
+Mistakes are cheap.
+Roll back first, debug later.
 ```
 
-## Security Policy Recovery
+If an update breaks your system (e.g., Wayland doesn't start, Wi-Fi stops working, or a package is broken), rolling back is the fastest way to get back to work.
 
-Security changes are part of the runtime contract. If firewall, login, doas, or
-kernel hardening policy prevents normal access, recover from a known-good NixOS
-generation first.
+## 🔄 Rolling Back from a Running System
 
-Recommended order:
+If your system boots but something isn't working right after a rebuild, you can revert to the previous generation without rebooting:
 
-1. Select an older generation from GRUB.
-2. Log in as the local overlay user.
-3. Inspect the failed generation and logs.
-4. Rebuild from the repository after reverting or overriding the broken policy.
+```sh
+doas nixos-rebuild switch --rollback
+```
 
-If no installed generation is usable, boot the official NixOS ISO in UEFI mode,
-unlock the root filesystem, mount the system, provide the local overlay and
-hardware configuration, then rebuild or reinstall from the repository flake.
+This immediately activates the previous known-good generation and sets it as the default for the next boot.
 
-The install environment can pass local paths inline:
+## 🚀 Rolling Back from a Broken Boot (GRUB)
+
+If an update prevents the system from booting entirely (e.g., kernel panic, black screen, or login loop):
+
+1. **Reboot** the machine.
+2. In the **GRUB boot menu**, instead of selecting the default entry, use the arrow keys to scroll down.
+3. Select an **older generation** (usually the second one in the list) that you know worked previously.
+4. Press `Enter` to boot.
+
+Your system will boot exactly as it was when that generation was created.
+
+### 💾 Making the Boot Rollback Permanent
+
+Booting an older generation from GRUB is a temporary state. If you reboot again, it will try to boot the broken (newest) generation. 
+
+To permanently set the currently running (good) generation as the default, simply rebuild the system from it:
+
+```sh
+doas nixos-rebuild switch --flake .#
+```
+
+*(Assuming you have reverted the breaking changes in your local Git repository).*
+
+## ⚠️ What Rollbacks Do Not Cover
+
+NixOS generations only snapshot the **system configuration** (`/nix/store` and `/etc`). They **do not** roll back:
+- **User Data:** Your documents and files in `/home` are untouched.
+- **Disk Layouts:** Destructive changes like formatting a partition or resizing LUKS cannot be rolled back.
+
+## 🆘 System Recovery from Live ISO
+
+If no installed generation is usable (e.g., severe bootloader corruption or disk replacement), boot the official NixOS ISO in UEFI mode.
+
+Review the disk state before mounting:
+
+```sh
+lsblk -f
+```
+
+Any command that repartitions, formats, or encrypts a real disk is destructive. After mounting or recreating the system according to the storage model, provide the local overlay and hardware configuration paths when reinstalling:
 
 ```sh
 NIX_CONFIG_LOCAL_USER="/tmp/nix-config-install/pc/user.nix" \
@@ -51,14 +67,14 @@ NIX_CONFIG_LOCAL_HARDWARE="/mnt/etc/nixos/hardware-configuration.nix" \
 nixos-install --impure --flake "path:/absolute/path/to/nixos-config#workstation-gui"
 ```
 
-If the Plymouth graphical prompt fails before root unlock, use the GRUB editor
-for the selected generation and remove `splash` from the kernel command line for
-that boot. After login, rebuild with a local override such as
-`platform.bootUx.enable = false;` if the issue persists on the target hardware.
+## 🔐 Restoring a LUKS2 Header
 
-Do not disable security mitigations globally as a recovery shortcut. Use a local
-override only for the specific policy that caused the failure, and document it.
+If your LUKS header becomes corrupted and the password no longer works, you can restore it from a backup (see [Backups](ops-backups)).
 
-If `doas` policy itself breaks, recover through GRUB first. If no generation is
-usable, use the official NixOS ISO, mount the system, fix the local overlay or
-security module, and rebuild from the repository flake.
+Boot from a Live ISO, transfer your backup header file (`luks-header-backup.img`) to the live environment, and run:
+
+```sh
+cryptsetup luksHeaderRestore /dev/<partition> --header-backup-file /path/to/luks-header-backup.img
+```
+
+**WARNING:** This command replaces the current header. Ensure you are restoring the correct file to the correct partition, otherwise all data will be permanently lost.

@@ -1,23 +1,40 @@
-# Installation
+# 🚀 Quick Start
 
-Installation docs explain how to prepare a host Linux environment for NixOS
-Platform development.
+Welcome to the NixOS Platform! This system gives you a fully reproducible and disposable operating system built from code.
 
-This section does not describe VM runtime commands. Runtime workflows live in
-[VM (Local Testing)](install-vm).
+#### 📦 The Profiles
 
-## Path
+The platform is organized into three primary targets (profiles). `workstation-gui` is the default.
 
-1. Prepare the host environment.
-2. Install Nix with flakes enabled.
-3. Install QEMU, OpenSSH, `sshpass`, and `just`.
-4. Enter the repository.
-5. Continue to the runtime documentation.
+| Profile | Description | When to use it |
+| --- | --- | --- |
+| **`workstation-gui`** | The primary product. A full graphical desktop environment using Hyprland (Wayland), complete with browsers, editors, development tools, and multimedia support. Built on top of a secure, headless core. | Install this on clean hardware and use it day to day. |
+| **`workstation`** | The headless foundation. It includes core security, networking, tuning, and CLI tools, but no graphical session. | Use this if you are building a server or just need a pure console experience. |
+| **`vm`** | A headless, disposable QEMU virtual machine used for local testing and CI validation. | Use it when you want to test locally without touching real hardware. |
 
-Continue with [Windows WSL2](/dev/setup/wsl) for local VM validation, or
-[Workstation Installation](install-workstation) for the future real-hardware install
-model.
+## ⚡ How to use this platform
 
-Future workstation installs use the official NixOS ISO, network access, this
-repository flake, and a local identity overlay. No custom ISO is required for
-the current workstation model.
+If you are setting up a new computer, the process is streamlined into a single command. 
+
+Boot your computer using the [official Minimal NixOS ISO](https://nixos.org/download), connect to Wi-Fi, and run:
+
+```sh
+curl -sL github.com/arttet/nixos-config/raw/main/install.sh | bash
+```
+
+The script will ask you a few simple questions (like your disk, hostname, and password) and then fully automate the partitioning, installation, and configuration of the default profile.
+
+👉 **Read [Install Workstation](install-workstation)** for the detailed step-by-step installation guide.
+
+## 🔄 Iterating on your system
+
+Once installed, your system is declarative. Instead of running `apt install` or manually editing `/etc/` files, you:
+
+1. Modify your local clone of the repository (e.g., enable a new tool in the Nix modules).
+2. Validate changes locally using `just check` or by booting the VM with `just vm run`.
+3. Apply the changes to your actual hardware:
+   ```sh
+   doas nixos-rebuild switch --flake .#
+   ```
+
+If you ever make a mistake, simply reboot and select the previous generation from the GRUB boot menu.

@@ -5,8 +5,9 @@ use common.nu *
 def default-state [] {
   {
     install_id: "pc"
-    target: "workstation-gui"
+    target: "default"
     user: "user"
+    password: ""
     hostname: "pc"
     timezone: "UTC"
     disk: ""
@@ -35,7 +36,11 @@ def disko-config-path [] {
 }
 
 def flake-uri [target: string] {
-  $"path:(repo-root)#($target)"
+  if $target == "default" {
+    $"path:(repo-root)#"
+  } else {
+    $"path:(repo-root)#($target)"
+  }
 }
 
 def prompt-default [label: string, default: string] {
@@ -90,6 +95,12 @@ def validate-user [value: string] {
   }
 }
 
+def validate-password [value: string] {
+  if ($value | str trim) == "" {
+    error make { msg: "password is required for initial login" }
+  }
+}
+
 def validate-hostname [value: string] {
   if not ($value =~ '^[A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?$') {
     error make { msg: "hostname must use RFC 1123 labels: letters, digits, and hyphens only" }
@@ -120,8 +131,8 @@ def validate-timezone [value: string] {
 }
 
 def validate-target [value: string] {
-  if not ($value in [ "workstation" "workstation-gui" ]) {
-    error make { msg: "target must be workstation or workstation-gui" }
+  if not ($value in [ "default" "workstation" "workstation-gui" ]) {
+    error make { msg: "target must be default, workstation, or workstation-gui" }
   }
 }
 
@@ -286,9 +297,10 @@ def write-overlay [state: record] {
   networking.hostName = lib.mkDefault \"($state.hostname)\";
   time.timeZone = lib.mkDefault \"($state.timezone)\";
 
-  users.users."($state.user)" = {
+  users.users.\"($state.user)\" = {
     isNormalUser = true;
     shell = pkgs.nushell;
+    initialPassword = \"($state.password)\";
     extraGroups = [ \"wheel\" ];
   };
 }
@@ -377,12 +389,17 @@ def run-apply [state: record] {
     error make { msg: "hardware configuration was not generated" }
   }
 
+  print "Persisting local overlay to target system..."
+  let persistent_user_dir = "/mnt/root/.nix-config-local"
+  mkdir $persistent_user_dir
+  cp (overlay-path $state.install_id) $"($persistent_user_dir)/user.nix"
+
   print "Installing NixOS..."
   with-env {
-    NIX_CONFIG_LOCAL_USER: (overlay-path $state.install_id)
+    NIX_CONFIG_LOCAL_USER: $"($persistent_user_dir)/user.nix"
     NIX_CONFIG_LOCAL_HARDWARE: (hardware-config-path)
   } {
-    nixos-install --impure --flake $flake
+    nixos-install --impure --flake $flake --no-root-passwd
     if $env.LAST_EXIT_CODE != 0 {
       error make { msg: "nixos-install failed" }
     }
@@ -427,28 +444,35 @@ def run-wizard [initial: record] {
         $step = 3
       }
     } else if $step == 3 {
-      let value = (prompt-validated "Hostname" $state.hostname {|input| validate-hostname $input })
+      let value = (prompt-validated "User Password (for initial login)" $state.password {|input| validate-password $input })
       if $value == "q" { exit 0 }
       if $value == "r" { $step = 2 } else {
-        $state = ($state | upsert hostname $value)
+        $state = ($state | upsert password $value)
         $step = 4
       }
     } else if $step == 4 {
-      print "Timezone hint: timedatectl list-timezones"
-      let value = (prompt-validated "Timezone" $state.timezone {|input| validate-timezone $input })
+      let value = (prompt-validated "Hostname" $state.hostname {|input| validate-hostname $input })
       if $value == "q" { exit 0 }
       if $value == "r" { $step = 3 } else {
-        $state = ($state | upsert timezone $value)
+        $state = ($state | upsert hostname $value)
         $step = 5
       }
     } else if $step == 5 {
-      let value = if $state.disk == "" { choose-disk "" } else { choose-disk $state.disk }
+      print "Timezone hint: timedatectl list-timezones"
+      let value = (prompt-validated "Timezone" $state.timezone {|input| validate-timezone $input })
+      if $value == "q" { exit 0 }
       if $value == "r" { $step = 4 } else {
-        validate-disk $value
-        $state = ($state | upsert disk $value)
+        $state = ($state | upsert timezone $value)
         $step = 6
       }
     } else if $step == 6 {
+      let value = if $state.disk == "" { choose-disk "" } else { choose-disk $state.disk }
+      if $value == "r" { $step = 5 } else {
+        validate-disk $value
+        $state = ($state | upsert disk $value)
+        $step = 7
+      }
+    } else if $step == 7 {
       print-summary $state
       print ""
       print "[d] dry-run"
@@ -458,7 +482,7 @@ def run-wizard [initial: record] {
       let value = (input $"Action [($state.action)]: " | str trim)
 
       if $value == "q" { exit 0 }
-      if $value == "r" { $step = 5 } else if $value == "a" or $value == "apply" {
+      if $value == "r" { $step = 6 } else if $value == "a" or $value == "apply" {
         $state = ($state | upsert action "apply")
         return $state
       } else if $value == "" {
@@ -477,6 +501,7 @@ def main [
   --target: string = ""
   --install-id: string = ""
   --user: string = ""
+  --password: string = ""
   --hostname: string = ""
   --timezone: string = ""
   --disk: string = ""
@@ -501,6 +526,11 @@ def main [
   if $user != "" {
     validate-user $user
     $initial = ($initial | upsert user $user)
+  }
+
+  if $password != "" {
+    validate-password $password
+    $initial = ($initial | upsert password $password)
   }
 
   if $hostname != "" {

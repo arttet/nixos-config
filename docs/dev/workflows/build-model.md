@@ -1,7 +1,7 @@
 # Build Model
 
-The active build targets are the `workstation` system closure and the `vm`
-NixOS VM.
+The main build target is the graphical workstation system closure. The headless
+`workstation` closure and the `vm` target remain supporting validation targets.
 
 Nix evaluates the flake, builds the requested closure, and writes local output
 under `target/` through the `just` workflow.

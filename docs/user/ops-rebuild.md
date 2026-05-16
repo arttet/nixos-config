@@ -1,48 +1,67 @@
-# Rebuilding
+# 🔄 Updates and Rebuilds
 
-Rebuild the VM whenever infrastructure changes:
+Use this page to apply changes to an installed workstation. 
 
-```sh
-just vm build
-```
+Because this is a declarative system, you do not update software or change settings on the live system directly. Instead, you modify your local Git repository, test the changes, and then apply them.
 
-Boot it again to validate runtime behavior:
+## 🏗️ Applying Local Changes
 
-```sh
-just vm run
-```
+If you've made modifications to your local repository (e.g., added a new package in your Nix modules), follow these steps to build and apply the new configuration.
 
-For background operation:
+First, make sure you are in the root of the repository:
 
 ```sh
-just vm daemon
-just vm status
-just vm stop
+test -f flake.nix && test -f justfile
 ```
 
-Rebuild an installed workstation with explicit `doas` escalation:
+It is highly recommended to build and test the configuration before switching to it. This validates your syntax and logic without touching your running system:
 
 ```sh
-doas nixos-rebuild switch --flake .#workstation
+just workstation-gui build
 ```
-
-Rollback to the previous generation:
 
 ```sh
-doas nixos-rebuild switch --rollback
+just workstation-gui test
 ```
 
-## Manual Updates
+Once the tests pass, apply the new configuration to your system. This makes the changes live and creates a new bootable generation:
 
-Automatic system upgrades are disabled. Updates are manual and deliberate:
+```sh
+doas nixos-rebuild switch --flake .#
+```
+
+*(Note: If you encounter issues after switching, you can easily roll back to the previous generation via GRUB or the rollback command).*
+
+## 📦 System Updates
+
+Automatic background upgrades are intentionally disabled so your system remains completely predictable. When you are ready to update your packages to their latest versions, you update the `flake.lock` file.
+
+First, update the lockfile to fetch the latest revisions of your inputs (like `nixpkgs`):
 
 ```sh
 nix flake update
-just check
-just workstation build
-just workstation test
-doas nixos-rebuild switch --flake .#workstation
 ```
 
-This keeps kernel, nixpkgs, and platform changes tied to reviewed `flake.lock`
-updates.
+Run the formatting and policy checks:
+
+```sh
+just check
+```
+
+Build the system with the new updates:
+
+```sh
+just workstation-gui build
+```
+
+Run the local validation tests:
+
+```sh
+just workstation-gui test
+```
+
+Finally, apply the update to your live system:
+
+```sh
+doas nixos-rebuild switch --flake .#
+```

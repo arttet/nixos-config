@@ -4,7 +4,11 @@ The platform uses layers to avoid mixing public infrastructure with private mach
 
 Public NixOS modules define reusable behavior. Profiles define reusable system shapes. Host targets compose profiles. Local overlays provide identity. Generated build output remains disposable.
 
-The `workstation` profile owns the shared headless core for future real hardware. Storage modules provide the opt-in installation layout for that hardware profile. The security, network, and tuning modules provide conservative real-hardware defaults through `platform.security`, `platform.network`, and `platform.tuning`.
+The `workstation` profile owns the shared headless core for real hardware.
+Storage modules provide the opt-in installation layout for that hardware
+profile. The security, network, and tuning modules provide conservative
+real-hardware defaults through `platform.security`, `platform.network`, and
+`platform.tuning`.
 
 The `workstation-gui` target imports the headless core and adds workstation-only product layers from `nixos/profiles/workstation/`. GUI software, browsers, desktop applications, containers, and language stacks must stay scoped to those workstation layers.
 
@@ -77,13 +81,14 @@ Use `NIX_CONFIG_LOCAL_HARDWARE` to import the generated file during installation
 
 ## Targets
 
-The active runtime target is `vm`.
-The active real-hardware profile target is `workstation`.
-The active V1 workstation product target is `workstation-gui`.
+The default real-hardware target is `workstation-gui`.
+The supporting headless target is `workstation`.
+The disposable local runtime target is `vm`.
 
 ### Workstation Profile
 
-The `workstation` profile is the reusable headless core for future real hardware targets: laptop, mini-PC, or desktop.
+The `workstation` profile is the reusable headless core for the default
+workstation and future real-hardware targets.
 
 It enables NetworkManager and keeps OpenSSH disabled by default. The package set is intentionally small: `git`, `curl`, `wget`, `jq`, `just`, `nushell`, `helix`, `btop`, `pciutils`, `usbutils`, and basic archive tools.
 
@@ -106,7 +111,8 @@ It imports `workstation`, then adds VM-only behavior:
 - QEMU memory, disk, port forwarding, and runtime assumptions.
 - The temporary public test user used by local VM validation.
 
-VM state is disposable. The profile exists to validate workstation changes before applying them to future real hardware.
+VM state is disposable. The profile exists to validate shared system changes
+without touching the installed workstation.
 
 The VM keeps QEMU storage settings in the VM target. It does not apply the workstation storage layout during normal runtime commands.
 
