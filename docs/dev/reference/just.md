@@ -14,6 +14,7 @@ Available recipes:
     [Development]
     fmt     # Format code
     check   # Run repository checks
+    test    # Run local script tests
 
     [VM Runtime]
     vm:

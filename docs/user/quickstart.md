@@ -7,7 +7,7 @@ The platform provides a streamlined path from initial hardware migration to dail
 To replace your current operating system with this declarative configuration, boot your computer using the [official Minimal NixOS ISO](https://nixos.org/download), connect to Wi-Fi, and run:
 
 ```sh
-curl -sL github.com/arttet/nixos-config/raw/main/install.sh | bash
+curl -sL https://github.com/arttet/nixos-config/raw/main/install.sh | sudo bash
 ```
 
 The script will ask you a few simple questions (like your disk, hostname, and password) and then fully automate the partitioning, installation, and configuration of the default profile.

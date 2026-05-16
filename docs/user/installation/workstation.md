@@ -46,7 +46,14 @@ Expected result:
 Run the installer from the live environment:
 
 ```sh
-curl -sL github.com/arttet/nixos-config/raw/main/install.sh | bash
+curl -sL https://github.com/arttet/nixos-config/raw/main/install.sh | sudo bash
+```
+
+The command runs the installer with root privileges. If the live console renders
+colors poorly, use the same command with colors disabled:
+
+```sh
+curl -sL https://github.com/arttet/nixos-config/raw/main/install.sh | sudo NO_COLOR=1 bash
 ```
 
 The entrypoint clones or updates the repository under
@@ -58,14 +65,18 @@ nu scripts/install/bootstrap.nu --apply
 
 ## 💬 Interactive Setup Wizard
 
+The wizard collects the local account, machine identity, timezone, and target
+disk. No disk is formatted until the final exact disk-path confirmation.
+
 The wizard asks for:
 
 | Prompt | Meaning |
 | --- | --- |
-| Install id | Local install workspace name under `$HOME/.cache/nixos-config-installer/state/` |
+| Session | Local name for this installer run; files are stored under `$HOME/.cache/nixos-config-installer/state/<session>/` |
 | Profile | System profile to install; keep `default` for the normal workstation |
-| Username | Initial local user |
-| User password | Initial login password for that user |
+| User | Human-readable account description, such as `User` or `Default User` |
+| Username | Initial local Linux username, lowercase only, such as `user`; `User` is invalid |
+| User password | Initial login password for that user; input is hidden and repeated once |
 | Hostname | Machine hostname |
 | Timezone | NixOS timezone, such as `Etc/UTC` |
 | Disk | Target disk device to repartition and format |
