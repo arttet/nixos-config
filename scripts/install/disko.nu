@@ -1,6 +1,7 @@
 #!/usr/bin/env nu
 
 use common.nu *
+use constants.nu *
 
 def default-config-path [] {
   join-path [ (temp-root) "workstation-disko.nix" ]
@@ -42,7 +43,7 @@ def main [
 
   print "Running disko..."
   let repo = (repo-root)
-  nix --extra-experimental-features "nix-command flakes" run $"path:($repo)#disko" -- --mode disko $config_path
+  nix --extra-experimental-features "nix-command flakes" run $"path:($repo)#disko" -- --mode (disko-mode) $config_path
   if $env.LAST_EXIT_CODE != 0 {
     error make { msg: "disko failed" }
   }

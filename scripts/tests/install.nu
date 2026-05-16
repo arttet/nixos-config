@@ -3,6 +3,7 @@
 use std assert
 
 use ../install/bootstrap.nu *
+use ../install/constants.nu *
 
 def assert-source-ok [path: string] {
   let result = (nu --no-config-file --commands $"source ($path)" | complete)
@@ -108,6 +109,13 @@ def test-summary-does-not-print-password-hash-path [] {
   assert not ($output.stdout | str contains "Password hash")
 }
 
+def test-disko-mode-is-current [] {
+  assert equal (disko-mode) "destroy,format,mount"
+
+  let source = (open scripts/install/disko.nu)
+  assert not ($source | str contains "--mode disko")
+}
+
 assert-source-ok "scripts/install/common.nu"
 assert-source-ok "scripts/install/constants.nu"
 assert-source-ok "scripts/install/bootstrap.nu"
@@ -123,5 +131,6 @@ test-flake-uri
 test-presentation-no-color
 test-password-validation
 test-summary-does-not-print-password-hash-path
+test-disko-mode-is-current
 
 print "install.nu tests passed"

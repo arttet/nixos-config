@@ -3,7 +3,7 @@
 
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
-    disko.url = "github:nix-community/disko";
+    disko.url = "github:nix-community/disko/latest";
     disko.inputs.nixpkgs.follows = "nixpkgs";
     treefmt-nix.url = "github:numtide/treefmt-nix";
     treefmt-nix.inputs.nixpkgs.follows = "nixpkgs";
@@ -76,7 +76,7 @@
 
       apps.${system}.disko = {
         type = "app";
-        program = "${disko.packages.${system}.disko}/bin/disko";
+        program = "${disko.packages.${system}.default}/bin/disko";
         meta.description = "Run the locked nix-community disko CLI";
       };
 
