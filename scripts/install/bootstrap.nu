@@ -1,42 +1,35 @@
 #!/usr/bin/env nu
 
 use common.nu *
+use constants.nu *
 
-def default-state [] {
-  {
-    install_id: "pc"
-    profile: "default"
-    user: "user"
-    password: ""
-    password_hash: ""
-    hostname: "pc"
-    timezone: "UTC"
-    disk: ""
-    action: "dry-run"
-  }
+# Runtime path helpers are grouped first; stable defaults live in constants.nu.
+
+def ui-rule [] {
+  "" | fill --alignment l --character "━" --width (ui-width)
 }
 
 def state-root [] {
   $env.NIX_CONFIG_INSTALL_STATE_DIR? | default (join-path [ $env.HOME ".cache" "nixos-config-installer" "state" ])
 }
 
-def install-dir [install_id: string] {
-  join-path [ (state-root) $install_id ]
+def install-dir [session: string] {
+  join-path [ (state-root) $session ]
 }
 
-def ensure-private-install-dir [install_id: string] {
-  let dir = (install-dir $install_id)
+def ensure-private-install-dir [session: string] {
+  let dir = (install-dir $session)
   ensure-dir $dir
   chmod 700 $dir
   $dir
 }
 
-def overlay-path [install_id: string] {
-  join-path [ (install-dir $install_id) "user.nix" ]
+def overlay-path [session: string] {
+  join-path [ (install-dir $session) "user.nix" ]
 }
 
-def password-path [install_id: string] {
-  join-path [ (install-dir $install_id) "user.passwd" ]
+def password-path [session: string] {
+  join-path [ (install-dir $session) "user.passwd" ]
 }
 
 def target-local-dir [] {
@@ -51,8 +44,8 @@ def mounted-target-password-path [] {
   join-path [ (target-local-dir) "user.passwd" ]
 }
 
-def env-path [install_id: string] {
-  join-path [ (install-dir $install_id) "install.env" ]
+def env-path [session: string] {
+  join-path [ (install-dir $session) "install.env" ]
 }
 
 def hardware-config-path [] {
@@ -63,7 +56,7 @@ def disko-config-path [] {
   join-path [ (temp-root) "workstation-disko.nix" ]
 }
 
-def flake-uri [profile: string] {
+export def flake-uri [profile: string] {
   if $profile == "default" {
     $"path:(repo-root)#"
   } else {
@@ -72,13 +65,103 @@ def flake-uri [profile: string] {
 }
 
 def prompt-default [label: string, default: string] {
-  let answer = (input $"($label) [($default)]: " | str trim)
+  let prompt = $"(paint prompt $label) [(paint value $default)]: "
+  let answer = (input $prompt | str trim)
 
   if $answer == "" {
     $default
   } else {
     $answer
   }
+}
+
+export def no-color [] {
+  ($env.NO_COLOR? | default "") != ""
+}
+
+export def paint [kind: string, text: string] {
+  if (no-color) {
+    return $text
+  }
+
+  match $kind {
+    "logo" => $"(ansi cyan_bold)($text)(ansi reset)"
+    "heading" => $"(ansi cyan_bold)($text)(ansi reset)"
+    "rule" => $"(ansi blue_dimmed)($text)(ansi reset)"
+    "detail" => $"(ansi light_gray_bold)($text)(ansi reset)"
+    "label" => $"(ansi blue_bold)($text)(ansi reset)"
+    "value" => $"(ansi green_bold)($text)(ansi reset)"
+    "prompt" => $"(ansi cyan_bold)($text)(ansi reset)"
+    "success" => $"(ansi green_bold)($text)(ansi reset)"
+    "warning" => $"(ansi yellow_bold)($text)(ansi reset)"
+    "danger" => $"(ansi red_bold)($text)(ansi reset)"
+    "muted" => $"(ansi dark_gray_bold)($text)(ansi reset)"
+    _ => $text
+  }
+}
+
+def clear-screen-once [] {
+  if ($env.TERM? | default "") != "dumb" {
+    print $"(ansi cls)(ansi home)"
+  }
+}
+
+def print-logo [] {
+  print ""
+  print (paint logo "    _   ___      ____  ____   __        __         _        _        _   _")
+  print (paint logo "   / | / (_)  __/ __ \\/ __/  / /  __   / /__  ____(_)__ ___(_)____ _/ /_(_)__  ___")
+  print (paint logo "  /  |/ / / |/ / /_/ /\\ \\   / / |/ /  / / _ \\/ __/ (_-</ _ \\/ __/ _ `/ __/ / _ \\/ _ \\")
+  print (paint logo " /_/|_/_/|___/\\____/___/  /_/|___/  /_/\\___/_/ /_/___/_//_/\\__/\\_,_/\\__/_/\\___/_//_/")
+  print (paint muted "                         Clean hardware installer")
+  print ""
+}
+
+def print-section [title: string, details: list<string>] {
+  let rule = (paint rule (ui-rule))
+  print ""
+  print $rule
+  print (paint heading $title | fill --alignment center --width (ui-width))
+  print $rule
+  for detail in $details {
+    print $"    (paint detail $detail)"
+  }
+  print $rule
+  print ""
+}
+
+def print-kv-section [title: string, rows: list<record<label: string, value: string>>] {
+  let rule = (paint rule (ui-rule))
+  print ""
+  print $rule
+  print (paint heading $title | fill --alignment center --width (ui-width))
+  print $rule
+  for row in $rows {
+    let label = ($row.label | fill --alignment l --width (kv-label-width))
+    print $"  (paint label $label) : (paint value $row.value)"
+  }
+  print $rule
+  print ""
+}
+
+def print-danger-section [title: string, details: list<string>] {
+  let rule = (paint danger (ui-rule))
+  print ""
+  print $rule
+  print (paint danger $title | fill --alignment center --width (ui-width))
+  print $rule
+  for detail in $details {
+    print $"    (paint warning $detail)"
+  }
+  print $rule
+  print ""
+}
+
+def print-status [message: string] {
+  print $"(paint success '==>') ($message)"
+}
+
+def print-error-line [message: string] {
+  print $"(paint danger 'error:') ($message)"
 }
 
 def prompt-validated [label: string, default: string, validator: closure] {
@@ -102,28 +185,75 @@ def prompt-validated [label: string, default: string, validator: closure] {
       return $value
     }
 
-    print $validation.msg
-    print "Try again, enter r to go back, or q to quit."
+    print-error-line $validation.msg
+    print "Enter a valid value, r to go back, or q to quit."
   }
 }
 
-def validate-id [value: string] {
+def prompt-password-confirm [] {
+  loop {
+    let password = (input --suppress-output (paint prompt "User password: "))
+    print ""
+
+    if $password in [ "q" "r" ] {
+      return $password
+    }
+
+    let confirmation = (input --suppress-output (paint prompt "Repeat password: "))
+    print ""
+
+    if $confirmation in [ "q" "r" ] {
+      return $confirmation
+    }
+
+    let validation = (
+      try {
+        validate-password $password
+        { ok: true, msg: "" }
+      } catch {|error|
+        { ok: false, msg: $error.msg }
+      }
+    )
+
+    if not $validation.ok {
+      print-error-line $validation.msg
+      print "Enter a valid password, r to go back, or q to quit."
+    } else if $password != $confirmation {
+      print-error-line "passwords did not match"
+      print "Try again, enter r to go back, or q to quit."
+    } else {
+      return $password
+    }
+  }
+}
+
+export def validate-id [value: string] {
   if not ($value =~ '^[A-Za-z0-9_-]+$') {
-    error make { msg: "install id may contain only letters, numbers, underscore, and dash" }
+    error make { msg: "session may contain only letters, numbers, underscore, and dash" }
   }
 }
 
-def validate-user [value: string] {
+export def validate-user [value: string] {
   if $value == "root" {
     error make { msg: "username cannot be root" }
   }
 
   if not ($value =~ '^[a-z_][a-z0-9_-]*$') {
-    error make { msg: "username must start with a lowercase letter or underscore and contain only lowercase letters, numbers, underscore, and dash" }
+    error make { msg: "username must start with a lowercase letter or underscore and contain only lowercase letters, numbers, underscores, and dashes" }
   }
 }
 
-def validate-password [value: string] {
+export def validate-user-description [value: string] {
+  if ($value | str trim) == "" {
+    error make { msg: "user description is required" }
+  }
+
+  if not ($value =~ '^[A-Za-z0-9 ._-]+$') {
+    error make { msg: "user description may contain only letters, numbers, spaces, dot, underscore, and dash" }
+  }
+}
+
+export def validate-password [value: string] {
   if ($value | str trim) == "" {
     error make { msg: "password is required for initial login" }
   }
@@ -187,13 +317,13 @@ def require-root [] {
   }
 }
 
-def validate-hostname [value: string] {
+export def validate-hostname [value: string] {
   if not ($value =~ '^[A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?$') {
     error make { msg: "hostname must use RFC 1123 labels: letters, digits, and hyphens only" }
   }
 }
 
-def derive-hostname [id: string, current: string] {
+export def derive-hostname [id: string, current: string] {
   if $id =~ '^[A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?$' {
     $id
   } else {
@@ -201,7 +331,7 @@ def derive-hostname [id: string, current: string] {
   }
 }
 
-def validate-timezone [value: string] {
+export def validate-timezone [value: string] {
   if ($value | str trim) == "" {
     error make { msg: "timezone is required" }
   }
@@ -216,9 +346,14 @@ def validate-timezone [value: string] {
   }
 }
 
-def validate-profile [value: string] {
-  if not ($value in [ "default" "workstation" "workstation-gui" ]) {
-    error make { msg: "profile must be default, workstation, or workstation-gui" }
+export def validate-profile [value: string] {
+  if $value == "vm" {
+    error make { msg: "vm is a disposable QEMU test target; use just vm build/run/test instead of the hardware installer" }
+  }
+
+  let allowed = (allowed-profiles)
+  if not ($value in $allowed) {
+    error make { msg: $"profile must be one of: ($allowed | str join ', ')" }
   }
 }
 
@@ -272,11 +407,12 @@ def read-disk-candidates [] {
 }
 
 def choose-disk [current: string] {
-  print ""
-  print "Disk discovery:"
-  print "  lsblk -o NAME,SIZE,TYPE,MODEL,SERIAL,MOUNTPOINTS"
-  print "  ls -l /dev/disk/by-id/"
-  print ""
+  print-section "Disk Discovery" [
+    "The installer reads block devices from lsblk."
+    "Review size, model, serial, mountpoints, and stable by-id names."
+    "Reference commands: lsblk -o NAME,SIZE,TYPE,MODEL,SERIAL,MOUNTPOINTS"
+    "Reference commands: ls -l /dev/disk/by-id/"
+  ]
 
   let disks = (read-disk-candidates)
 
@@ -306,7 +442,7 @@ def choose-disk [current: string] {
         return $manual
       }
 
-      print $validation.msg
+      print-error-line $validation.msg
       print "Enter a valid disk path, r to go back, or q to quit."
     }
   }
@@ -359,7 +495,7 @@ def choose-disk [current: string] {
           return $manual
         }
 
-        print $validation.msg
+        print-error-line $validation.msg
         print "Enter a valid disk path, r to go back, or q to quit."
       }
     }
@@ -374,7 +510,7 @@ def choose-disk [current: string] {
 }
 
 def write-overlay [state: record] {
-  ensure-private-install-dir $state.install_id | ignore
+  ensure-private-install-dir $state.session | ignore
 
   let overlay = $"
 { pkgs, lib, ... }:
@@ -384,6 +520,7 @@ def write-overlay [state: record] {
 
   users.users.\"($state.user)\" = {
     isNormalUser = true;
+    description = \"($state.user_description)\";
     shell = pkgs.nushell;
     hashedPasswordFile = \"(target-password-path)\";
     extraGroups = [ \"wheel\" ];
@@ -391,13 +528,13 @@ def write-overlay [state: record] {
 }
 "
 
-  $overlay | save --force (overlay-path $state.install_id)
+  $overlay | save --force (overlay-path $state.session)
 }
 
 def write-password-file [state: record] {
-  ensure-private-install-dir $state.install_id | ignore
+  ensure-private-install-dir $state.session | ignore
 
-  let path = (password-path $state.install_id)
+  let path = (password-path $state.session)
   install -m 600 /dev/null $path
   $state.password_hash | save --force $path
   chmod 600 $path
@@ -405,57 +542,63 @@ def write-password-file [state: record] {
 
 def write-env [state: record] {
   let env_file = $"
-export NIX_CONFIG_LOCAL_USER=\"(overlay-path $state.install_id)\"
+export NIX_CONFIG_LOCAL_USER=\"(overlay-path $state.session)\"
 export NIX_CONFIG_LOCAL_HARDWARE=\"(hardware-config-path)\"
 "
 
-  $env_file | save --force (env-path $state.install_id)
+  $env_file | save --force (env-path $state.session)
 }
 
-def print-summary [state: record] {
-  print ""
-  print "Install summary"
-  print $"  install id:       ($state.install_id)"
-  print $"  profile:          ($state.profile)"
-  print $"  user:             ($state.user)"
-  print $"  hostname:         ($state.hostname)"
-  print $"  timezone:         ($state.timezone)"
-  print $"  disk:             ($state.disk)"
-  print $"  local overlay:    (overlay-path $state.install_id)"
-  print $"  password hash:    (password-path $state.install_id)"
-  print $"  install env:      (env-path $state.install_id)"
-  print $"  hardware config:  (hardware-config-path)"
+export def print-summary [state: record] {
+  let password_set = if (($state.password_hash? | default "") != "") or (($state.password? | default "") != "") {
+    "yes"
+  } else {
+    "no"
+  }
+
+  print-kv-section "Install Summary" [
+    { label: "Session", value: $state.session }
+    { label: "Profile", value: $state.profile }
+    { label: "User", value: $state.user_description }
+    { label: "Username", value: $state.user }
+    { label: "Password set", value: $password_set }
+    { label: "Hostname", value: $state.hostname }
+    { label: "Timezone", value: $state.timezone }
+    { label: "Disk", value: $state.disk }
+    { label: "Local overlay", value: (overlay-path $state.session) }
+    { label: "Install env", value: (env-path $state.session) }
+    { label: "Hardware config", value: (hardware-config-path) }
+  ]
 }
 
 def print-next-commands [state: record] {
   let repo = (repo-root)
   let flake = (flake-uri $state.profile)
 
-  print ""
-  print "Generated files:"
-  print $"  (overlay-path $state.install_id)"
-  print $"  (password-path $state.install_id)"
-  print $"  (env-path $state.install_id)"
-  print $"  (disko-config-path)"
-  print ""
-  print "Dry-run complete. No destructive command was run."
+  print-section "Generated Files" [
+    (overlay-path $state.session)
+    (env-path $state.session)
+    (disko-config-path)
+  ]
+
+  print (paint success "Dry-run complete. No destructive command was run.")
   print ""
   print "To apply after review:"
-  print $"  source \"(env-path $state.install_id)\""
+  print $"  source \"(env-path $state.session)\""
   print $"  nu \"($repo)/scripts/install/disko.nu\" \"($state.disk)\""
   print "  nixos-generate-config --root /mnt"
   print "  test -f /mnt/etc/nixos/hardware-configuration.nix"
-  print $"  NIX_CONFIG_LOCAL_USER=\"(overlay-path $state.install_id)\" \\"
+  print $"  NIX_CONFIG_LOCAL_USER=\"(overlay-path $state.session)\" \\"
   print $"  NIX_CONFIG_LOCAL_HARDWARE=\"(hardware-config-path)\" \\"
   print $"  nixos-install --impure --flake \"($flake)\""
 }
 
 def confirm-disk [disk_device: string] {
-  print ""
-  print "DESTRUCTIVE WARNING"
-  print $"Disk selected for formatting: ($disk_device)"
-  print "This will repartition and format the selected disk."
-  print ""
+  print-danger-section "Destructive Disk Confirmation" [
+    $"Disk selected for formatting: ($disk_device)"
+    "This will repartition and format the selected disk."
+    "Type the exact disk path to continue."
+  ]
   let confirmation = (input "Type the exact disk path to continue: " | str trim)
 
   if $confirmation != $disk_device {
@@ -471,13 +614,13 @@ def run-apply [state: record] {
 
   confirm-disk $state.disk
 
-  print "Applying disk layout..."
+  print-status "Applying disk layout..."
   nu $"($repo)/scripts/install/disko.nu" $state.disk --yes --config (disko-config-path)
   if $env.LAST_EXIT_CODE != 0 {
     error make { msg: "disko failed; aborting before hardware generation and nixos-install" }
   }
 
-  print "Generating hardware configuration..."
+  print-status "Generating hardware configuration..."
   nixos-generate-config --root /mnt
   if $env.LAST_EXIT_CODE != 0 {
     error make { msg: "nixos-generate-config failed" }
@@ -487,14 +630,22 @@ def run-apply [state: record] {
     error make { msg: "hardware configuration was not generated" }
   }
 
-  print "Persisting local overlay to target system..."
+  print-status "Persisting local overlay to target system..."
   let persistent_user_dir = (target-local-dir)
   mkdir $persistent_user_dir
   chmod 700 $persistent_user_dir
-  cp (overlay-path $state.install_id) $"($persistent_user_dir)/user.nix"
-  install -m 600 (password-path $state.install_id) (mounted-target-password-path)
+  cp (overlay-path $state.session) $"($persistent_user_dir)/user.nix"
+  let password_copy = (
+    install -m 600 (password-path $state.session) (mounted-target-password-path)
+    | complete
+  )
+  if $password_copy.exit_code != 0 {
+    let stderr = ($password_copy.stderr | str trim)
+    let detail = if $stderr == "" { "" } else { $": ($stderr)" }
+    error make { msg: $"failed to persist password file to target system($detail)" }
+  }
 
-  print "Installing NixOS..."
+  print-status "Installing NixOS..."
   with-env {
     NIX_CONFIG_LOCAL_USER: $"($persistent_user_dir)/user.nix"
     NIX_CONFIG_LOCAL_HARDWARE: (hardware-config-path)
@@ -506,10 +657,14 @@ def run-apply [state: record] {
   }
 
   print ""
-  print "Install command completed. Reboot when ready:"
+  print-section "Install Complete" [
+    "The install command completed."
+    "Reboot when ready after reviewing the first boot checks."
+  ]
+  print (paint heading "Reboot command:")
   print "  reboot"
   print ""
-  print "First boot checks:"
+  print (paint heading "First boot checks:")
   print "  test -d /sys/firmware/efi"
   print "  findmnt"
   print "  swapon --show"
@@ -522,14 +677,32 @@ def run-wizard [initial: record] {
   mut state = $initial
   mut step = 0
 
+  clear-screen-once
+  print-logo
+  print-section "Interactive NixOS workstation installer" [
+    "This wizard prepares a clean-hardware workstation install."
+    "Enter q to quit or r to go back when a prompt allows it."
+    "No disk is formatted until the final destructive confirmation."
+  ]
+
   loop {
     if $step == 0 {
-      let value = (prompt-validated "Install id" $state.install_id {|input| validate-id $input })
+      print-section "Session" [
+        "Local name for this installer run."
+        $"Files are stored under (state-root)/<session>/."
+      ]
+      let value = (prompt-validated "Session" $state.session {|input| validate-id $input })
       if $value == "q" { exit 0 }
+      if $value == "r" { continue }
       let next_hostname = (derive-hostname $value $state.hostname)
-      $state = ($state | upsert install_id $value | upsert hostname $next_hostname)
+      $state = ($state | upsert session $value | upsert hostname $next_hostname)
       $step = 1
     } else if $step == 1 {
+      print-section "Profile" [
+        "Choose what NixOS system to install on this disk."
+        "default installs the graphical workstation target."
+        $"Allowed values: ((allowed-profiles) | str join ', ')."
+      ]
       let value = (prompt-validated "Profile" $state.profile {|input| validate-profile $input })
       if $value == "q" { exit 0 }
       if $value == "r" { $step = 0 } else {
@@ -537,52 +710,88 @@ def run-wizard [initial: record] {
         $step = 2
       }
     } else if $step == 2 {
-      let value = (prompt-validated "Username" $state.user {|input| validate-user $input })
+      print-section "User" [
+        "Human-readable account description shown by desktop tools."
+        "This can be capitalized, for example User or Default User."
+      ]
+      let value = (prompt-validated "User" $state.user_description {|input| validate-user-description $input })
       if $value == "q" { exit 0 }
       if $value == "r" { $step = 1 } else {
-        $state = ($state | upsert user $value)
+        $state = ($state | upsert user_description $value)
         $step = 3
       }
     } else if $step == 3 {
-      let value = (prompt-validated "User Password (for initial login)" $state.password {|input| validate-password $input })
+      print-section "Username" [
+        "Linux login name for the installed system."
+        "Use lowercase only, for example user. Do not use User."
+      ]
+      let value = (prompt-validated "Username" $state.user {|input| validate-user $input })
       if $value == "q" { exit 0 }
       if $value == "r" { $step = 2 } else {
-        $state = ($state | upsert password $value)
+        $state = ($state | upsert user $value)
         $step = 4
       }
     } else if $step == 4 {
-      let value = (prompt-validated "Hostname" $state.hostname {|input| validate-hostname $input })
+      print-section "Password" [
+        "Password for the local account on first boot."
+        "Input is hidden and must be entered twice."
+      ]
+      let value = (prompt-password-confirm)
       if $value == "q" { exit 0 }
       if $value == "r" { $step = 3 } else {
-        $state = ($state | upsert hostname $value)
+        $state = ($state | upsert password $value)
         $step = 5
       }
     } else if $step == 5 {
-      print "Timezone hint: timedatectl list-timezones"
-      let value = (prompt-validated "Timezone" $state.timezone {|input| validate-timezone $input })
+      print-section "Hostname" [
+        "Network name of the installed machine."
+        "The default follows the session when it is hostname-safe."
+      ]
+      let value = (prompt-validated "Hostname" $state.hostname {|input| validate-hostname $input })
       if $value == "q" { exit 0 }
       if $value == "r" { $step = 4 } else {
-        $state = ($state | upsert timezone $value)
+        $state = ($state | upsert hostname $value)
         $step = 6
       }
     } else if $step == 6 {
-      let value = if $state.disk == "" { choose-disk "" } else { choose-disk $state.disk }
+      print-section "Timezone" [
+        "NixOS timezone for the installed machine."
+        "Example: Etc/UTC or Europe/Berlin."
+        "Hint: timedatectl list-timezones"
+      ]
+      let value = (prompt-validated "Timezone" $state.timezone {|input| validate-timezone $input })
+      if $value == "q" { exit 0 }
       if $value == "r" { $step = 5 } else {
-        validate-disk $value
-        $state = ($state | upsert disk $value)
+        $state = ($state | upsert timezone $value)
         $step = 7
       }
     } else if $step == 7 {
+      print-section "Disk" [
+        "Select the physical disk that will be repartitioned and formatted."
+        "Review model, serial, size, and mountpoints before choosing."
+      ]
+      let value = if $state.disk == "" { choose-disk "" } else { choose-disk $state.disk }
+      if $value == "r" { $step = 6 } else {
+        validate-disk $value
+        $state = ($state | upsert disk $value)
+        $step = 8
+      }
+    } else if $step == 8 {
+      print-section "Action" [
+        "dry-run writes generated files only."
+        "apply starts the destructive install flow after exact disk confirmation."
+      ]
       print-summary $state
       print ""
-      print "[d] dry-run"
-      print "[a] apply"
-      print "[r] back"
-      print "[q] quit"
-      let value = (input $"Action [($state.action)]: " | str trim)
+      print $"[(paint label d)] dry-run"
+      print $"[(paint danger a)] apply"
+      print $"[(paint label r)] back"
+      print $"[(paint label q)] quit"
+      let prompt = $"(paint prompt 'Action') [(paint value $state.action)]: "
+      let value = (input $prompt | str trim)
 
       if $value == "q" { exit 0 }
-      if $value == "r" { $step = 6 } else if $value == "a" or $value == "apply" {
+      if $value == "r" { $step = 7 } else if $value == "a" or $value == "apply" {
         $state = ($state | upsert action "apply")
         return $state
       } else if $value == "" {
@@ -600,7 +809,8 @@ def main [
   --apply
   --profile: string = ""
   --target: string = ""
-  --install-id: string = ""
+  --session: string = ""
+  --user-description: string = ""
   --user: string = ""
   --password: string = ""
   --hostname: string = ""
@@ -626,15 +836,20 @@ def main [
     $initial = ($initial | upsert profile $selected_profile)
   }
 
-  if $install_id != "" {
-    validate-id $install_id
-    let next_hostname = (derive-hostname $install_id $initial.hostname)
-    $initial = ($initial | upsert install_id $install_id | upsert hostname $next_hostname)
+  if $session != "" {
+    validate-id $session
+    let next_hostname = (derive-hostname $session $initial.hostname)
+    $initial = ($initial | upsert session $session | upsert hostname $next_hostname)
   }
 
   if $user != "" {
     validate-user $user
     $initial = ($initial | upsert user $user)
+  }
+
+  if $user_description != "" {
+    validate-user-description $user_description
+    $initial = ($initial | upsert user_description $user_description)
   }
 
   if $password != "" {

@@ -1,3 +1,6 @@
+set dotenv-load
+set dotenv-path := ".envrc"
+
 # ==============================================================================
 # Help
 # ==============================================================================
@@ -25,6 +28,11 @@ fmt:
 [group('Development')]
 check:
     nix flake check
+
+[doc('Run local script tests')]
+[group('Development')]
+test:
+    nu scripts/tests/install.nu
 
 # ==============================================================================
 # VM Runtime
