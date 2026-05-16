@@ -74,10 +74,13 @@
     {
       formatter.${system} = treefmtEval.config.build.wrapper;
 
-      apps.${system}.disko = {
-        type = "app";
-        program = "${disko.packages.${system}.default}/bin/disko";
-        meta.description = "Run the locked nix-community disko CLI";
+      apps.${system} = {
+        disko = {
+          type = "app";
+          program = "${disko.packages.${system}.default}/bin/disko";
+          meta.description = "Run the locked nix-community disko CLI";
+        };
+
       };
 
       nixosConfigurations.vm = nixpkgs.lib.nixosSystem {

@@ -37,18 +37,78 @@ export def ensure-dir [dir: string] {
 }
 
 export def write-disko-config [disk_device: string, config_path: string] {
-  let repo = (repo-root)
   let dir = ($config_path | path dirname)
   let config = $"
-{ ... }:
 {
-  imports = [
-    \(/. + \"($repo)/nixos/modules/storage/disko.nix\"\)
-  ];
+  disko.devices = {
+    disk.workstation = {
+      type = \"disk\";
+      device = \"($disk_device)\";
+      content = {
+        type = \"gpt\";
+        partitions = {
+          ESP = {
+            size = \"512M\";
+            type = \"EF00\";
+            content = {
+              type = \"filesystem\";
+              format = \"vfat\";
+              mountpoint = \"/boot/efi\";
+              mountOptions = [ \"umask=0077\" ];
+            };
+          };
 
-  platform.storage = {
-    enable = true;
-    diskDevice = \"($disk_device)\";
+          boot = {
+            size = \"512M\";
+            content = {
+              type = \"filesystem\";
+              format = \"ext4\";
+              mountpoint = \"/boot\";
+            };
+          };
+
+          luks = {
+            size = \"100%\";
+            content = {
+              type = \"luks\";
+              name = \"cryptroot\";
+              extraFormatArgs = [ \"--type\" \"luks2\" ];
+              settings.allowDiscards = true;
+              content = {
+                type = \"btrfs\";
+                extraArgs = [ \"-f\" ];
+                subvolumes = {
+                  \"@root\" = {
+                    mountpoint = \"/\";
+                    mountOptions = [ \"compress=zstd\" \"noatime\" \"discard=async\" ];
+                  };
+
+                  \"@nix\" = {
+                    mountpoint = \"/nix\";
+                    mountOptions = [ \"compress=zstd\" \"noatime\" \"discard=async\" ];
+                  };
+
+                  \"@home\" = {
+                    mountpoint = \"/home\";
+                    mountOptions = [ \"compress=zstd\" \"noatime\" \"discard=async\" ];
+                  };
+
+                  \"@log\" = {
+                    mountpoint = \"/var/log\";
+                    mountOptions = [ \"compress=zstd\" \"noatime\" \"discard=async\" ];
+                  };
+
+                  \"@swap\" = {
+                    mountpoint = \"/swap\";
+                    mountOptions = [ \"compress=zstd\" \"noatime\" \"discard=async\" ];
+                  };
+                };
+              };
+            };
+          };
+        };
+      };
+    };
   };
 }
 "

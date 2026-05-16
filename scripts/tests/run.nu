@@ -12,5 +12,9 @@ def main [] {
   run-test "install unit tests" [ "nu" "scripts/tests/install.nu" ]
   run-test "generated installer config tests" [ "nu" "scripts/tests/install-generate.nu" ]
 
+  if ($env.RUN_DISKO_LOOP_TEST? | default "") == "1" {
+    run-test "real disko loopback tests" [ "nu" "scripts/tests/disko-loop.nu" ]
+  }
+
   print "all tests passed"
 }

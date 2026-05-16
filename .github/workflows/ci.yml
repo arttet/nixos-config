@@ -75,6 +75,12 @@ jobs:
       - name: Validate scripts
         run: nix shell nixpkgs#just nixpkgs#nushell nixpkgs#openssl -c just test
 
+      - name: Install loopback disk test dependencies
+        run: sudo apt-get update && sudo apt-get install --yes cryptsetup-bin
+
+      - name: Validate real disko on loopback disk
+        run: nix shell nixpkgs#just nixpkgs#nushell nixpkgs#openssl -c sh -c 'sudo env "PATH=$PATH" RUN_DISKO_LOOP_TEST=1 just test'
+
       - name: Check flake
         run: nix flake check
 
