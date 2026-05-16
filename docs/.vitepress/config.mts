@@ -4,17 +4,14 @@ const userSidebar = [
   {
     text: "Getting Started",
     items: [
-      { text: "Migration Handbook", link: "/user/migration" },
-      { text: "Quick Start", link: "/user/installation" },
+      { text: "Overview", link: "/user/installation" },
     ],
   },
   {
     text: "Installation",
     items: [
-      { text: "Workstation", link: "/user/install-workstation" },
-      { text: "Workstation GUI", link: "/user/workstation-gui" },
-      { text: "VM (Local Testing)", link: "/user/install-vm" },
-      { text: "Rehearsal", link: "/user/install-rehearsal" },
+      { text: "Install Workstation", link: "/user/install-workstation" },
+      { text: "VM", link: "/user/install-vm" },
     ],
   },
   {
@@ -23,13 +20,17 @@ const userSidebar = [
       { text: "Updates & Rebuilds", link: "/user/ops-rebuild" },
       { text: "Maintenance & Cleanup", link: "/user/ops-cleanup" },
       { text: "Backups", link: "/user/ops-backups" },
+      { text: "Recovery & Rollbacks", link: "/user/ops-recovery" },
     ],
   },
   {
-    text: "Disaster Recovery",
+    text: "Diagnostics",
     items: [
-      { text: "Rollbacks", link: "/user/ops-rollback" },
-      { text: "System Recovery", link: "/user/ops-recovery" },
+      { text: "GRUB & Early Boot", link: "/user/diag-grub" },
+      { text: "Boot Time", link: "/user/diag-boot" },
+      { text: "Disk Space", link: "/user/diag-disk" },
+      { text: "Security & Auditing", link: "/user/diag-security" },
+      { text: "Networking", link: "/user/diag-network" },
     ],
   },
 ];
@@ -70,17 +71,11 @@ const devSidebar = [
       { text: "Deferred Features", link: "/dev/roadmap/deferred-features" },
     ],
   },
-];
-
-const referenceSidebar = [
   {
-    text: "Technical Contracts",
+    text: "Reference",
     items: [
-      { text: "Just Commands", link: "/reference/just" },
       { text: "Repository Layout", link: "/reference/layouts" },
-      { text: "Flakes", link: "/reference/flakes" },
-      { text: "Nushell", link: "/reference/nushell" },
-      { text: "QEMU", link: "/reference/qemu" },
+      { text: "Just Commands", link: "/reference/just" },
     ],
   },
 ];
@@ -115,16 +110,15 @@ export default defineConfig({
 
     nav: [
       { text: "Home", link: "/" },
-      { text: "User Guide", link: "/user/migration", activeMatch: "/user/" },
-      { text: "Engineering", link: "/dev/setup/wsl", activeMatch: "/dev/" },
-      { text: "Reference", link: "/reference/just", activeMatch: "/reference/" },
+      { text: "User Guide", link: "/user/installation", activeMatch: "/user/" },
+      { text: "Engineering", link: "/dev/setup/wsl", activeMatch: "/dev/|/reference/" },
       { text: "Evolution", link: "/evolution/adr/", activeMatch: "/evolution/" },
     ],
 
     sidebar: {
       "/user/": userSidebar,
       "/dev/": devSidebar,
-      "/reference/": referenceSidebar,
+      "/reference/": devSidebar,
       "/evolution/": evolutionSidebar,
     },
 

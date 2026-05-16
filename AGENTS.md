@@ -2,25 +2,29 @@
 
 Repository instructions for `nix-config`.
 
+Keep this file compact. It is loaded often by agents, so detailed procedures
+belong in `docs/` and should be linked from here instead of duplicated.
+
 ## Active Scope
 
-The active targets are:
+For users, the product is the graphical workstation installed on real hardware.
+In Nix terms, that is the `workstation-gui` flake target.
 
-```txt
-workstation
-vm
-```
+| Target | Role |
+| --- | --- |
+| `workstation-gui` | Default real-hardware workstation install |
+| `workstation` | Non-graphical base used by checks and development workflows |
+| `vm` | Disposable local QEMU system for testing without real hardware |
 
-- `workstation` is the real-hardware, console-only personal workstation target.
-- `vm` is the disposable local QEMU mirror of `workstation`.
-- `vm` imports `workstation`.
+For the user guide entry point, see `docs/user/installation.md`.
+For the clean-hardware install runbook, see `docs/user/install-workstation.md`.
+For local VM testing, see `docs/user/install-vm.md`.
 
-## Rules
+## Hard Rules
 
 - Documentation must be written in English.
 - Planning or chat may be in Russian.
 - Do not use Home Manager.
-- Do not add GUI services.
 - Do not add active laptop-specific targets yet.
 - Do not add active VPN targets yet.
 - Do not commit real usernames, hostnames, SSH keys, API tokens, VPN tokens,
@@ -34,68 +38,67 @@ vm
 - The user performs runtime and hardware verification locally.
 - Agents must not claim runtime or hardware install success without user
   confirmation.
+- For real-hardware installs, agents must treat user-run validation output as
+  the hardware acceptance result.
+- Deferred features: TPM unlock, YubiKey unlock, Secure Boot, automatic
+  snapshots, impermanence, and hibernation.
+- Automated backups are deferred. Future backup work may add remote untrusted
+  storage, restic with rclone, or YubiKey-backed encryption.
 
-## Repository Layout
+## Read Docs First
 
-```txt
-nix-config/
-├── flake.nix
-├── flake.lock
-├── README.md
-├── AGENTS.md
-├── justfile
-├── docs/
-├── examples/
-├── misc/
-├── nix/
-├── nixos/
-├── scripts/
-└── target/        # ignored local build output
-```
+Before changing a subsystem, read the relevant documentation instead of loading
+unrelated files:
 
-## NixOS Layout
+- User guide overview: `docs/user/installation.md`
+- Workstation install: `docs/user/install-workstation.md`
+- Workstation rebuilds: `docs/user/ops-rebuild.md`
+- Rollback and recovery: `docs/user/ops-rollback.md`,
+  `docs/user/ops-recovery.md`
+- Backups and cleanup: `docs/user/ops-backups.md`,
+  `docs/user/ops-cleanup.md`
+- VM local testing: `docs/user/install-vm.md`
+- Architecture: `docs/dev/system/architecture.md`
+- Storage: `docs/dev/system/storage.md`
+- Security and network: `docs/dev/system/security.md`
+- Applications: `docs/dev/system/applications.md`
+- Testing workflow: `docs/dev/workflows/testing.md`
+- Command reference: `docs/reference/just.md`
+- Repository layout: `docs/reference/layouts.md`
 
-Only the `nixos/` tree is active for NixOS configuration:
+## Layout Rules
 
-```txt
-nixos/
-├── hosts/
-│   ├── vm/
-│   └── workstation/
-├── profiles/
-│   ├── base.nix
-│   ├── vm.nix
-│   └── workstation.nix
-└── modules/
-    ├── core/
-    └── storage/
-```
+Only the `nixos/` tree is active for NixOS configuration. Do not add parallel
+root-level `hosts/`, `profiles/`, or `modules/` trees.
 
-Do not add parallel root-level `hosts/`, `profiles/`, or `modules/` trees.
+Important layout references:
+
+- Repository layout: `docs/reference/layouts.md`
+- NixOS architecture: `docs/dev/system/architecture.md`
+- Command surface: `docs/reference/just.md`
 
 ## Commands
 
-Use modular just commands:
+Use modular `just` commands. Prefer the docs reference for the full command
+surface: `docs/reference/just.md`.
+
+Common checks:
 
 ```sh
 just check
-just vm build
-just vm run
-just vm daemon
-just vm ssh
-just vm status
-just vm stop
-just vm test
-just vm clean
-just workstation build
+just docs build
+just workstation-gui build
+just workstation-gui test
 just workstation test
+just vm build
 ```
 
-Build artifacts go to `target/` by default. Override with:
+Use `workstation-gui` for the default real-hardware workstation path. Use
+`workstation` only for headless/core validation. Use `vm` only for disposable
+local QEMU testing.
 
-```sh
-BUILD_DIR=/tmp/nix-config-build just vm build
-```
+Build artifacts go to `target/` by default unless a command documents another
+output path.
 
 ## Local Overlay
 
@@ -110,7 +113,7 @@ Default overlay path:
 Environment override:
 
 ```sh
-NIX_CONFIG_LOCAL_USER=/path/to/user.nix just workstation build
+NIX_CONFIG_LOCAL_USER=/path/to/user.nix just workstation-gui build
 ```
 
 The committed example overlay in `examples/local/user.nix` must use fake values

@@ -98,6 +98,8 @@
         ];
       };
 
+      nixosConfigurations.default = self.nixosConfigurations.workstation-gui;
+
       nixosConfigurations.workstation-gui = nixpkgs.lib.nixosSystem {
         inherit system;
         specialArgs = moduleArgs;

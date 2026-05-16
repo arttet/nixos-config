@@ -4,11 +4,11 @@ layout: home
 hero:
   name: NixOS Platform
   text: Personal Reproducible NixOS Infrastructure
-  tagline: Declarative systems, disposable machines, and local identity without turning the repository into snowflake state.
+  tagline: A declarative NixOS workstation with local identity kept outside the repository.
   actions:
     - theme: brand
-      text: 🚀 User Guide
-      link: /user/migration
+      text: 🚀 Quick Start
+      link: /user/installation
     - theme: alt
       text: 🏗 Engineering Guide
       link: /dev/setup/wsl
@@ -18,8 +18,8 @@ features:
     title: Layered Architecture
     details: Public infrastructure, local overlays, generated artifacts, and machine identity remain intentionally separated.
   - icon: 🔁
-    title: Disposable Systems
-    details: Rebuild the local NixOS VM mirror before applying changes to real hardware.
+    title: Default Workstation
+    details: Install the graphical workstation on clean hardware, then rebuild and roll back through NixOS generations.
   - icon: 🔐
     title: Local Identity
     details: Real users, SSH keys, hardware state, and secrets never enter the repository.
@@ -30,7 +30,7 @@ features:
     title: Documentation Driven
     details: Architecture, operating contracts, and workflows evolve beside the implementation instead of drifting separately.
   - icon: 🧭
-    title: Incremental Platform
-    details: The system grows milestone by milestone from VM validation toward workstation installs, encryption, CI, and future infrastructure targets.
+    title: Disposable VM
+    details: Use the disposable VM for local checks without making it the main operating workflow.
 
 ---

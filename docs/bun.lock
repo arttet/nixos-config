@@ -8,9 +8,6 @@
         "@types/bun": "latest",
         "vitepress": "^2.0.0-alpha.17",
       },
-      "peerDependencies": {
-        "typescript": "^5",
-      },
     },
   },
   "packages": {

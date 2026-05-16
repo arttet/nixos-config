@@ -139,4 +139,4 @@ At this point the host environment is ready.
 
 Continue with the runtime workflow:
 
-[VM (Local Testing)](/user/install-vm)
+[VM](/user/install-vm)

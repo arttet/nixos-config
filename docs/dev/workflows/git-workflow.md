@@ -2,11 +2,19 @@
 
 The repository is designed for local feedback.
 
-Make a small change. Build the VM. Boot it. Validate behavior. Update the
-docs while the decision is still fresh.
+Make a small change, run the relevant checks, and update the docs while the
+decision is still fresh. Use the VM when the change needs disposable runtime
+validation.
 
 ```sh
 just check
+just workstation-gui build
+just workstation-gui test
+```
+
+For VM-specific runtime validation:
+
+```sh
 just vm build
 just vm run
 ```

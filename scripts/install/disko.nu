@@ -42,7 +42,7 @@ def main [
 
   print "Running disko..."
   let repo = (repo-root)
-  nix run $"path:($repo)#disko" -- --mode disko $config_path
+  nix --extra-experimental-features "nix-command flakes" run $"path:($repo)#disko" -- --mode disko $config_path
   if $env.LAST_EXIT_CODE != 0 {
     error make { msg: "disko failed" }
   }
