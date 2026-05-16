@@ -32,7 +32,7 @@ check:
 [doc('Run local script tests')]
 [group('Development')]
 test:
-    nu scripts/tests/install.nu
+    nu scripts/tests/run.nu
 
 # ==============================================================================
 # VM Runtime

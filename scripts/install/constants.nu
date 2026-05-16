@@ -17,6 +17,10 @@ export def allowed-profiles [] {
   [ "default" "workstation" "workstation-gui" ]
 }
 
+export def disko-mode [] {
+  "destroy,format,mount"
+}
+
 export def ui-width [] {
   55
 }

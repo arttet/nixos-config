@@ -515,8 +515,8 @@ def write-overlay [state: record] {
   let overlay = $"
 { pkgs, lib, ... }:
 {
-  networking.hostName = lib.mkDefault \"($state.hostname)\";
-  time.timeZone = lib.mkDefault \"($state.timezone)\";
+  networking.hostName = lib.mkForce \"($state.hostname)\";
+  time.timeZone = lib.mkForce \"($state.timezone)\";
 
   users.users.\"($state.user)\" = {
     isNormalUser = true;

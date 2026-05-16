@@ -72,6 +72,9 @@ jobs:
       - name: Check formatting
         run: nix fmt -- --ci
 
+      - name: Validate scripts
+        run: nix shell nixpkgs#just nixpkgs#nushell nixpkgs#openssl -c just test
+
       - name: Check flake
         run: nix flake check
 
