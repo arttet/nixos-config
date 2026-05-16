@@ -2,13 +2,13 @@
 layout: home
 
 hero:
-  name: NixOS Platform
+  name: NixOS Configuration
   text: Personal Reproducible NixOS Infrastructure
   tagline: A declarative NixOS workstation with local identity kept outside the repository.
   actions:
     - theme: brand
       text: 🚀 Quick Start
-      link: /user/installation/
+      link: /user/quickstart
     - theme: alt
       text: 🏗 Engineering Guide
       link: /dev/

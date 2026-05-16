@@ -12,13 +12,13 @@ Back up these categories:
 | Category | Why it matters | Example paths |
 | --- | --- | --- |
 | Documents | Personal files | `~/Documents`, `~/Desktop`, selected media folders |
-| Local overlay | Hostname, timezone, local user, private host settings | `/root/.nix-config-local/user.nix` |
+| Local identity | Hostname, timezone, local user, password hash, private host settings | `/root/.nix-config-local/user.nix`, `/root/.nix-config-local/user.passwd` |
 | Secrets | Private credentials and key material | selected SSH, GPG, password manager, or token files |
 | App state | Only when intentionally needed | selected browser, editor, or profile data |
 | LUKS2 Header | Vital if the primary header is corrupted | Explicitly collected file (see below) |
 
-Do not upload local overlays, secrets, or LUKS headers to remote storage unless the
-backup is encrypted.
+Do not upload local identity files, secrets, or LUKS headers to remote storage
+unless the backup is encrypted.
 
 ## 📁 Create a Backup Workspace
 
@@ -32,21 +32,29 @@ backup_dir="$HOME/workstation-backup-$(date +%Y%m%d-%H%M%S)"
 mkdir -p "$backup_dir"
 ```
 
-## 🔐 Back Up the Local Overlay
+## 🔐 Back Up Local Identity
 
-The installer stores the machine-local overlay under root. Copy it into the backup workspace:
+The installer stores machine-local identity under root. Copy the overlay and
+password hash file into the backup workspace:
 
 ```sh
 doas cp /root/.nix-config-local/user.nix "$backup_dir/user.nix"
 ```
 
 ```sh
-doas chown "$USER:$(id -gn)" "$backup_dir/user.nix"
+doas cp /root/.nix-config-local/user.passwd "$backup_dir/user.passwd"
 ```
 
 ```sh
-chmod 600 "$backup_dir/user.nix"
+doas chown "$USER:$(id -gn)" "$backup_dir/user.nix" "$backup_dir/user.passwd"
 ```
+
+```sh
+chmod 600 "$backup_dir/user.nix" "$backup_dir/user.passwd"
+```
+
+`user.passwd` contains the hashed login password. Treat it as sensitive
+material.
 
 ## 🛡️ Back Up the LUKS2 Header
 

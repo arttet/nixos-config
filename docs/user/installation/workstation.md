@@ -12,8 +12,7 @@ Prepare the machine before starting this guide:
 
 - Back up important data from the target disk.
 - Download the official [Minimal NixOS ISO](https://nixos.org/download).
-- Prepare a bootable USB drive. [Ventoy](https://www.ventoy.net/) is
-  recommended for this.
+- Prepare a bootable USB drive. [Ventoy](https://www.ventoy.net/) is recommended for this.
 - Disable Secure Boot in firmware settings.
 - Make sure the machine can reach the network from the live ISO.
 - Identify which physical disk will be erased.
@@ -88,12 +87,17 @@ When `apply` is selected and disk confirmation succeeds, the installer:
 2. Runs `disko` to partition and format the disk.
 3. Runs `nixos-generate-config --root /mnt`.
 4. Writes the local user overlay to `/mnt/root/.nix-config-local/user.nix`.
-5. Installs the default workstation target with
+5. Writes the local password hash file to
+   `/mnt/root/.nix-config-local/user.passwd`.
+6. Installs the default workstation target with
    `nixos-install --impure --no-root-passwd`.
 
 The generated local overlay contains the hostname, timezone, initial user, user
-shell, hashed initial password, and `wheel` membership. It is local machine
-state and must not be committed to the repository.
+shell, `wheel` membership, and a reference to the password hash file. The
+password hash itself is stored separately in `user.passwd`, not inside the Nix
+overlay.
+
+Both files are local machine state and must not be committed to the repository.
 
 After the installer completes, reboot:
 

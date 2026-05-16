@@ -64,7 +64,14 @@ Any command that repartitions, formats, or encrypts a real disk is destructive. 
 ```sh
 NIX_CONFIG_LOCAL_USER="/tmp/nix-config-install/pc/user.nix" \
 NIX_CONFIG_LOCAL_HARDWARE="/mnt/etc/nixos/hardware-configuration.nix" \
-nixos-install --impure --flake "path:/absolute/path/to/nixos-config#workstation-gui"
+nixos-install --impure --flake "path:/absolute/path/to/nixos-config#"
+```
+
+The recovered target root must also contain the password hash file referenced by
+the local overlay:
+
+```txt
+/mnt/root/.nix-config-local/user.passwd
 ```
 
 ## 🔐 Restoring a LUKS2 Header
