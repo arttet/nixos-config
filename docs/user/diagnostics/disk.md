@@ -14,11 +14,13 @@ Look for the usage percentage of `/` (root), `/nix`, and `/home`.
 
 ## 📁 Identifying Large Files and Folders
 
-To find the largest directories inside a specific path (e.g., your home folder):
+To find the largest directories where user data or logs typically accumulate:
 
 ```sh
-doas du -sh /* | sort -hr | head -n 15
+doas du -sh /home /var /root /tmp | sort -hr | head -n 15
 ```
+
+Avoid running `du -sh /*` as root; traversing the entire `/nix/store` or virtual filesystems like `/proc` is extremely slow and may hang your session.
 
 If you prefer an interactive tool, you can temporarily install and use `ncdu` or `dust`:
 
@@ -36,7 +38,7 @@ To see how much space the Nix store is using:
 du -sh /nix/store
 ```
 
-To clean up old, unused NixOS generations and free up space, see the [Maintenance & Cleanup](ops-cleanup) guide.
+To clean up old, unused NixOS generations and free up space, see the [Maintenance & Cleanup](../operations/cleanup) guide.
 
 ## 🌲 Btrfs Specific Diagnostics
 

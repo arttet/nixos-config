@@ -69,7 +69,7 @@ nixos-install --impure --flake "path:/absolute/path/to/nixos-config#workstation-
 
 ## 🔐 Restoring a LUKS2 Header
 
-If your LUKS header becomes corrupted and the password no longer works, you can restore it from a backup (see [Backups](ops-backups)).
+If your LUKS header becomes corrupted and the password no longer works, you can restore it from a backup (see [Backups](backups)).
 
 Boot from a Live ISO, transfer your backup header file (`luks-header-backup.img`) to the live environment, and run:
 

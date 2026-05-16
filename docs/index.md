@@ -8,10 +8,10 @@ hero:
   actions:
     - theme: brand
       text: 🚀 Quick Start
-      link: /user/installation
+      link: /user/installation/
     - theme: alt
       text: 🏗 Engineering Guide
-      link: /dev/setup/wsl
+      link: /dev/
 
 features:
   - icon: 🧱

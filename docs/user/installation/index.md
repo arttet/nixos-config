@@ -24,7 +24,7 @@ curl -sL github.com/arttet/nixos-config/raw/main/install.sh | bash
 
 The script will ask you a few simple questions (like your disk, hostname, and password) and then fully automate the partitioning, installation, and configuration of the default profile.
 
-👉 **Read [Install Workstation](install-workstation)** for the detailed step-by-step installation guide.
+👉 **Read [Install Workstation](workstation)** for the detailed step-by-step installation guide.
 
 ## 🔄 Iterating on your system
 

@@ -92,8 +92,8 @@ When `apply` is selected and disk confirmation succeeds, the installer:
    `nixos-install --impure --no-root-passwd`.
 
 The generated local overlay contains the hostname, timezone, initial user, user
-shell, password, and `wheel` membership. It is local machine state and must not
-be committed to the repository.
+shell, hashed initial password, and `wheel` membership. It is local machine
+state and must not be committed to the repository.
 
 After the installer completes, reboot:
 
