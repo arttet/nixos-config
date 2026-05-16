@@ -1,5 +1,5 @@
 {
-  description = "NixOS Platform: personal reproducible infrastructure";
+  description = "NixOS Configuration: personal reproducible infrastructure";
 
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";

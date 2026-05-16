@@ -62,7 +62,7 @@ lsblk -f
 Any command that repartitions, formats, or encrypts a real disk is destructive. After mounting or recreating the system according to the storage model, provide the local overlay and hardware configuration paths when reinstalling:
 
 ```sh
-NIX_CONFIG_LOCAL_USER="/tmp/nix-config-install/pc/user.nix" \
+NIX_CONFIG_LOCAL_USER="$HOME/.cache/nixos-config-installer/state/pc/user.nix" \
 NIX_CONFIG_LOCAL_HARDWARE="/mnt/etc/nixos/hardware-configuration.nix" \
 nixos-install --impure --flake "path:/absolute/path/to/nixos-config#"
 ```

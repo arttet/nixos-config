@@ -49,8 +49,8 @@ Run the installer from the live environment:
 curl -sL github.com/arttet/nixos-config/raw/main/install.sh | bash
 ```
 
-The entrypoint clones or updates the repository under `/tmp/nixos-config`, then
-starts the Nushell installer:
+The entrypoint clones or updates the repository under
+`/root/.cache/nixos-config-installer/repo`, then starts the Nushell installer:
 
 ```sh
 nu scripts/install/bootstrap.nu --apply
@@ -62,8 +62,8 @@ The wizard asks for:
 
 | Prompt | Meaning |
 | --- | --- |
-| Install id | Local install workspace name under `/tmp/nix-config-install/` |
-| Target | System variant to install; keep `default` for the normal workstation |
+| Install id | Local install workspace name under `$HOME/.cache/nixos-config-installer/state/` |
+| Profile | System profile to install; keep `default` for the normal workstation |
 | Username | Initial local user |
 | User password | Initial login password for that user |
 | Hostname | Machine hostname |
@@ -71,9 +71,9 @@ The wizard asks for:
 | Disk | Target disk device to repartition and format |
 | Action | `dry-run` or `apply` |
 
-Keep the target as `default` for a normal workstation install. The flake default
-points to the graphical workstation. Do not switch to another target unless you
-are deliberately testing a development workflow.
+Keep the profile as `default` for a normal workstation install. The flake
+default points to the graphical workstation. Do not switch to another profile
+unless you are deliberately testing a development workflow.
 
 Disk discovery prints available disks from `lsblk` and matching
 `/dev/disk/by-id/` entries when available. Review the disk carefully. The
