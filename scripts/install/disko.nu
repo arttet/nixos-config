@@ -62,10 +62,16 @@ export def canonical-device-path [device: string] {
 def main [
   disk_device: string
   --yes
+  --non-interactive
   --config: string = ""
+  --luks-password-file: string = ""
 ] {
   let config_path = if $config == "" { default-config-path } else { $config }
   let config_provided = $config != ""
+
+  if $non_interactive and not $config_provided and $luks_password_file == "" {
+    error make { msg: "non-interactive disko mode requires --luks-password-file when generating the config" }
+  }
 
   validate-disk $disk_device
   if $config_provided {
@@ -73,7 +79,7 @@ def main [
       error make { msg: $"provided disko config does not exist: ($config_path)" }
     }
   } else {
-    write-disko-config $disk_device $config_path
+    write-disko-config $disk_device $config_path --luks-password-file $luks_password_file
   }
 
   validate-config-disk $disk_device $config_path
@@ -84,8 +90,13 @@ def main [
 
   print "Running disko..."
   let repo = (repo-root)
-  nix --extra-experimental-features "nix-command flakes" run $"path:($repo)#disko" -- --mode (disko-mode) --yes-wipe-all-disks $config_path
-  if $env.LAST_EXIT_CODE != 0 {
-    error make { msg: "disko failed" }
+  if $non_interactive {
+    nix --extra-experimental-features "nix-command flakes" run $"path:($repo)#disko" -- --mode (disko-mode) --yes-wipe-all-disks $config_path
+  } else {
+    nix --extra-experimental-features "nix-command flakes" run $"path:($repo)#disko" -- --mode (disko-mode) --yes-wipe-all-disks $config_path
+  }
+  let disko_exit_code = $env.LAST_EXIT_CODE
+  if $disko_exit_code != 0 {
+    error make { msg: $"disko failed with exit code ($disko_exit_code)" }
   }
 }

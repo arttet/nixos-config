@@ -174,6 +174,7 @@ def main [] {
     let disko = (open $paths.disko)
     assert ($disko | str contains 'disko.devices =')
     assert ($disko | str contains $"device = \"(test-disk-path)\";")
+    assert not ($disko | str contains "passwordFile")
 
     assert-nix-parses $paths.overlay
     assert-nix-parses $paths.disko
