@@ -25,7 +25,10 @@
       efiSupport = true;
       useOSProber = false;
     };
-    efi.canTouchEfiVariables = true;
+    efi = {
+      canTouchEfiVariables = true;
+      efiSysMountPoint = "/boot/efi";
+    };
   };
 
   hardware.enableRedistributableFirmware = true;

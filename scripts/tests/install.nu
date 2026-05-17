@@ -5,6 +5,7 @@ use std assert
 use ../install/bootstrap.nu *
 use ../install/constants.nu *
 use ../install/disko.nu *
+use ../install/ui.nu *
 
 def assert-source-ok [path: string] {
   let result = (nu --no-config-file --commands $"source ($path)" | complete)
@@ -68,14 +69,29 @@ def test-hostname-derivation [] {
 
 def test-flake-uri [] {
   assert ($"(flake-uri "default")" | str starts-with "path:")
-  assert ($"(flake-uri "default")" | str ends-with "#")
+  assert ($"(flake-uri "default")" | str ends-with "#default")
   assert ($"(flake-uri "workstation-gui")" | str ends-with "#workstation-gui")
 }
 
 def test-presentation-no-color [] {
-  with-env { NO_COLOR: "1" } {
+  with-env { NO_COLOR: "1", NIX_CONFIG_INSTALL_PLAIN_UI: "1" } {
     assert equal (paint "heading" "Profile") "Profile"
     assert equal (paint "danger" "warning") "warning"
+  }
+}
+
+def test-plain-ui-rendering [] {
+  with-env { NIX_CONFIG_INSTALL_PLAIN_UI: "1", NO_COLOR: "1" } {
+    let section = (render-kv-section "NixOS installer" [
+      { label: "Target disk", value: "/dev/nvme0n1" }
+      { label: "Encryption", value: "LUKS enabled" }
+    ])
+
+    assert ($section | str contains "NixOS installer")
+    assert ($section | str contains "Target disk")
+    assert ($section | str contains "/dev/nvme0n1")
+    assert equal (render-step 2 6 "Applying disk layout" "running") "  [2/6] Applying disk layout               … running"
+    assert equal (render-step 3 6 "Generating hardware configuration" "ok") "  [3/6] Generating hardware configuration  ✓ ok"
   }
 }
 
@@ -191,8 +207,56 @@ def test-disko-config-disk-validation [] {
   }
 }
 
+def test-disko-config-password-file [] {
+  let root = (mktemp -d | str trim)
+
+  try {
+    let config = ([$root disko.nix] | path join)
+    let key = ([$root luks.key] | path join)
+
+    write-disko-config "/dev/nixos-config-test-disk" $config --luks-password-file $key
+
+    let source = (open $config)
+    assert ($source | str contains $"passwordFile = \"($key)\";") "expected generated disko config to include passwordFile"
+  } finally {
+    rm --recursive --force $root
+  }
+}
+
+def test-installer-file-permission-contract [] {
+  let source = (open scripts/install/bootstrap.nu)
+
+  assert ($source | str contains "def ensure-private-secrets-dir") "expected a dedicated secrets directory helper"
+  assert ($source | str contains "chmod 700 $dir") "expected private installer directories to be chmod 700"
+  assert ($source | str contains "chmod 700 $persistent_user_dir") "expected target local overlay directory to be chmod 700"
+  assert ($source | str contains "install -m 600 /dev/null $path") "expected secret files to be created mode 600"
+  assert ($source | str contains "install -m 600 (password-hash-path $state.session) (mounted-target-password-path)") "expected target password hash to be copied mode 600"
+}
+
+def test-installer-preflight-contract [] {
+  let source = (open scripts/install/bootstrap.nu)
+
+  assert ($source | str contains "def require-uefi") "expected UEFI pre-flight check"
+  assert ($source | str contains '"/sys/firmware/efi" | path exists') "expected UEFI check to inspect efivars path"
+  assert ($source | str contains "def ensure-mnt-free") "expected /mnt pre-flight check"
+  assert ($source | str contains "findmnt /mnt") "expected /mnt check to use findmnt"
+  assert ($source | str contains "def require-network") "expected network pre-flight check"
+  assert ($source | str contains "ping -c 1 cache.nixos.org") "expected cache.nixos.org connectivity check"
+  assert ($source | str contains "run-preflight-checks $state.session") "expected apply flow to run pre-flight before destructive confirmation"
+}
+
+def test-installer-output-logging-contract [] {
+  let source = (open scripts/install/bootstrap.nu)
+
+  assert ($source | str contains "def run-logged-stream") "expected helper for captured command output logging"
+  assert ($source | str contains "tee -a") "expected stdout and stderr to be logged via tee"
+  assert ($source | str contains "run-logged-stream $state.session \"disko\"") "expected disko output logging"
+  assert ($source | str contains "run-logged-stream $state.session \"nixos-generate-config\"") "expected nixos-generate-config output logging"
+}
+
 assert-source-ok "scripts/install/common.nu"
 assert-source-ok "scripts/install/constants.nu"
+assert-source-ok "scripts/install/ui.nu"
 assert-source-ok "scripts/install/bootstrap.nu"
 assert-source-ok "scripts/install/disko.nu"
 assert-source-ok "scripts/install/workstation.nu"
@@ -204,9 +268,14 @@ test-session-validation
 test-hostname-derivation
 test-flake-uri
 test-presentation-no-color
+test-plain-ui-rendering
 test-password-validation
 test-summary-does-not-print-password-hash-path
 test-disko-mode-is-current
 test-disko-config-disk-validation
+test-disko-config-password-file
+test-installer-file-permission-contract
+test-installer-preflight-contract
+test-installer-output-logging-contract
 
 print "install.nu tests passed"

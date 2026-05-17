@@ -2,12 +2,9 @@
 
 use common.nu *
 use constants.nu *
+use ui.nu *
 
 # Runtime path helpers are grouped first; stable defaults live in constants.nu.
-
-def ui-rule [] {
-  "" | fill --alignment l --character "━" --width (ui-width)
-}
 
 def state-root [] {
   $env.NIX_CONFIG_INSTALL_STATE_DIR? | default (join-path [ $env.HOME ".cache" "nixos-config-installer" "state" ])
@@ -28,8 +25,59 @@ def overlay-path [session: string] {
   join-path [ (install-dir $session) "user.nix" ]
 }
 
-def password-path [session: string] {
-  join-path [ (install-dir $session) "user.passwd" ]
+def volatile-root [] {
+  $env.NIX_CONFIG_INSTALL_VOLATILE_DIR? | default "/run/nixos-config-installer"
+}
+
+def runtime-dir [session: string] {
+  join-path [ (volatile-root) $session "runtime" ]
+}
+
+def secrets-dir [session: string] {
+  join-path [ (volatile-root) $session "secrets" ]
+}
+
+def ensure-private-runtime-dir [session: string] {
+  let dir = (runtime-dir $session)
+  ensure-dir $dir
+  chmod 700 $dir
+  $dir
+}
+
+def ensure-private-secrets-dir [session: string] {
+  let dir = (secrets-dir $session)
+  ensure-dir $dir
+  chmod 700 $dir
+  $dir
+}
+
+def remove-secret-file [path: string] {
+  if ($path | path exists) {
+    let result = (shred -u -z $path | complete)
+    if $result.exit_code != 0 {
+      let stderr = ($result.stderr | str trim)
+      let detail = if $stderr == "" { "" } else { $": ($stderr)" }
+      error make { msg: $"failed to shred secret file ($path) with exit code ($result.exit_code)($detail)" }
+    }
+  }
+}
+
+def cleanup-secrets-dir [session: string] {
+  let dir = (secrets-dir $session)
+  if ($dir | path exists) {
+    ls $dir | each {|file|
+      remove-secret-file $file.name
+    }
+    rm --recursive --force $dir
+  }
+}
+
+def cleanup-volatile-session [session: string] {
+  let dir = (join-path [ (volatile-root) $session ])
+  if ($dir | path exists) {
+    cleanup-secrets-dir $session
+    rm --recursive --force $dir
+  }
 }
 
 def target-local-dir [] {
@@ -52,116 +100,34 @@ def hardware-config-path [] {
   "/mnt/etc/nixos/hardware-configuration.nix"
 }
 
-def disko-config-path [] {
-  join-path [ (temp-root) "workstation-disko.nix" ]
+def disko-config-path [session: string] {
+  join-path [ (runtime-dir $session) "workstation-disko.nix" ]
+}
+
+def luks-password-path [session: string] {
+  join-path [ (secrets-dir $session) "luks.passwd" ]
+}
+
+def password-hash-path [session: string] {
+  join-path [ (secrets-dir $session) "user.passwd" ]
+}
+
+def install-log-path [session: string] {
+  join-path [ (runtime-dir $session) "install.log" ]
 }
 
 export def flake-uri [profile: string] {
-  if $profile == "default" {
-    $"path:(repo-root)#"
-  } else {
-    $"path:(repo-root)#($profile)"
-  }
+  $"path:(repo-root)#($profile)"
 }
 
 def prompt-default [label: string, default: string] {
-  let prompt = $"(paint prompt $label) [(paint value $default)]: "
-  let answer = (input $prompt | str trim)
-
-  if $answer == "" {
-    $default
-  } else {
-    $answer
-  }
-}
-
-export def no-color [] {
-  ($env.NO_COLOR? | default "") != ""
-}
-
-export def paint [kind: string, text: string] {
-  if (no-color) {
-    return $text
-  }
-
-  match $kind {
-    "logo" => $"(ansi cyan_bold)($text)(ansi reset)"
-    "heading" => $"(ansi cyan_bold)($text)(ansi reset)"
-    "rule" => $"(ansi blue_dimmed)($text)(ansi reset)"
-    "detail" => $"(ansi light_gray_bold)($text)(ansi reset)"
-    "label" => $"(ansi blue_bold)($text)(ansi reset)"
-    "value" => $"(ansi green_bold)($text)(ansi reset)"
-    "prompt" => $"(ansi cyan_bold)($text)(ansi reset)"
-    "success" => $"(ansi green_bold)($text)(ansi reset)"
-    "warning" => $"(ansi yellow_bold)($text)(ansi reset)"
-    "danger" => $"(ansi red_bold)($text)(ansi reset)"
-    "muted" => $"(ansi dark_gray_bold)($text)(ansi reset)"
-    _ => $text
-  }
+  prompt-text $label $default
 }
 
 def clear-screen-once [] {
   if ($env.TERM? | default "") != "dumb" {
     print $"(ansi cls)(ansi home)"
   }
-}
-
-def print-logo [] {
-  print ""
-  print (paint logo "    _   ___      ____  ____   __        __         _        _        _   _")
-  print (paint logo "   / | / (_)  __/ __ \\/ __/  / /  __   / /__  ____(_)__ ___(_)____ _/ /_(_)__  ___")
-  print (paint logo "  /  |/ / / |/ / /_/ /\\ \\   / / |/ /  / / _ \\/ __/ (_-</ _ \\/ __/ _ `/ __/ / _ \\/ _ \\")
-  print (paint logo " /_/|_/_/|___/\\____/___/  /_/|___/  /_/\\___/_/ /_/___/_//_/\\__/\\_,_/\\__/_/\\___/_//_/")
-  print (paint muted "                         Clean hardware installer")
-  print ""
-}
-
-def print-section [title: string, details: list<string>] {
-  let rule = (paint rule (ui-rule))
-  print ""
-  print $rule
-  print (paint heading $title | fill --alignment center --width (ui-width))
-  print $rule
-  for detail in $details {
-    print $"    (paint detail $detail)"
-  }
-  print $rule
-  print ""
-}
-
-def print-kv-section [title: string, rows: list<record<label: string, value: string>>] {
-  let rule = (paint rule (ui-rule))
-  print ""
-  print $rule
-  print (paint heading $title | fill --alignment center --width (ui-width))
-  print $rule
-  for row in $rows {
-    let label = ($row.label | fill --alignment l --width (kv-label-width))
-    print $"  (paint label $label) : (paint value $row.value)"
-  }
-  print $rule
-  print ""
-}
-
-def print-danger-section [title: string, details: list<string>] {
-  let rule = (paint danger (ui-rule))
-  print ""
-  print $rule
-  print (paint danger $title | fill --alignment center --width (ui-width))
-  print $rule
-  for detail in $details {
-    print $"    (paint warning $detail)"
-  }
-  print $rule
-  print ""
-}
-
-def print-status [message: string] {
-  print $"(paint success '==>') ($message)"
-}
-
-def print-error-line [message: string] {
-  print $"(paint danger 'error:') ($message)"
 }
 
 def prompt-validated [label: string, default: string, validator: closure] {
@@ -192,15 +158,13 @@ def prompt-validated [label: string, default: string, validator: closure] {
 
 def prompt-secret-confirm [label: string, repeat_label: string, validator: closure] {
   loop {
-    let password = (input --suppress-output (paint prompt $label))
-    print ""
+    let password = (prompt-secret $label)
 
     if $password in [ "q" "r" ] {
       return $password
     }
 
-    let confirmation = (input --suppress-output (paint prompt $repeat_label))
-    print ""
+    let confirmation = (prompt-secret $repeat_label)
 
     if $confirmation in [ "q" "r" ] {
       return $confirmation
@@ -260,39 +224,91 @@ export def validate-password [value: string] {
 }
 
 def hash-password [password: string] {
-  if (which mkpasswd | length) > 0 {
-    let result = ($password | mkpasswd -m sha-512 -s | complete)
-    let hash = ($result.stdout | str trim)
+  let result = ($password | mkpasswd -m sha-512 -s | complete)
+  let hash = ($result.stdout | str trim)
 
-    if $result.exit_code == 0 and ($hash | str starts-with '$6$') {
-      return $hash
-    }
+  if $result.exit_code == 0 and ($hash | str starts-with '$6$') {
+    return $hash
   }
 
-  if (which openssl | length) > 0 {
-    let result = ($password | openssl passwd -6 -stdin | complete)
-    let hash = ($result.stdout | str trim)
-
-    if $result.exit_code == 0 and ($hash | str starts-with '$6$') {
-      return $hash
-    }
-  }
-
-  error make { msg: "mkpasswd or openssl is required to generate hashedPasswordFile content" }
+  let stderr = ($result.stderr | str trim)
+  let detail = if $stderr == "" { "" } else { $": ($stderr)" }
+  error make { msg: $"mkpasswd failed to generate hashedPasswordFile content with exit code ($result.exit_code)($detail)" }
 }
 
 def require-password-hash-tool [] {
-  if (which mkpasswd | length) == 0 and (which openssl | length) == 0 {
-    error make { msg: "mkpasswd or openssl is required to generate the initial user password hash" }
+  if (which mkpasswd | length) == 0 {
+    error make { msg: "mkpasswd is required to generate the initial user password hash" }
   }
 }
 
 def require-file-permission-tools [] {
-  for command in [ "chmod" "install" ] {
+  for command in [ "chmod" "install" "shred" ] {
     if (which $command | length) == 0 {
       error make { msg: $"($command) is required to create local installer files with restrictive permissions" }
     }
   }
+}
+
+def require-apply-tools [] {
+  for command in [ "bash" "findmnt" "nixos-generate-config" "nixos-install" "ping" "swapoff" "tee" "umount" ] {
+    if (which $command | length) == 0 {
+      error make { msg: $"($command) is required before apply mode can safely continue" }
+    }
+  }
+}
+
+def require-uefi [] {
+  if not ("/sys/firmware/efi" | path exists) {
+    error make { msg: "system booted in Legacy BIOS mode, but this installer requires UEFI; reboot the live USB in UEFI mode" }
+  }
+}
+
+def ensure-mnt-free [] {
+  let result = (findmnt /mnt | complete)
+  if $result.exit_code == 0 {
+    print $"  (paint warning 'Unmounting existing /mnt from previous run...')"
+    let umount_result = (umount -R /mnt | complete)
+    if $umount_result.exit_code != 0 {
+      let stderr = ($umount_result.stderr | str trim)
+      let detail = if $stderr == "" { "" } else { $": ($stderr)" }
+      error make { msg: $"failed to unmount /mnt automatically; unmount it manually before running the installer($detail)" }
+    }
+  }
+}
+
+def require-network [] {
+  let result = (ping -c 1 cache.nixos.org | complete)
+  if $result.exit_code != 0 {
+    error make { msg: "cannot reach cache.nixos.org; check network before formatting the disk" }
+  }
+}
+
+def run-preflight-checks [session: string] {
+  print ""
+  print (paint heading "Pre-flight Checks")
+  print $"  (paint detail 'Validating requirements before applying destructive changes.')"
+  append-install-log $session "PREFLIGHT start"
+
+  print-step 1 4 "Checking UEFI boot mode" "running"
+  require-uefi
+  append-install-log $session "PREFLIGHT uefi=ok"
+  print-step 1 4 "Checking UEFI boot mode" "ok"
+
+  print-step 2 4 "Checking installer commands" "running"
+  require-apply-tools
+  append-install-log $session "PREFLIGHT commands=ok"
+  print-step 2 4 "Checking installer commands" "ok"
+
+  print-step 3 4 "Checking /mnt is free" "running"
+  ensure-mnt-free
+  append-install-log $session "PREFLIGHT mnt=free"
+  print-step 3 4 "Checking /mnt is free" "ok"
+
+  print-step 4 4 "Checking network" "running"
+  require-network
+  append-install-log $session "PREFLIGHT network=ok target=cache.nixos.org"
+  print-step 4 4 "Checking network" "ok"
 }
 
 def with-password-hash [state: record] {
@@ -406,19 +422,16 @@ def read-disk-candidates [] {
   }
 }
 
-def choose-disk [current: string] {
-  print-section "Disk Discovery" [
-    "The installer reads block devices from lsblk."
-    "Review size, model, serial, mountpoints, and stable by-id names."
-    "Reference commands: lsblk -o NAME,SIZE,TYPE,MODEL,SERIAL,MOUNTPOINTS"
-    "Reference commands: ls -l /dev/disk/by-id/"
-  ]
-
+def choose-disk [state: record] {
+  let current = $state.disk
   let disks = (read-disk-candidates)
 
   if ($disks | length) == 0 {
-    print "No lsblk disk candidates were parsed. Enter a disk path manually."
     loop {
+      wizard-screen $state 8 "Disk" [
+        "No lsblk disk candidates were parsed."
+        "Enter a disk path manually, preferably /dev/disk/by-id/..."
+      ]
       let manual = (prompt-default "Disk device" $current)
 
       if $manual == "q" {
@@ -447,20 +460,28 @@ def choose-disk [current: string] {
     }
   }
 
-  print "Available disk candidates:"
-  $disks | enumerate | each {|item|
-    let n = $item.index + 1
-    let disk = $item.item
-    let stable = if $disk.stable_id == "" { "no-by-id-match" } else { $disk.stable_id }
-    print $"[($n)] ($disk.path)  id=($stable)  ($disk.size)  ($disk.model)  ($disk.serial)  mounts=($disk.mountpoints)"
-  }
-  print "[m] manual path"
-  print "[r] back"
-  print "[q] quit"
-  print ""
-
   loop {
-    let answer = (input "Select disk: " | str trim)
+    let options = (
+      $disks | enumerate | each {|item|
+        let n = $item.index + 1
+        let disk = $item.item
+        let stable = if $disk.stable_id == "" { "no-by-id-match" } else { $disk.stable_id }
+        $"($n). ($disk.path)  ($disk.size)  ($disk.model)  ($disk.serial)  id=($stable)"
+      } | append [ "m  manual path" "r  back" "q  quit" ]
+    )
+    wizard-screen $state 8 "Disk" (
+      [
+        "Select the physical disk that will be repartitioned and formatted."
+        "Review model, serial, size, and stable by-id names before choosing."
+        ""
+      ] | append $options
+    )
+    let selected = (prompt-choice "Select disk" $options)
+    let answer = if ($selected | str trim) == "" {
+      ""
+    } else {
+      ($selected | split row " " | first | str trim | str replace --regex '[.]$' '')
+    }
 
     if $answer == "q" {
       exit 0
@@ -472,6 +493,10 @@ def choose-disk [current: string] {
 
     if $answer == "m" {
       loop {
+        wizard-screen $state 8 "Manual disk path" [
+          "Enter the target disk device."
+          "Prefer stable paths under /dev/disk/by-id/."
+        ]
         let manual = (input "Disk device [/dev/disk/by-id/...]: " | str trim)
 
         if $manual == "q" {
@@ -532,12 +557,57 @@ def write-overlay [state: record] {
 }
 
 def write-password-file [state: record] {
-  ensure-private-install-dir $state.session | ignore
+  ensure-private-secrets-dir $state.session | ignore
 
-  let path = (password-path $state.session)
+  let path = (password-hash-path $state.session)
   install -m 600 /dev/null $path
   $state.password_hash | save --force $path
   chmod 600 $path
+}
+
+def write-luks-password-file [session: string, passphrase: string] {
+  ensure-private-secrets-dir $session | ignore
+  let path = (luks-password-path $session)
+  install -m 600 /dev/null $path
+  $passphrase | save --force $path
+  chmod 600 $path
+}
+
+def append-install-log [session: string, message: string] {
+  ensure-private-runtime-dir $session | ignore
+  let line = $"(date now | format date '%Y-%m-%dT%H:%M:%S%z')  ($message)\n"
+  $line | save --append (install-log-path $session)
+}
+
+def log-command-start [session: string, command: string] {
+  append-install-log $session $"START command=($command)"
+}
+
+def log-command-exit [session: string, command: string, exit_code: int] {
+  append-install-log $session $"EXIT code=($exit_code) command=($command)"
+}
+
+def run-logged-stream [session: string, command_label: string, command: string] {
+  log-command-start $session $command_label
+  let log_path = (install-log-path $session)
+  bash -c $"set -o pipefail; ($command) 2>&1 | tee -a '($log_path)'"
+  let exit_code = $env.LAST_EXIT_CODE
+  log-command-exit $session $command_label $exit_code
+  $exit_code
+}
+
+def disable-active-swap [session: string] {
+  let command = "swapoff -a"
+  log-command-start $session $command
+  let result = (swapoff -a | complete)
+  log-command-exit $session $command $result.exit_code
+
+  if $result.exit_code != 0 {
+    let stderr = ($result.stderr | str trim)
+    let detail = if $stderr == "" { "continuing; no active swap may be present" } else { $stderr }
+    append-install-log $session $"WARN swapoff=($detail)"
+    print $"  (paint warning 'swapoff warning:') ($detail)"
+  }
 }
 
 def write-env [state: record] {
@@ -578,7 +648,7 @@ def print-next-commands [state: record] {
   print-section "Generated Files" [
     (overlay-path $state.session)
     (env-path $state.session)
-    (disko-config-path)
+    (disko-config-path $state.session)
   ]
 
   print (paint success "Dry-run complete. No destructive command was run.")
@@ -599,10 +669,103 @@ def confirm-disk [disk_device: string] {
     "This will repartition and format the selected disk."
     "Type the exact disk path to continue."
   ]
-  let confirmation = (input "Type the exact disk path to continue: " | str trim)
 
-  if $confirmation != $disk_device {
-    error make { msg: "disk confirmation did not match; aborting" }
+  loop {
+    let confirmation = (input "> Type the exact disk path to continue (or 'q' to quit): " | str trim)
+    if $confirmation == "q" {
+      exit 0
+    }
+    if $confirmation == $disk_device {
+      return
+    }
+    print-error-line "Disk confirmation did not match."
+  }
+}
+
+def print-apply-plan [state: record] {
+  print-kv-section "NixOS installer" [
+    { label: "Target disk", value: $state.disk }
+    { label: "Encryption", value: "LUKS enabled" }
+    { label: "Bootloader", value: "GRUB" }
+    { label: "Host profile", value: $state.profile }
+    { label: "Local user", value: $state.user }
+  ]
+}
+
+def masked-status [value: string] {
+  if $value == "" { "not set" } else { "set" }
+}
+
+def wizard-rows [state: record, step: int, title: string, details: list<string>] {
+  let password_status = (masked-status ($state.password? | default ""))
+  let disk_value = if $state.disk == "" { "not selected" } else { $state.disk }
+  let rows = [
+    $"Step                  ($step)/9"
+    $"Session               ($state.session)"
+    $"Profile               ($state.profile)"
+    $"User                  ($state.user_description)"
+    $"Username              ($state.user)"
+    $"Password              ($password_status)"
+    $"Hostname              ($state.hostname)"
+    $"Timezone              ($state.timezone)"
+    $"Disk                  ($disk_value)"
+    $"Action                ($state.action)"
+    ""
+    $title
+    ""
+  ]
+
+  $rows | append $details | append [
+    ""
+    "Enter accepts the shown default. Type r to go back or q to quit when available."
+  ]
+}
+
+def wizard-screen [state: record, step: int, title: string, details: list<string>] {
+  clear-screen-once
+  print-screen "NixOS installer" (wizard-rows $state $step $title $details)
+  print ""
+}
+
+def confirm-command [title: string, description: string, command: string] {
+  print ""
+  print (paint heading $title)
+  print $"  (paint detail $description)"
+  print ""
+  print $"  (paint warning $command)"
+  print ""
+
+  loop {
+    let answer = (input "> Run this command? [Y/q]: " | str trim | str downcase)
+    if $answer in [ "y" "yes" "" ] {
+      return
+    }
+    if $answer in [ "q" "quit" ] {
+      exit 0
+    }
+    print-error-line "Please enter 'y' or press Enter to continue, or 'q' to quit."
+  }
+}
+
+def prompt-luks-passphrase [] {
+  print ""
+  print (paint heading "Disk Encryption")
+  print $"  (paint detail 'Passphrase for the encrypted root container.')"
+  print $"  (paint detail 'This is separate from the local user login password.')"
+  print ""
+
+  loop {
+    let value = (prompt-secret-confirm "LUKS passphrase: " "Repeat LUKS passphrase: " {|input| validate-password $input })
+    if $value == "q" {
+      exit 0
+    }
+
+    if $value == "r" {
+      print-error-line "cannot go back from apply-time LUKS prompt; please enter a valid password or 'q' to quit."
+      continue
+    }
+
+    return $value
   }
 }
 
@@ -611,71 +774,115 @@ def run-apply [state: record] {
 
   let repo = (repo-root)
   let flake = (flake-uri $state.profile)
+  let disko_config = (disko-config-path $state.session)
+  let luks_password = (luks-password-path $state.session)
 
+  let disko_command = $"nu \"($repo)/scripts/install/disko.nu\" \"($state.disk)\" --yes --config \"($disko_config)\""
+  let generate_config_command = "nixos-generate-config --root /mnt"
+
+  let persistent_user_dir = (target-local-dir)
+  let persistence_command = $"mkdir ($persistent_user_dir)\ncp .../user.nix ($persistent_user_dir)/\ninstall -m 600 .../user.passwd ($persistent_user_dir)/"
+
+  let install_command = $"NIX_CONFIG_LOCAL_USER=\"($persistent_user_dir)/user.nix\" NIX_CONFIG_LOCAL_HARDWARE=\"(hardware-config-path)\" nixos-install --impure --flake \"($flake)\" --no-root-passwd"
+
+  cleanup-volatile-session $state.session
+  ensure-private-runtime-dir $state.session | ignore
+  append-install-log $state.session $"START session=($state.session) profile=($state.profile) disk=($state.disk)"
+
+  clear-screen-once
+  print-apply-plan $state
+
+  run-preflight-checks $state.session
   confirm-disk $state.disk
+  disable-active-swap $state.session
 
-  print-status "Applying disk layout..."
-  # Disko stays interactive here so cryptsetup can ask for the LUKS passphrase.
-  # Capture the exit code immediately before any later command can overwrite it.
-  nu $"($repo)/scripts/install/disko.nu" $state.disk --yes --config (disko-config-path)
-  let disko_exit_code = $env.LAST_EXIT_CODE
+  confirm-command "Phase 1: Disk Layout" "Applies disko configuration and encrypts the drive." $disko_command
+
+  print-step 1 6 "Preparing encryption" "running"
+  try {
+    let luks_passphrase = (prompt-luks-passphrase)
+    write-luks-password-file $state.session $luks_passphrase
+    write-password-file $state
+    write-disko-config $state.disk $disko_config --luks-password-file $luks_password
+    append-install-log $state.session $"PREPARED disko_config=($disko_config) luks_password_file=($luks_password)"
+  } catch {|error|
+    cleanup-secrets-dir $state.session
+    print-step 1 6 "Preparing encryption" "failed"
+    error make { msg: $error.msg }
+  }
+  print-step 1 6 "Preparing encryption" "ok"
+
+  print-step 2 6 "Applying disk layout" "running"
+  let disko_exit_code = (run-logged-stream $state.session "disko" $disko_command)
+  remove-secret-file $luks_password
+
   if $disko_exit_code != 0 {
+    print-step 2 6 "Applying disk layout" "failed"
+    cleanup-secrets-dir $state.session
     error make { msg: $"disko failed with exit code ($disko_exit_code); aborting before hardware generation and nixos-install" }
   }
+  print-step 2 6 "Applying disk layout" "ok"
 
-  print-status "Generating hardware configuration..."
-  nixos-generate-config --root /mnt
-  let generate_config_exit_code = $env.LAST_EXIT_CODE
+  confirm-command "Phase 2: Hardware Config" "Generates NixOS hardware profile for the target machine." $generate_config_command
+  print-step 3 6 "Generating hardware configuration" "running"
+  let generate_config_exit_code = (run-logged-stream $state.session "nixos-generate-config" $generate_config_command)
   if $generate_config_exit_code != 0 {
+    print-step 3 6 "Generating hardware configuration" "failed"
+    cleanup-secrets-dir $state.session
     error make { msg: $"nixos-generate-config failed with exit code ($generate_config_exit_code)" }
   }
+  print-step 3 6 "Generating hardware configuration" "ok"
 
   if not ((hardware-config-path) | path exists) {
+    cleanup-secrets-dir $state.session
     error make { msg: "hardware configuration was not generated" }
   }
 
-  print-status "Persisting local overlay to target system..."
-  let persistent_user_dir = (target-local-dir)
+  confirm-command "Phase 3: Persistence" "Copies the local user overlay and password to the target." $persistence_command
+  print-step 4 6 "Persisting local installer state" "running"
   mkdir $persistent_user_dir
   chmod 700 $persistent_user_dir
   cp (overlay-path $state.session) $"($persistent_user_dir)/user.nix"
   let password_copy = (
-    install -m 600 (password-path $state.session) (mounted-target-password-path)
+    install -m 600 (password-hash-path $state.session) (mounted-target-password-path)
     | complete
   )
   if $password_copy.exit_code != 0 {
     let stderr = ($password_copy.stderr | str trim)
     let detail = if $stderr == "" { "" } else { $": ($stderr)" }
+    append-install-log $state.session $"FAILED persist-password exit_code=($password_copy.exit_code)"
+    print-step 4 6 "Persisting local installer state" "failed"
+    cleanup-secrets-dir $state.session
     error make { msg: $"failed to persist password file to target system($detail)" }
   }
+  append-install-log $state.session $"PERSISTED local_overlay=($persistent_user_dir)/user.nix password_file=(mounted-target-password-path)"
+  cleanup-secrets-dir $state.session
+  print-step 4 6 "Persisting local installer state" "ok"
 
-  print-status "Installing NixOS..."
+  confirm-command "Phase 4: NixOS Install" "Builds and installs the NixOS system." $install_command
+  print-step 5 6 "Installing NixOS" "running"
   with-env {
     NIX_CONFIG_LOCAL_USER: $"($persistent_user_dir)/user.nix"
     NIX_CONFIG_LOCAL_HARDWARE: (hardware-config-path)
   } {
-    nixos-install --impure --flake $flake --no-root-passwd
-    let nixos_install_exit_code = $env.LAST_EXIT_CODE
+    let nixos_install_exit_code = (run-logged-stream $state.session "nixos-install" $install_command)
     if $nixos_install_exit_code != 0 {
+      print-step 5 6 "Installing NixOS" "failed"
       error make { msg: $"nixos-install failed with exit code ($nixos_install_exit_code)" }
     }
   }
+  print-step 5 6 "Installing NixOS" "ok"
+  print-step 6 6 "Install complete" "ok"
+  append-install-log $state.session "COMPLETE"
 
   print ""
-  print-section "Install Complete" [
-    "The install command completed."
-    "Reboot when ready after reviewing the first boot checks."
+  print (paint success "Install Complete")
+  print $"  (paint detail 'The install command completed.')"
+  print $"  (paint detail $'Install log: (install-log-path $state.session)')"
+
+  print-section "Next Step" [
+    "reboot"
   ]
-  print (paint heading "Reboot command:")
-  print "  reboot"
-  print ""
-  print (paint heading "First boot checks:")
-  print "  test -d /sys/firmware/efi"
-  print "  findmnt"
-  print "  swapon --show"
-  print "  systemctl status NetworkManager"
-  print "  doas true"
-  print $"  doas nixos-rebuild switch --impure --flake \"($flake)\""
 }
 
 def run-wizard [initial: record] {
@@ -683,16 +890,10 @@ def run-wizard [initial: record] {
   mut step = 0
 
   clear-screen-once
-  print-logo
-  print-section "Interactive NixOS workstation installer" [
-    "This wizard prepares a clean-hardware workstation install."
-    "Enter q to quit or r to go back when a prompt allows it."
-    "No disk is formatted until the final destructive confirmation."
-  ]
 
   loop {
     if $step == 0 {
-      print-section "Session" [
+      wizard-screen $state 1 "Session" [
         "Local name for this installer run."
         $"Files are stored under (state-root)/<session>/."
       ]
@@ -703,7 +904,7 @@ def run-wizard [initial: record] {
       $state = ($state | upsert session $value | upsert hostname $next_hostname)
       $step = 1
     } else if $step == 1 {
-      print-section "Profile" [
+      wizard-screen $state 2 "Profile" [
         "Choose what NixOS system to install on this disk."
         "default installs the graphical workstation target."
         $"Allowed values: ((allowed-profiles) | str join ', ')."
@@ -715,7 +916,7 @@ def run-wizard [initial: record] {
         $step = 2
       }
     } else if $step == 2 {
-      print-section "User" [
+      wizard-screen $state 3 "User" [
         "Human-readable account description shown by desktop tools."
         "This can be capitalized, for example User or Default User."
       ]
@@ -726,7 +927,7 @@ def run-wizard [initial: record] {
         $step = 3
       }
     } else if $step == 3 {
-      print-section "Username" [
+      wizard-screen $state 4 "Username" [
         "Linux login name for the installed system."
         "Use lowercase only, for example user. Do not use User."
       ]
@@ -737,7 +938,7 @@ def run-wizard [initial: record] {
         $step = 4
       }
     } else if $step == 4 {
-      print-section "Password" [
+      wizard-screen $state 5 "Password" [
         "Password for the local account on first boot."
         "Input is hidden and must be entered twice."
       ]
@@ -748,7 +949,7 @@ def run-wizard [initial: record] {
         $step = 5
       }
     } else if $step == 5 {
-      print-section "Hostname" [
+      wizard-screen $state 6 "Hostname" [
         "Network name of the installed machine."
         "The default follows the session when it is hostname-safe."
       ]
@@ -759,7 +960,7 @@ def run-wizard [initial: record] {
         $step = 6
       }
     } else if $step == 6 {
-      print-section "Timezone" [
+      wizard-screen $state 7 "Timezone" [
         "NixOS timezone for the installed machine."
         "Example: Etc/UTC or Europe/Berlin."
         "Hint: timedatectl list-timezones"
@@ -771,29 +972,37 @@ def run-wizard [initial: record] {
         $step = 7
       }
     } else if $step == 7 {
-      print-section "Disk" [
+      wizard-screen $state 8 "Disk" [
         "Select the physical disk that will be repartitioned and formatted."
         "Review model, serial, size, and mountpoints before choosing."
       ]
-      let value = if $state.disk == "" { choose-disk "" } else { choose-disk $state.disk }
+      let value = (choose-disk $state)
       if $value == "r" { $step = 6 } else {
         validate-disk $value
         $state = ($state | upsert disk $value)
         $step = 8
       }
     } else if $step == 8 {
-      print-section "Action" [
+      wizard-screen $state 9 "Action" [
         "dry-run writes generated files only."
         "apply starts the destructive install flow after exact disk confirmation."
+        ""
+        "d  dry-run"
+        "a  apply"
+        "r  back"
+        "q  quit"
       ]
-      print-summary $state
-      print ""
-      print $"[(paint label d)] dry-run"
-      print $"[(paint danger a)] apply"
-      print $"[(paint label r)] back"
-      print $"[(paint label q)] quit"
-      let prompt = $"(paint prompt 'Action') [(paint value $state.action)]: "
-      let value = (input $prompt | str trim)
+      let selected_action = (prompt-choice $"Action [($state.action)]" [
+        "d  dry-run"
+        "a  apply"
+        "r  back"
+        "q  quit"
+      ])
+      let value = if ($selected_action | str trim) == "" {
+        ""
+      } else {
+        ($selected_action | split row " " | first | str trim)
+      }
 
       if $value == "q" { exit 0 }
       if $value == "r" { $step = 7 } else if $value == "a" or $value == "apply" {
@@ -822,6 +1031,7 @@ def main [
   --timezone: string = ""
   --disk: string = ""
 ] {
+  require-ui-tools
   require-password-hash-tool
   require-file-permission-tools
 
@@ -895,9 +1105,13 @@ def main [
   let final = (with-password-hash $selected)
 
   write-overlay $final
-  write-password-file $final
   write-env $final
-  write-disko-config $final.disk (disko-config-path)
+
+  if $final.action == "dry-run" {
+    ensure-private-runtime-dir $final.session | ignore
+    write-disko-config $final.disk (disko-config-path $final.session)
+  }
+
   print-summary $final
 
   if $final.action == "apply" {
