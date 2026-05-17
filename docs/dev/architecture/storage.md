@@ -62,6 +62,15 @@ The root container uses LUKS2 with manual passphrase unlock. Plymouth provides
 the graphical prompt, but the unlock method remains passphrase-based. TPM,
 YubiKey, and Secure Boot integration are explicitly deferred.
 
+During the clean-hardware installer apply flow, the installer asks for the LUKS
+passphrase, writes it to a root-only file under
+`/run/nixos-config-installer/<session>/secrets/`, generates a `disko`
+configuration with `passwordFile`, and removes the secrets directory after it is
+no longer needed. The generated user password hash is also staged under
+`/run/nixos-config-installer/<session>/secrets/` before it is copied into the
+installed target root. The LUKS passphrase is not the local user login password
+and is not persisted by the installer.
+
 ### Install Boundary
 
 Encryption setup is a destructive storage operation. A real install must happen only after reviewing the target disk device and confirming that all data on that device can be erased.

@@ -11,7 +11,7 @@ export def repo-root [] {
 }
 
 export def temp-root [] {
-  $env.NIX_CONFIG_INSTALL_TMP? | default "/tmp"
+  $env.NIX_CONFIG_INSTALL_TMP? | default "/run/nixos-config-installer/runtime"
 }
 
 export def validate-disk [disk_device: string] {

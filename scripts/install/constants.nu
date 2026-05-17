@@ -22,9 +22,16 @@ export def disko-mode [] {
 }
 
 export def ui-width [] {
-  55
+  let size = (try { term size } catch { { columns: 80 } })
+  let columns = ($size.columns? | default 80)
+
+  if $columns < 72 {
+    $columns
+  } else {
+    $columns - 2
+  }
 }
 
 export def kv-label-width [] {
-  16
+  18
 }

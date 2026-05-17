@@ -6,6 +6,23 @@ def require-command [name: string] {
   assert ((which $name | length) > 0) $"required command is missing: ($name)"
 }
 
+def has-command [name: string] {
+  (which $name | length) > 0
+}
+
+def has-compatible-mkpasswd [] {
+  if not (has-command "mkpasswd") {
+    return false
+  }
+
+  let result = ("ci-password" | mkpasswd -m sha-512 -s | complete)
+  $result.exit_code == 0 and (($result.stdout | str trim) | str starts-with '$6$')
+}
+
+def has-nix-validation-tools [] {
+  (has-command "nix") and (has-command "nix-instantiate")
+}
+
 def assert-clean-stderr [label: string, stderr: string] {
   let filtered = (
     $stderr
@@ -24,11 +41,11 @@ def assert-command-ok [label: string, result: record<exit_code: int, stdout: str
 def generated-paths [root: string] {
   {
     state: $"($root)/state/vm"
-    temp: $"($root)/tmp"
+    volatile: $"($root)/run"
     overlay: $"($root)/state/vm/user.nix"
-    password: $"($root)/state/vm/user.passwd"
+    password: $"($root)/run/vm/secrets/user.passwd"
     env: $"($root)/state/vm/install.env"
-    disko: $"($root)/tmp/workstation-disko.nix"
+    disko: $"($root)/run/vm/runtime/workstation-disko.nix"
     hardware: $"($root)/hardware-configuration.nix"
   }
 }
@@ -125,21 +142,26 @@ def assert-generated-config-build-plans [paths: record] {
 }
 
 def main [] {
-  for command in [ "mktemp" "nu" "openssl" "install" "chmod" "nix" "nix-instantiate" ] {
+  for command in [ "mktemp" "nu" "install" "chmod" "shred" ] {
     require-command $command
+  }
+
+  if not (has-compatible-mkpasswd) {
+    print "skipping generated installer config dry-run; compatible mkpasswd with sha-512 support is missing"
+    return
   }
 
   let root = (mktemp -d | str trim)
   try {
     let paths = (generated-paths $root)
-    mkdir $paths.temp
     write-hardware-stub $paths.hardware
 
     let result = (
       with-env {
         HOME: $root
         NIX_CONFIG_INSTALL_STATE_DIR: $"($root)/state"
-        NIX_CONFIG_INSTALL_TMP: $paths.temp
+        NIX_CONFIG_INSTALL_VOLATILE_DIR: $paths.volatile
+        NIX_CONFIG_INSTALL_PLAIN_UI: "1"
         NO_COLOR: "1"
       } {
         nu scripts/install/bootstrap.nu --dry-run --session vm --profile default --user-description User --user user --password ci-password --hostname vm --timezone UTC --disk (test-disk-path) | complete
@@ -148,9 +170,11 @@ def main [] {
 
     assert equal $result.exit_code 0 $"installer dry-run failed; stderr: ($result.stderr)"
 
-    for path in [ $paths.overlay $paths.password $paths.env $paths.disko ] {
+    for path in [ $paths.overlay $paths.env $paths.disko ] {
       assert-file $path
     }
+
+    assert not ($paths.password | path exists) "dry-run must not persist generated password hash in installer state or volatile secrets"
 
     let overlay = (open $paths.overlay)
     assert ($overlay | str contains 'networking.hostName = lib.mkForce "vm";')
@@ -159,13 +183,6 @@ def main [] {
     assert ($overlay | str contains 'description = "User";')
     assert ($overlay | str contains 'hashedPasswordFile = "/root/.nix-config-local/user.passwd";')
     assert not ($overlay | str contains "ci-password")
-
-    let password = (open $paths.password | str trim)
-    assert ($password | str starts-with '$6$') "expected SHA-512 password hash"
-    assert not ($password | str contains "ci-password")
-
-    let password_mode = (ls --long $paths.password | get mode.0)
-    assert equal $password_mode "rw-------" "expected generated password file mode 600 (rw-------)"
 
     let env_file = (open $paths.env)
     assert ($env_file | str contains 'export NIX_CONFIG_LOCAL_USER=')
@@ -176,12 +193,16 @@ def main [] {
     assert ($disko | str contains $"device = \"(test-disk-path)\";")
     assert not ($disko | str contains "passwordFile")
 
-    assert-nix-parses $paths.overlay
-    assert-nix-parses $paths.disko
-    assert-nix-parses $paths.hardware
-    assert-generated-disko-shape $paths.disko
-    assert-generated-config-imports $paths
-    assert-generated-config-build-plans $paths
+    if (has-nix-validation-tools) {
+      assert-nix-parses $paths.overlay
+      assert-nix-parses $paths.disko
+      assert-nix-parses $paths.hardware
+      assert-generated-disko-shape $paths.disko
+      assert-generated-config-imports $paths
+      assert-generated-config-build-plans $paths
+    } else {
+      print "skipping Nix-dependent generated config checks; nix or nix-instantiate is missing"
+    }
 
     print "install-generate.nu tests passed"
   } finally {
