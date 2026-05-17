@@ -190,16 +190,16 @@ def prompt-validated [label: string, default: string, validator: closure] {
   }
 }
 
-def prompt-password-confirm [] {
+def prompt-secret-confirm [label: string, repeat_label: string, validator: closure] {
   loop {
-    let password = (input --suppress-output (paint prompt "User password: "))
+    let password = (input --suppress-output (paint prompt $label))
     print ""
 
     if $password in [ "q" "r" ] {
       return $password
     }
 
-    let confirmation = (input --suppress-output (paint prompt "Repeat password: "))
+    let confirmation = (input --suppress-output (paint prompt $repeat_label))
     print ""
 
     if $confirmation in [ "q" "r" ] {
@@ -208,7 +208,7 @@ def prompt-password-confirm [] {
 
     let validation = (
       try {
-        validate-password $password
+        do $validator $password
         { ok: true, msg: "" }
       } catch {|error|
         { ok: false, msg: $error.msg }
@@ -615,15 +615,19 @@ def run-apply [state: record] {
   confirm-disk $state.disk
 
   print-status "Applying disk layout..."
+  # Disko stays interactive here so cryptsetup can ask for the LUKS passphrase.
+  # Capture the exit code immediately before any later command can overwrite it.
   nu $"($repo)/scripts/install/disko.nu" $state.disk --yes --config (disko-config-path)
-  if $env.LAST_EXIT_CODE != 0 {
-    error make { msg: "disko failed; aborting before hardware generation and nixos-install" }
+  let disko_exit_code = $env.LAST_EXIT_CODE
+  if $disko_exit_code != 0 {
+    error make { msg: $"disko failed with exit code ($disko_exit_code); aborting before hardware generation and nixos-install" }
   }
 
   print-status "Generating hardware configuration..."
   nixos-generate-config --root /mnt
-  if $env.LAST_EXIT_CODE != 0 {
-    error make { msg: "nixos-generate-config failed" }
+  let generate_config_exit_code = $env.LAST_EXIT_CODE
+  if $generate_config_exit_code != 0 {
+    error make { msg: $"nixos-generate-config failed with exit code ($generate_config_exit_code)" }
   }
 
   if not ((hardware-config-path) | path exists) {
@@ -651,8 +655,9 @@ def run-apply [state: record] {
     NIX_CONFIG_LOCAL_HARDWARE: (hardware-config-path)
   } {
     nixos-install --impure --flake $flake --no-root-passwd
-    if $env.LAST_EXIT_CODE != 0 {
-      error make { msg: "nixos-install failed" }
+    let nixos_install_exit_code = $env.LAST_EXIT_CODE
+    if $nixos_install_exit_code != 0 {
+      error make { msg: $"nixos-install failed with exit code ($nixos_install_exit_code)" }
     }
   }
 
@@ -736,7 +741,7 @@ def run-wizard [initial: record] {
         "Password for the local account on first boot."
         "Input is hidden and must be entered twice."
       ]
-      let value = (prompt-password-confirm)
+      let value = (prompt-secret-confirm "User password: " "Repeat password: " {|input| validate-password $input })
       if $value == "q" { exit 0 }
       if $value == "r" { $step = 3 } else {
         $state = ($state | upsert password $value)

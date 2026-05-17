@@ -36,8 +36,11 @@ def main [] {
   try {
     let image = $"($root)/disk.img"
     let loop_file = $"($root)/loop-device"
+    let luks_key = $"($root)/luks.key"
 
     run-ok "create sparse disk image" [ "truncate" "-s" "4G" $image ] | ignore
+    "ci-disk-password" | save --force $luks_key
+    chmod 600 $luks_key
     let loop_result = (run-ok "attach loop device" [ "losetup" "--find" "--partscan" "--show" $image ])
     let loop_device = ($loop_result.stdout | str trim)
     $loop_device | save --force $loop_file
@@ -50,6 +53,9 @@ def main [] {
         "scripts/install/disko.nu"
         $loop_device
         "--yes"
+        "--non-interactive"
+        "--luks-password-file"
+        $luks_key
       ] | ignore
     }
 

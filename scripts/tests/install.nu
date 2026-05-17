@@ -128,6 +128,7 @@ def test-disko-config-disk-validation [] {
     let matching = ([$root matching.nix] | path join)
     let mismatched = ([$root mismatched.nix] | path join)
     let missing = ([$root missing.nix] | path join)
+    let multiple = ([$root multiple.nix] | path join)
     let function_style = ([$root function-style.nix] | path join)
     let disk = ([$root disk.img] | path join)
     let other_disk = ([$root other-disk.img] | path join)
@@ -155,6 +156,19 @@ def test-disko-config-disk-validation [] {
 
     write-test-disko-config $missing "{}"
 
+    write-test-disko-config $multiple $"
+{
+  disko.devices.disk.main = {
+    type = \"disk\";
+    device = \"($disk)\";
+  };
+  disko.devices.disk.other = {
+    type = \"disk\";
+    device = \"($other_disk)\";
+  };
+}
+"
+
     write-test-disko-config $function_style $"
 { ... }:
 {
@@ -171,6 +185,7 @@ def test-disko-config-disk-validation [] {
 
     assert-error-message { validate-config-disk $disk $mismatched } "does not match confirmed disk"
     assert-error-message { validate-config-disk $disk $missing } "must define exactly one disk device"
+    assert-error-message { validate-config-disk $disk $multiple } "must define exactly one disk device"
   } finally {
     rm --recursive --force $root
   }

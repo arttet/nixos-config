@@ -36,8 +36,17 @@ export def ensure-dir [dir: string] {
   }
 }
 
-export def write-disko-config [disk_device: string, config_path: string] {
+export def write-disko-config [
+  disk_device: string
+  config_path: string
+  --luks-password-file: string = ""
+] {
   let dir = ($config_path | path dirname)
+  let password_file_line = if $luks_password_file == "" {
+    ""
+  } else {
+    $"              passwordFile = \"($luks_password_file)\";\n"
+  }
   let config = $"
 {
   disko.devices = {
@@ -73,7 +82,7 @@ export def write-disko-config [disk_device: string, config_path: string] {
               type = \"luks\";
               name = \"cryptroot\";
               extraFormatArgs = [ \"--type\" \"luks2\" ];
-              settings.allowDiscards = true;
+($password_file_line)              settings.allowDiscards = true;
               content = {
                 type = \"btrfs\";
                 extraArgs = [ \"-f\" ];

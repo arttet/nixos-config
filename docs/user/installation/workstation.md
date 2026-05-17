@@ -103,6 +103,17 @@ When `apply` is selected and disk confirmation succeeds, the installer:
 6. Installs the default workstation target with
    `nixos-install --impure --no-root-passwd`.
 
+The installer checks each external command exit code before continuing:
+
+| Command | Comment |
+| --- | --- |
+| `disko` | Runs interactively after disk confirmation; the expected prompt is the LUKS passphrase from `disko`/`cryptsetup`. |
+| `nixos-generate-config --root /mnt` | Runs only after `disko` exits successfully. |
+| `nixos-install --impure --no-root-passwd` | Runs only after hardware configuration and local installer state are in place. |
+
+The LUKS passphrase protects the encrypted root container and is separate from
+the local user login password.
+
 The generated local overlay contains the hostname, timezone, initial user, user
 shell, `wheel` membership, and a reference to the password hash file. The
 password hash itself is stored separately in `user.passwd`, not inside the Nix
