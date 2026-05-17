@@ -4,6 +4,7 @@ use std assert
 
 use ../install/bootstrap.nu *
 use ../install/constants.nu *
+use ../install/disko.nu *
 
 def assert-source-ok [path: string] {
   let result = (nu --no-config-file --commands $"source ($path)" | complete)
@@ -116,6 +117,65 @@ def test-disko-mode-is-current [] {
   assert not ($source | str contains "--mode disko")
 }
 
+def write-test-disko-config [path: string, body: string] {
+  $body | save --force $path
+}
+
+def test-disko-config-disk-validation [] {
+  let root = (mktemp -d | str trim)
+
+  try {
+    let matching = ([$root matching.nix] | path join)
+    let mismatched = ([$root mismatched.nix] | path join)
+    let missing = ([$root missing.nix] | path join)
+    let function_style = ([$root function-style.nix] | path join)
+    let disk = ([$root disk.img] | path join)
+    let other_disk = ([$root other-disk.img] | path join)
+
+    touch $disk
+    touch $other_disk
+
+    write-test-disko-config $matching $"
+{
+  disko.devices.disk.main = {
+    type = \"disk\";
+    device = \"($disk)\";
+  };
+}
+"
+
+    write-test-disko-config $mismatched $"
+{
+  disko.devices.disk.main = {
+    type = \"disk\";
+    device = \"($other_disk)\";
+  };
+}
+"
+
+    write-test-disko-config $missing "{}"
+
+    write-test-disko-config $function_style $"
+{ ... }:
+{
+  disko.devices.disk.main = {
+    type = \"disk\";
+    device = \"($disk)\";
+  };
+}
+"
+
+    assert equal (config-disk-devices $matching) [ $disk ]
+    validate-config-disk $disk $matching
+    validate-config-disk $disk $function_style
+
+    assert-error-message { validate-config-disk $disk $mismatched } "does not match confirmed disk"
+    assert-error-message { validate-config-disk $disk $missing } "must define exactly one disk device"
+  } finally {
+    rm --recursive --force $root
+  }
+}
+
 assert-source-ok "scripts/install/common.nu"
 assert-source-ok "scripts/install/constants.nu"
 assert-source-ok "scripts/install/bootstrap.nu"
@@ -132,5 +192,6 @@ test-presentation-no-color
 test-password-validation
 test-summary-does-not-print-password-hash-path
 test-disko-mode-is-current
+test-disko-config-disk-validation
 
 print "install.nu tests passed"
