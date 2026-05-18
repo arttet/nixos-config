@@ -59,8 +59,10 @@ Periodic trim is enabled by the workstation tuning layer. The storage layout als
 ## Encryption
 
 The root container uses LUKS2 with manual passphrase unlock. Plymouth provides
-the graphical prompt, but the unlock method remains passphrase-based. TPM,
-YubiKey, and Secure Boot integration are explicitly deferred.
+the graphical prompt, but the unlock method remains passphrase-based. TPM and
+YubiKey unlock integration are explicitly deferred. Secure Boot protects the EFI
+boot path through the security layer; it does not change how the LUKS container
+is unlocked.
 
 During the clean-hardware installer apply flow, the installer asks for the LUKS
 passphrase, writes it to a root-only file under
@@ -75,7 +77,7 @@ and is not persisted by the installer.
 
 Encryption setup is a destructive storage operation. A real install must happen only after reviewing the target disk device and confirming that all data on that device can be erased.
 
-The current repository does not require TPM, YubiKey, or Secure Boot to build, run, or install `workstation`.
+The current repository does not require TPM or YubiKey unlock to build, run, or install `workstation`.
 
 ## Partition Size Rationale
 
@@ -85,7 +87,7 @@ The 512 MiB `/boot` partition is reserved for workstation generation management,
 
 ## Explicitly Deferred
 
-The layout does not implement automatic snapshots, Timeshift integration, GRUB snapshot boot entries, impermanence, hibernation, TPM unlock, YubiKey unlock, or Secure Boot.
+The layout does not implement automatic snapshots, Timeshift integration, GRUB snapshot boot entries, impermanence, hibernation, TPM unlock, or YubiKey unlock.
 
 ## VM Boundary
 

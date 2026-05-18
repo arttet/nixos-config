@@ -4,6 +4,7 @@
     ../base.nix
     ../../modules/core/network.nix
     ../../modules/core/security.nix
+    ../../modules/core/secure-boot.nix
     ../../modules/core/tuning.nix
     ../../modules/core/boot-ux.nix
     ../../modules/storage/disko.nix
@@ -13,6 +14,7 @@
   platform.bootUx.enable = true;
   platform.network.enable = true;
   platform.security.enable = true;
+  platform.secureBoot.enable = true;
   platform.tuning.enable = true;
 
   boot.kernelPackages = pkgs.linuxPackages_latest;
@@ -24,6 +26,10 @@
       device = "nodev";
       efiSupport = true;
       useOSProber = false;
+      extraGrubInstallArgs = [
+        "--disable-shim-lock"
+        "--modules=tpm"
+      ];
     };
     efi = {
       canTouchEfiVariables = true;

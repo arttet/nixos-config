@@ -11,6 +11,11 @@
 
   networking.firewall.enable = true;
 
+  nix.settings.experimental-features = [
+    "nix-command"
+    "flakes"
+  ];
+
   users.users.root.hashedPassword = "!";
 
   system.stateVersion = "25.11";

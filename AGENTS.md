@@ -16,9 +16,9 @@ In Nix terms, that is the `workstation-gui` flake target.
 | `workstation` | Non-graphical base used by checks and development workflows |
 | `vm` | Disposable local QEMU system for testing without real hardware |
 
-For the user guide entry point, see `docs/user/installation.md`.
-For the clean-hardware install runbook, see `docs/user/install-workstation.md`.
-For local VM testing, see `docs/user/install-vm.md`.
+For the user guide entry point, see `docs/user/index.md`.
+For the clean-hardware install runbook, see `docs/user/installation/workstation.md`.
+For local VM testing, see `docs/user/installation/vm.md`.
 
 ## Hard Rules
 
@@ -50,21 +50,24 @@ For local VM testing, see `docs/user/install-vm.md`.
 Before changing a subsystem, read the relevant documentation instead of loading
 unrelated files:
 
-- User guide overview: `docs/user/installation.md`
-- Workstation install: `docs/user/install-workstation.md`
-- Workstation rebuilds: `docs/user/ops-rebuild.md`
-- Rollback and recovery: `docs/user/ops-rollback.md`,
-  `docs/user/ops-recovery.md`
-- Backups and cleanup: `docs/user/ops-backups.md`,
-  `docs/user/ops-cleanup.md`
-- VM local testing: `docs/user/install-vm.md`
-- Architecture: `docs/dev/system/architecture.md`
-- Storage: `docs/dev/system/storage.md`
-- Security and network: `docs/dev/system/security.md`
-- Applications: `docs/dev/system/applications.md`
-- Testing workflow: `docs/dev/workflows/testing.md`
-- Command reference: `docs/reference/just.md`
-- Repository layout: `docs/reference/layouts.md`
+- User guide overview: `docs/user/index.md`
+- Workstation install: `docs/user/installation/workstation.md`
+- Workstation rebuilds: `docs/user/operations/rebuild.md`
+- Maintenance and cleanup: `docs/user/operations/cleanup.md`
+- Backups: `docs/user/operations/backups.md`
+- Recovery and rollbacks: `docs/user/operations/recovery.md`
+- VM local testing: `docs/user/installation/vm.md`
+- Engineering overview: `docs/dev/index.md`
+- Architecture overview: `docs/dev/architecture/layers.md`
+- System composition: `docs/dev/architecture/composition.md`
+- Security and network: `docs/dev/architecture/security.md`
+- Storage and data: `docs/dev/architecture/storage.md`
+- Boot UX: `docs/dev/architecture/boot.md`
+- System tuning: `docs/dev/architecture/tuning.md`
+- Command reference: `docs/dev/reference/just.md`
+- Repository layout: `docs/dev/reference/layouts.md`
+- Testing and validation: `docs/dev/reference/validation.md`
+- Nix style guide: `docs/dev/standards/nix-style.md`
 
 ## Layout Rules
 
@@ -73,14 +76,14 @@ root-level `hosts/`, `profiles/`, or `modules/` trees.
 
 Important layout references:
 
-- Repository layout: `docs/reference/layouts.md`
-- NixOS architecture: `docs/dev/system/architecture.md`
-- Command surface: `docs/reference/just.md`
+- Repository layout: `docs/dev/reference/layouts.md`
+- NixOS architecture: `docs/dev/architecture/layers.md`
+- Command surface: `docs/dev/reference/just.md`
 
 ## Commands
 
 Use modular `just` commands. Prefer the docs reference for the full command
-surface: `docs/reference/just.md`.
+surface: `docs/dev/reference/just.md`.
 
 Common checks:
 
@@ -89,8 +92,10 @@ just check
 just docs build
 just workstation-gui build
 just workstation-gui test
+just workstation build
 just workstation test
 just vm build
+just vm test
 ```
 
 Use `workstation-gui` for the default real-hardware workstation path. Use

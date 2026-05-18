@@ -8,10 +8,9 @@ design, validation, and rollback story before entering the platform baseline.
 
 | Feature | Status | Why deferred |
 | --- | --- | --- |
-| Secure Boot | Deferred | Requires key management, signing workflow, recovery plan, and lockdown policy. |
 | TPM unlock | Deferred | Needs threat model, recovery flow, and clear fallback from failed unlock. |
 | YubiKey unlock | Deferred | Needs enrollment, backup key strategy, and install/recovery documentation. |
-| Kernel lockdown | Deferred | Should be tied to Secure Boot and real hardware validation. |
+| Kernel lockdown | Deferred | Needs separate validation after the baseline Secure Boot workflow is stable. |
 | USBGuard | Deferred | Needs hardware whitelist planning to avoid locking out input devices or recovery tools. |
 | Thunderbolt policy | Deferred | Hardware-specific and must not break docks or USB-C workflows without review. |
 

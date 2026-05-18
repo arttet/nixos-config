@@ -13,7 +13,8 @@ Prepare the machine before starting this guide:
 - Back up important data from the target disk.
 - Download the official [Minimal NixOS ISO](https://nixos.org/download).
 - Prepare a bootable USB drive. [Ventoy](https://www.ventoy.net/) is recommended for this.
-- Disable Secure Boot in firmware settings.
+- Leave Secure Boot disabled or in setup/custom mode for the first install.
+  Enable it only after the installed system boots and `sbctl` keys are enrolled.
 - Make sure the machine can reach the network from the live ISO.
 - Identify which physical disk will be erased.
 
@@ -169,24 +170,139 @@ After the installer completes, reboot:
 reboot
 ```
 
-## ✅ First Boot Checks
+## ✅ After Installation
 
 After booting the installed workstation, log in as the local user created by the
 installer.
 
-Run each check separately:
+### 🧭 First Boot Checks
+
+Run each check separately from the installed system. The default login shell is
+Nushell, so the shell-specific checks below use Nushell syntax.
 
 | Check | Command | Expected result |
 | --- | --- | --- |
-| UEFI boot | `test -d /sys/firmware/efi` | Command exits successfully |
+| UEFI boot | See the Nushell command below | Output is `true` |
 | Mounted filesystems | `findmnt` | Installed filesystems are visible |
 | Swap | `swapon --show` | Swap is available |
 | Network | `systemctl status NetworkManager` | NetworkManager is active |
 | Login manager | `systemctl status greetd` | `greetd` is active |
-| Session type | `echo $XDG_SESSION_TYPE` | Output is `wayland` |
+| Session type | See the Nushell command below | Output is `wayland` |
 | Hyprland version | `hyprctl version` | Hyprland responds |
 | Displays | `hyprctl monitors` | Connected monitors are listed |
 | Desktop portal | `systemctl --user status xdg-desktop-portal-hyprland` | User portal is available |
-| Audio | `pactl info` | PipeWire/Pulse compatibility responds |
+| Audio | `wpctl status` | PipeWire/WirePlumber devices are listed |
 | Privilege escalation | `doas true` | `doas` prompts and exits successfully |
-| Default rebuild | `doas nixos-rebuild switch --flake .#` | Default workstation rebuilds and activates |
+
+Nushell commands for the shell-specific checks:
+
+```nu
+"/sys/firmware/efi" | path exists
+$env.XDG_SESSION_TYPE? | default ""
+```
+
+### 🔑 Prepare Git Access
+
+The installed system does not contain a working copy of this repository. Before
+running flake rebuilds, export the resident SSH keys from the YubiKey and make
+sure GitHub knows the public key.
+
+Insert the YubiKey, then run:
+
+```nu
+^mkdir -p ~/.ssh
+ssh-keygen -K
+chmod 700 ~/.ssh
+glob "~/.ssh/id_*" | where {|path| not ($path | str ends-with ".pub") } | each {|path| chmod 600 $path }
+glob "~/.ssh/*.pub" | each {|path| chmod 644 $path }
+```
+
+If the clone step below fails with a permission error, add the exported public
+SSH key from `~/.ssh/*.pub` to GitHub and try again.
+
+### 📦 Clone the Repository
+
+Clone the repository into the local home directory:
+
+```nu
+git clone git@github.com:arttet/nixos-config.git ~/nixos-config
+cd ~/nixos-config
+just setup
+```
+
+### 🔄 Rebuild from the Repository
+
+Build and test the graphical workstation target before switching:
+
+```nu
+just build
+just test
+just switch
+```
+
+The default profile points to the graphical workstation. To build or test a
+specific profile explicitly, pass it as an argument:
+
+```nu
+just build workstation-gui
+just test workstation-gui
+```
+
+The rebuild uses the local repository and creates a new bootable generation.
+
+### 🔐 Enable Secure Boot
+
+Secure Boot is configured through `sbctl`, while the system intentionally keeps
+GRUB for future custom boot UX work. Enable firmware Secure Boot only after the
+installed system boots, Git access works, and a rebuild from the local
+repository succeeds.
+
+Prepare the firmware for key enrollment first. In many firmware menus this means
+switching Secure Boot to setup/custom mode or clearing the existing Secure Boot
+keys. Keep a known-good firmware recovery path before changing keys.
+
+Create and enroll the local Secure Boot keys:
+
+```nu
+doas sbctl status
+doas sbctl create-keys
+doas sbctl enroll-keys -m
+```
+
+The `-m` flag keeps Microsoft certificates enrolled alongside the local keys,
+which is useful for common firmware, GPU option ROMs, and removable boot media.
+
+Rebuild once more from the repository. The GRUB install hook signs EFI artifacts
+under `/boot/efi` automatically when `sbctl` keys exist:
+
+```nu
+just switch
+doas sbctl verify
+```
+
+If `sbctl verify` reports unsigned EFI files that belong to the NixOS boot path,
+do not enable Secure Boot yet. Rebuild again and inspect the reported paths.
+
+After verification succeeds, enable Secure Boot in firmware and reboot.
+
+Advanced GRUB locking is a separate hardening step. GRUB can also be configured
+to require a password for unsafe edits and to verify detached signatures for
+files loaded from `/boot`, but that workflow needs local GRUB password and
+signing-key material and is not required for the baseline Secure Boot setup.
+
+### 🧪 Runtime Validation
+
+After rebooting with Secure Boot enabled in firmware, run:
+
+```nu
+doas sbctl status
+doas sbctl verify
+bootctl status
+```
+
+Expected result:
+
+- Secure Boot is enabled.
+- EFI boot artifacts are signed.
+- `sbctl verify` reports no unsigned EFI artifacts relevant to the NixOS boot path.
+- GRUB still boots the current NixOS generation normally.

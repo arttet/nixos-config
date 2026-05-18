@@ -38,7 +38,7 @@ Booting an older generation from GRUB is a temporary state. If you reboot again,
 To permanently set the currently running (good) generation as the default, simply rebuild the system from it:
 
 ```sh
-doas nixos-rebuild switch --flake .#
+just switch
 ```
 
 *(Assuming you have reverted the breaking changes in your local Git repository).*

@@ -92,10 +92,6 @@ in
           max-jobs = lib.mkDefault "auto";
           cores = lib.mkDefault 0;
           auto-optimise-store = lib.mkDefault true;
-          experimental-features = lib.mkDefault [
-            "nix-command"
-            "flakes"
-          ];
         };
       })
 
