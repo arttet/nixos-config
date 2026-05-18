@@ -8,6 +8,14 @@ in
 
   services.dbus.enable = lib.mkDefault true;
   security.polkit.enable = lib.mkDefault true;
+  services.gvfs.enable = lib.mkDefault true;
+  services.udisks2.enable = lib.mkDefault true;
+
+  services.avahi = {
+    enable = lib.mkDefault true;
+    nssmdns4 = lib.mkDefault true;
+    openFirewall = lib.mkDefault true;
+  };
 
   services.greetd = {
     enable = lib.mkDefault true;
@@ -28,6 +36,7 @@ in
     enable = lib.mkDefault true;
     plugins = with pkgs; [
       thunar-archive-plugin
+      xfce.thunar-volman
     ];
   };
 
@@ -46,8 +55,11 @@ in
 
   environment.systemPackages = [
     tuigreet
+    pkgs.cifs-utils
     pkgs.hyprpolkitagent
     pkgs.rofi
+    pkgs.samba
+    pkgs.udiskie
     pkgs.xdg-user-dirs
   ];
 }
