@@ -12,9 +12,12 @@ Available recipes:
     help    # List all commands
 
     [Development]
-    fmt     # Format code
-    check   # Run repository checks
-    test    # Run local script tests
+    fmt           # Format code
+    check         # Run repository checks
+    build profile # Build a NixOS profile closure
+    test profile  # Run script tests and selected profile checks
+    setup         # Prepare this checkout for privileged local rebuilds
+    switch profile # Switch the installed NixOS system to a profile
 
     [VM Runtime]
     vm:
@@ -64,4 +67,21 @@ Available recipes:
         list        # List Cloudflare Pages projects
         create name # Create a Cloudflare Pages project
         delete name # Delete a Cloudflare Pages project
+```
+
+The root profile commands default to the flake `default` target:
+
+```sh
+just build
+just test
+just setup
+just switch
+```
+
+Pass a profile when you want a specific target:
+
+```sh
+just build workstation-gui
+just test workstation-gui
+just switch workstation-gui
 ```

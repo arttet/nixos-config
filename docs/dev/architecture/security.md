@@ -165,6 +165,25 @@ Why `doas`:
 
 Only `wheel` users may escalate. Passwordless escalation is not allowed. Persistent privilege caching is not allowed. Global environment preservation is not allowed.
 
+## Secure Boot
+
+The workstation enables baseline Secure Boot support with `sbctl` while keeping
+GRUB as the bootloader:
+
+```nix
+environment.systemPackages = [ pkgs.sbctl ];
+```
+
+The GRUB install flow signs EFI artifacts under the EFI System Partition when
+local `sbctl` keys exist. Key creation and firmware enrollment remain manual
+operations performed after the first successful boot and local repository
+rebuild. This avoids automating firmware trust changes while still making EFI
+re-signing part of normal rebuilds.
+
+Advanced GRUB hardening, such as GRUB password protection and detached
+signature verification for files loaded from `/boot`, is a separate optional
+step.
+
 ## Journald
 
 The workstation security baseline makes journald persistent:
@@ -218,7 +237,6 @@ This baseline does not:
 - enable USBGuard before a real device allowlist exists
 - enable vendor-specific IOMMU parameters before real hardware validation
 - add an entropy daemon without measured entropy pressure
-- enable Secure Boot
 - enable kernel lockdown mode
 - enable TPM or YubiKey unlock
 - replace threat modeling with generic sysctl blobs

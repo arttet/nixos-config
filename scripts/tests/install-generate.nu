@@ -100,7 +100,7 @@ def assert-generated-config-imports [paths: record] {
         NIX_CONFIG_LOCAL_USER: $paths.overlay
         NIX_CONFIG_LOCAL_HARDWARE: $paths.hardware
       } {
-        nix eval --impure $".#($prefix).config.users.users.user" --apply 'user: if user.description == "User" && user.hashedPasswordFile == "/root/.nix-config-local/user.passwd" && builtins.elem "wheel" user.extraGroups then "ok" else throw "generated user overlay was not applied correctly"' | complete
+        nix eval --impure $".#($prefix).config.users.users.user" --apply 'user: if user.description == "User" && user.hashedPasswordFile == "/etc/nixos/local/users/user.passwd" && builtins.elem "wheel" user.extraGroups then "ok" else throw "generated user overlay was not applied correctly"' | complete
       }
     )
     assert-command-ok $"generated user overlay on ($target)" $user_check
@@ -181,7 +181,7 @@ def main [] {
     assert ($overlay | str contains 'time.timeZone = lib.mkForce "UTC";')
     assert ($overlay | str contains 'users.users."user"')
     assert ($overlay | str contains 'description = "User";')
-    assert ($overlay | str contains 'hashedPasswordFile = "/root/.nix-config-local/user.passwd";')
+    assert ($overlay | str contains 'hashedPasswordFile = "/etc/nixos/local/users/user.passwd";')
     assert not ($overlay | str contains "ci-password")
 
     let env_file = (open $paths.env)

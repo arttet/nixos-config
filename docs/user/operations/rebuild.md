@@ -15,7 +15,7 @@ nix flake update
 Finally, apply the update to your live system:
 
 ```sh
-doas nixos-rebuild switch --flake .#
+just switch
 ```
 
 ## 🏗️ Applying Local Changes
@@ -39,7 +39,7 @@ just workstation-gui test
 Once the tests pass, apply the new configuration to your system. This makes the changes live and creates a new bootable generation:
 
 ```sh
-doas nixos-rebuild switch --flake .#
+just switch
 ```
 
 *(Note: If you encounter issues after switching, you can easily roll back to the previous generation via GRUB or the rollback command).*

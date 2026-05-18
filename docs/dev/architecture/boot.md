@@ -15,12 +15,12 @@ The boot UX layer enables:
 - The `splash` kernel parameter through the NixOS Plymouth module.
 - Compatibility with the existing GRUB2, UEFI, and systemd initrd model.
 - Manual LUKS passphrase unlock.
+- Baseline Secure Boot tooling through `sbctl`, owned by the security layer.
 
 It intentionally does not enable:
 
 - TPM unlock.
 - YubiKey unlock.
-- Secure Boot.
 - kernel lockdown.
 - automatic recovery behavior.
 

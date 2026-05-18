@@ -81,15 +81,15 @@ def cleanup-volatile-session [session: string] {
 }
 
 def target-local-dir [] {
-  "/mnt/root/.nix-config-local"
+  "/mnt/etc/nixos/local"
 }
 
-def target-password-path [] {
-  "/root/.nix-config-local/user.passwd"
+def target-password-path [username: string] {
+  $"/etc/nixos/local/users/($username).passwd"
 }
 
-def mounted-target-password-path [] {
-  join-path [ (target-local-dir) "user.passwd" ]
+def mounted-target-password-path [username: string] {
+  join-path [ (target-local-dir) "users" $"($username).passwd" ]
 }
 
 def env-path [session: string] {
@@ -547,7 +547,7 @@ def write-overlay [state: record] {
     isNormalUser = true;
     description = \"($state.user_description)\";
     shell = pkgs.nushell;
-    hashedPasswordFile = \"(target-password-path)\";
+    hashedPasswordFile = \"(target-password-path $state.user)\";
     extraGroups = [ \"wheel\" ];
   };
 }
@@ -781,9 +781,10 @@ def run-apply [state: record] {
   let generate_config_command = "nixos-generate-config --root /mnt"
 
   let persistent_user_dir = (target-local-dir)
-  let persistence_command = $"mkdir ($persistent_user_dir)\ncp .../user.nix ($persistent_user_dir)/\ninstall -m 600 .../user.passwd ($persistent_user_dir)/"
+  let persistent_users_dir = (join-path [ $persistent_user_dir "users" ])
+  let persistence_command = $"mkdir ($persistent_user_dir)\ncp .../default.nix ($persistent_user_dir)/\ninstall -m 600 .../($state.user).passwd ($persistent_users_dir)/"
 
-  let install_command = $"NIX_CONFIG_LOCAL_USER=\"($persistent_user_dir)/user.nix\" NIX_CONFIG_LOCAL_HARDWARE=\"(hardware-config-path)\" nixos-install --impure --flake \"($flake)\" --no-root-passwd"
+  let install_command = $"NIX_CONFIG_LOCAL_USER=\"($persistent_user_dir)/default.nix\" NIX_CONFIG_LOCAL_HARDWARE=\"(hardware-config-path)\" nixos-install --impure --flake \"($flake)\" --no-root-passwd"
 
   cleanup-volatile-session $state.session
   ensure-private-runtime-dir $state.session | ignore
@@ -841,10 +842,12 @@ def run-apply [state: record] {
   confirm-command "Phase 3: Persistence" "Copies the local user overlay and password to the target." $persistence_command
   print-step 4 6 "Persisting local installer state" "running"
   mkdir $persistent_user_dir
+  mkdir $persistent_users_dir
   chmod 700 $persistent_user_dir
-  cp (overlay-path $state.session) $"($persistent_user_dir)/user.nix"
+  chmod 700 $persistent_users_dir
+  cp (overlay-path $state.session) $"($persistent_user_dir)/default.nix"
   let password_copy = (
-    install -m 600 (password-hash-path $state.session) (mounted-target-password-path)
+    install -m 600 (password-hash-path $state.session) (mounted-target-password-path $state.user)
     | complete
   )
   if $password_copy.exit_code != 0 {
@@ -855,14 +858,14 @@ def run-apply [state: record] {
     cleanup-secrets-dir $state.session
     error make { msg: $"failed to persist password file to target system($detail)" }
   }
-  append-install-log $state.session $"PERSISTED local_overlay=($persistent_user_dir)/user.nix password_file=(mounted-target-password-path)"
+  append-install-log $state.session $"PERSISTED local_overlay=($persistent_user_dir)/default.nix password_file=(mounted-target-password-path $state.user)"
   cleanup-secrets-dir $state.session
   print-step 4 6 "Persisting local installer state" "ok"
 
   confirm-command "Phase 4: NixOS Install" "Builds and installs the NixOS system." $install_command
   print-step 5 6 "Installing NixOS" "running"
   with-env {
-    NIX_CONFIG_LOCAL_USER: $"($persistent_user_dir)/user.nix"
+    NIX_CONFIG_LOCAL_USER: $"($persistent_user_dir)/default.nix"
     NIX_CONFIG_LOCAL_HARDWARE: (hardware-config-path)
   } {
     let nixos_install_exit_code = (run-logged-stream $state.session "nixos-install" $install_command)

@@ -22,7 +22,7 @@ Once your machine is running this NixOS Configuration, you no longer perform man
 2. **Validate**: Check changes locally using `just check` or by booting the VM with `just vm run`.
 3. **Apply**: Switch your running system to the new generation:
    ```sh
-   doas nixos-rebuild switch --flake .#
+   just switch
    ```
 
 If you ever make a mistake, simply reboot and select the previous generation from the GRUB boot menu.

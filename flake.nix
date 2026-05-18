@@ -30,27 +30,28 @@
         path:
         if path == "" then
           null
-        else if nixpkgs.lib.hasPrefix "/" path then
-          /. + path
         else
-          ./. + "/${path}";
+          let
+            resolved = if nixpkgs.lib.hasPrefix "/" path then /. + path else ./. + "/${path}";
+            check = builtins.tryEval (builtins.pathExists resolved);
+          in
+          if check.success && check.value then resolved else null;
       localOverlayArgs =
         let
-          home = builtins.getEnv "HOME";
           envUserOverlay = builtins.getEnv "NIX_CONFIG_LOCAL_USER";
           envSystemOverlay = builtins.getEnv "NIX_CONFIG_LOCAL_SYSTEM";
           envHardwareConfig = builtins.getEnv "NIX_CONFIG_LOCAL_HARDWARE";
-          defaultUserOverlay = if home == "" then "" else "${home}/.nix-config-local/user.nix";
-          defaultSystemOverlay = if home == "" then "" else "${home}/.nix-config-local/system.nix";
+          defaultUserOverlay = "/etc/nixos/local/default.nix";
+          defaultHardwareConfig = "/etc/nixos/hardware-configuration.nix";
         in
         {
           localUserOverlay = localPathOrNull (
             if envUserOverlay != "" then envUserOverlay else defaultUserOverlay
           );
-          localSystemOverlay = localPathOrNull (
-            if envSystemOverlay != "" then envSystemOverlay else defaultSystemOverlay
+          localSystemOverlay = localPathOrNull (if envSystemOverlay != "" then envSystemOverlay else "");
+          localHardwareConfig = localPathOrNull (
+            if envHardwareConfig != "" then envHardwareConfig else defaultHardwareConfig
           );
-          localHardwareConfig = localPathOrNull envHardwareConfig;
         };
       moduleArgs = localOverlayArgs // {
         inherit zen-browser;
@@ -119,6 +120,27 @@
             self.nixosConfigurations.workstation.config.boot.kernelPackages.kernel.outPath
             == pkgs.linuxPackages_latest.kernel.outPath;
           "workstation uses pkgs.linuxPackages_latest\n"
+        );
+        workstation-secure-boot-policy = pkgs.writeText "workstation-secure-boot-policy.txt" (
+          assert self.nixosConfigurations.workstation.config.boot.loader.grub.enable;
+          assert builtins.elem "--disable-shim-lock"
+            self.nixosConfigurations.workstation.config.boot.loader.grub.extraGrubInstallArgs;
+          assert builtins.elem "--modules=tpm"
+            self.nixosConfigurations.workstation.config.boot.loader.grub.extraGrubInstallArgs;
+          assert builtins.elem pkgs.sbctl
+            self.nixosConfigurations.workstation.config.environment.systemPackages;
+          assert builtins.elem pkgs.efibootmgr
+            self.nixosConfigurations.workstation.config.environment.systemPackages;
+          assert builtins.elem pkgs.sbsigntool
+            self.nixosConfigurations.workstation.config.environment.systemPackages;
+          assert builtins.elem pkgs.grub2
+            self.nixosConfigurations.workstation.config.environment.systemPackages;
+          assert !(builtins.elem pkgs.sbctl self.nixosConfigurations.vm.config.environment.systemPackages);
+          assert
+            !(builtins.elem pkgs.efibootmgr self.nixosConfigurations.vm.config.environment.systemPackages);
+          assert
+            !(builtins.elem pkgs.sbsigntool self.nixosConfigurations.vm.config.environment.systemPackages);
+          "workstation uses GRUB with sbctl Secure Boot support\n"
         );
         workstation-storage-layout = pkgs.writeText "workstation-storage-layout.json" (
           assert workstationStorageLayout.disk.workstation.device == "/dev/disk/by-id/workstation-example";

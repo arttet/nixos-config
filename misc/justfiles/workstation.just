@@ -100,7 +100,7 @@ runtime-checks:
     @echo "nft list ruleset"
     @echo "doas true"
     @echo "doas id"
-    @echo "doas nixos-rebuild switch --flake .#workstation"
+    @echo "just switch workstation"
     @echo "doas nixos-rebuild switch --rollback"
     @echo "sysctl net.ipv4.tcp_congestion_control"
     @echo "sysctl net.core.default_qdisc"
