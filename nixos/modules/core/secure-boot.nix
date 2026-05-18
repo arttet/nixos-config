@@ -46,8 +46,20 @@ in
           echo "secure-boot: signing EFI artifacts under $efi_mount"
           "$find_bin" "$efi_mount" -type f -iname '*.efi' -exec "$sbctl_bin" sign -s '{}' ';'
 
-          echo "secure-boot: signing kernel images under $boot_mount"
-          "$find_bin" "$boot_mount" -type f \( -iname 'bzImage*' -o -iname 'vmlinuz*' -o -iname 'zImage*' -o -iname 'Image*' \) -exec "$sbctl_bin" sign '{}' +
+          echo "secure-boot: discovering kernel images under $boot_mount"
+          kernels="$("$find_bin" "$boot_mount" -type f \( -iname '*bzImage*' -o -iname '*vmlinuz*' -o -iname '*zImage*' -o -iname '*-Image*' \) -print)"
+
+          if [ -z "$kernels" ]; then
+            echo "secure-boot: no kernel images found under $boot_mount — check filename patterns" >&2
+            "$find_bin" "$boot_mount" -maxdepth 3 -type f -printf '  %p\n' >&2
+            exit 1
+          fi
+
+          echo "secure-boot: signing kernel images:"
+          echo "$kernels" | while IFS= read -r kernel; do
+            echo "  $kernel"
+            "$sbctl_bin" sign -s "$kernel"
+          done
         fi
       '';
     };
