@@ -50,6 +50,7 @@ in
     exec-once=wl-paste --type text --watch cliphist store
     exec-once=wl-paste --type image --watch cliphist store
     exec-once=hypridle
+    exec-once=udiskie --tray
 
     env = XDG_CURRENT_DESKTOP,Hyprland
     env = XDG_SESSION_DESKTOP,Hyprland
