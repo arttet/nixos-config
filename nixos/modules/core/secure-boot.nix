@@ -45,6 +45,9 @@ in
         else
           echo "secure-boot: signing EFI artifacts under $efi_mount"
           "$find_bin" "$efi_mount" -type f -iname '*.efi' -exec "$sbctl_bin" sign -s '{}' ';'
+
+          echo "secure-boot: signing kernel images under $boot_mount"
+          "$find_bin" "$boot_mount" -type f \( -iname 'bzImage*' -o -iname 'vmlinuz*' -o -iname 'zImage*' -o -iname 'Image*' \) -exec "$sbctl_bin" sign '{}' +
         fi
       '';
     };
