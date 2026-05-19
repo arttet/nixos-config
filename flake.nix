@@ -5,6 +5,8 @@
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
     disko.url = "github:nix-community/disko/latest";
     disko.inputs.nixpkgs.follows = "nixpkgs";
+    home-manager.url = "https://github.com/nix-community/home-manager/archive/release-25.11.tar.gz";
+    home-manager.inputs.nixpkgs.follows = "nixpkgs";
     treefmt-nix.url = "github:numtide/treefmt-nix";
     treefmt-nix.inputs.nixpkgs.follows = "nixpkgs";
     zen-browser.url = "github:youwen5/zen-browser-flake";
@@ -15,6 +17,7 @@
     {
       self,
       disko,
+      home-manager,
       nixpkgs,
       treefmt-nix,
       zen-browser,
@@ -54,7 +57,7 @@
           );
         };
       moduleArgs = localOverlayArgs // {
-        inherit zen-browser;
+        inherit home-manager zen-browser;
       };
       workstationStorageExample = nixpkgs.lib.nixosSystem {
         inherit system;

@@ -1,10 +1,27 @@
 { pkgs, lib, ... }:
+let
+  userName = "user";
+  userDescription = "User";
+  userHome = "/home/${userName}";
+  userSources = null;
+in
 {
-  users.users.user = {
+  imports = lib.optional (userSources != null) ./${userName}/dotfiles.nix;
+
+  _module.args = {
+    inherit
+      userDescription
+      userHome
+      userName
+      userSources
+      ;
+  };
+
+  users.users.${userName} = {
     isNormalUser = true;
-    description = "User";
+    description = userDescription;
     shell = pkgs.nushell;
-    hashedPasswordFile = "/etc/nixos/local/users/user.passwd";
+    hashedPasswordFile = "/etc/nixos/local/users/${userName}/${userName}.passwd";
     extraGroups = [ "wheel" ];
   };
 }

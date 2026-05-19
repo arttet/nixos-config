@@ -25,6 +25,10 @@ def overlay-path [session: string] {
   join-path [ (install-dir $session) "user.nix" ]
 }
 
+def dotfiles-path [session: string, username: string] {
+  join-path [ (install-dir $session) "users" $username "dotfiles.nix" ]
+}
+
 def volatile-root [] {
   $env.NIX_CONFIG_INSTALL_VOLATILE_DIR? | default "/run/nixos-config-installer"
 }
@@ -85,11 +89,15 @@ def target-local-dir [] {
 }
 
 def target-password-path [username: string] {
-  $"/etc/nixos/local/users/($username).passwd"
+  $"/etc/nixos/local/users/($username)/($username).passwd"
 }
 
 def mounted-target-password-path [username: string] {
-  join-path [ (target-local-dir) "users" $"($username).passwd" ]
+  join-path [ (target-local-dir) "users" $username $"($username).passwd" ]
+}
+
+def mounted-target-dotfiles-path [username: string] {
+  join-path [ (target-local-dir) "users" $username "dotfiles.nix" ]
 }
 
 def env-path [session: string] {
@@ -539,21 +547,80 @@ def write-overlay [state: record] {
 
   let overlay = $"
 { pkgs, lib, ... }:
+let
+  userName = \"($state.user)\";
+  userDescription = \"($state.user_description)\";
+  userHome = \"/home/${userName}\";
+  userSources = null;
+in
 {
+  imports = lib.optional (userSources != null) ./users/${userName}/dotfiles.nix;
+
   networking.hostName = lib.mkForce \"($state.hostname)\";
   time.timeZone = lib.mkForce \"($state.timezone)\";
 
-  users.users.\"($state.user)\" = {
+  _module.args = {
+    inherit
+      userDescription
+      userHome
+      userName
+      userSources
+      ;
+  };
+
+  users.users.${userName} = {
     isNormalUser = true;
-    description = \"($state.user_description)\";
+    description = userDescription;
     shell = pkgs.nushell;
-    hashedPasswordFile = \"(target-password-path $state.user)\";
+    hashedPasswordFile = \"/etc/nixos/local/users/${userName}/${userName}.passwd\";
     extraGroups = [ \"wheel\" ];
   };
 }
 "
 
   $overlay | save --force (overlay-path $state.session)
+}
+
+def write-dotfiles-skeleton [state: record] {
+  let path = (dotfiles-path $state.session $state.user)
+  mkdir ($path | path dirname)
+
+  let content = $"
+{
+  home-manager,
+  lib,
+  userHome,
+  userName,
+  userSources,
+  ...
+}:
+{
+  imports = [
+    home-manager.nixosModules.home-manager
+  ];
+
+  home-manager.useGlobalPkgs = true;
+  home-manager.useUserPackages = true;
+
+  home-manager.users.${userName} = {
+    home.username = userName;
+    home.homeDirectory = userHome;
+    home.stateVersion = \"25.11\";
+
+    programs.home-manager.enable = true;
+
+    home.file =
+      lib.optionalAttrs (userSources ? dotfiles) {
+        \".config\".source = \"${userSources.dotfiles}/.config\";
+        \".local\".source = \"${userSources.dotfiles}/.local\";
+        \".zshrc\".source = \"${userSources.dotfiles}/.zshrc\";
+        \".gitconfig\".source = \"${userSources.dotfiles}/.gitconfig\";
+      };
+  };
+}
+"
+
+  $content | save --force $path
 }
 
 def write-password-file [state: record] {
@@ -647,6 +714,7 @@ def print-next-commands [state: record] {
 
   print-section "Generated Files" [
     (overlay-path $state.session)
+    (dotfiles-path $state.session $state.user)
     (env-path $state.session)
     (disko-config-path $state.session)
   ]
@@ -782,7 +850,8 @@ def run-apply [state: record] {
 
   let persistent_user_dir = (target-local-dir)
   let persistent_users_dir = (join-path [ $persistent_user_dir "users" ])
-  let persistence_command = $"mkdir ($persistent_user_dir)\ncp .../default.nix ($persistent_user_dir)/\ninstall -m 600 .../($state.user).passwd ($persistent_users_dir)/"
+  let persistent_dotfiles_dir = (join-path [ $persistent_users_dir $state.user ])
+  let persistence_command = $"mkdir ($persistent_user_dir)\ncp .../default.nix ($persistent_user_dir)/\ncp .../dotfiles.nix ($persistent_dotfiles_dir)/\ninstall -m 600 .../($state.user).passwd ($persistent_dotfiles_dir)/"
 
   let install_command = $"NIX_CONFIG_LOCAL_USER=\"($persistent_user_dir)/default.nix\" NIX_CONFIG_LOCAL_HARDWARE=\"(hardware-config-path)\" nixos-install --impure --flake \"($flake)\" --no-root-passwd"
 
@@ -843,9 +912,12 @@ def run-apply [state: record] {
   print-step 4 6 "Persisting local installer state" "running"
   mkdir $persistent_user_dir
   mkdir $persistent_users_dir
+  mkdir $persistent_dotfiles_dir
   chmod 700 $persistent_user_dir
   chmod 700 $persistent_users_dir
+  chmod 700 $persistent_dotfiles_dir
   cp (overlay-path $state.session) $"($persistent_user_dir)/default.nix"
+  cp (dotfiles-path $state.session $state.user) (mounted-target-dotfiles-path $state.user)
   let password_copy = (
     install -m 600 (password-hash-path $state.session) (mounted-target-password-path $state.user)
     | complete
@@ -1108,6 +1180,7 @@ def main [
   let final = (with-password-hash $selected)
 
   write-overlay $final
+  write-dotfiles-skeleton $final
   write-env $final
 
   if $final.action == "dry-run" {
