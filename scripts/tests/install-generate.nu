@@ -43,6 +43,7 @@ def generated-paths [root: string] {
     state: $"($root)/state/vm"
     volatile: $"($root)/run"
     overlay: $"($root)/state/vm/user.nix"
+    dotfiles: $"($root)/state/vm/users/user/dotfiles.nix"
     password: $"($root)/run/vm/secrets/user.passwd"
     env: $"($root)/state/vm/install.env"
     disko: $"($root)/run/vm/runtime/workstation-disko.nix"
@@ -100,7 +101,7 @@ def assert-generated-config-imports [paths: record] {
         NIX_CONFIG_LOCAL_USER: $paths.overlay
         NIX_CONFIG_LOCAL_HARDWARE: $paths.hardware
       } {
-        nix eval --impure $".#($prefix).config.users.users.user" --apply 'user: if user.description == "User" && user.hashedPasswordFile == "/etc/nixos/local/users/user.passwd" && builtins.elem "wheel" user.extraGroups then "ok" else throw "generated user overlay was not applied correctly"' | complete
+        nix eval --impure $".#($prefix).config.users.users.user" --apply 'user: if user.description == "User" && user.hashedPasswordFile == "/etc/nixos/local/users/user/user.passwd" && builtins.elem "wheel" user.extraGroups then "ok" else throw "generated user overlay was not applied correctly"' | complete
       }
     )
     assert-command-ok $"generated user overlay on ($target)" $user_check
@@ -124,6 +125,16 @@ def assert-generated-config-imports [paths: record] {
       }
     )
     assert-command-ok $"generated timezone overlay on ($target)" $timezone_check
+
+    let hm_inactive_check = (
+      with-env {
+        NIX_CONFIG_LOCAL_USER: $paths.overlay
+        NIX_CONFIG_LOCAL_HARDWARE: $paths.hardware
+      } {
+        nix eval --impure $".#($prefix).config" --apply 'cfg: if !(cfg ? home-manager) then "ok" else throw "home-manager must be inactive while userSources is null"' | complete
+      }
+    )
+    assert-command-ok $"generated home-manager inactive on ($target)" $hm_inactive_check
   }
 }
 
@@ -170,7 +181,7 @@ def main [] {
 
     assert equal $result.exit_code 0 $"installer dry-run failed; stderr: ($result.stderr)"
 
-    for path in [ $paths.overlay $paths.env $paths.disko ] {
+    for path in [ $paths.overlay $paths.dotfiles $paths.env $paths.disko ] {
       assert-file $path
     }
 
@@ -179,10 +190,17 @@ def main [] {
     let overlay = (open $paths.overlay)
     assert ($overlay | str contains 'networking.hostName = lib.mkForce "vm";')
     assert ($overlay | str contains 'time.timeZone = lib.mkForce "UTC";')
-    assert ($overlay | str contains 'users.users."user"')
-    assert ($overlay | str contains 'description = "User";')
-    assert ($overlay | str contains 'hashedPasswordFile = "/etc/nixos/local/users/user.passwd";')
+    assert ($overlay | str contains 'userSources = null;')
+    assert ($overlay | str contains 'imports = lib.optional (userSources != null) ./users/${userName}/dotfiles.nix;')
+    assert ($overlay | str contains 'users.users.${userName}')
+    assert ($overlay | str contains 'description = userDescription;')
+    assert ($overlay | str contains 'hashedPasswordFile = "/etc/nixos/local/users/${userName}/${userName}.passwd";')
     assert not ($overlay | str contains "ci-password")
+
+    let dotfiles = (open $paths.dotfiles)
+    assert ($dotfiles | str contains "home-manager.nixosModules.home-manager")
+    assert ($dotfiles | str contains 'home.stateVersion = "25.11";')
+    assert ($dotfiles | str contains "programs.home-manager.enable = true;")
 
     let env_file = (open $paths.env)
     assert ($env_file | str contains 'export NIX_CONFIG_LOCAL_USER=')
@@ -195,6 +213,7 @@ def main [] {
 
     if (has-nix-validation-tools) {
       assert-nix-parses $paths.overlay
+      assert-nix-parses $paths.dotfiles
       assert-nix-parses $paths.disko
       assert-nix-parses $paths.hardware
       assert-generated-disko-shape $paths.disko

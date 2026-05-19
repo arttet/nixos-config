@@ -8,6 +8,7 @@
     mako
     networkmanagerapplet
     brightnessctl
+    pavucontrol
     playerctl
     pamixer
   ];

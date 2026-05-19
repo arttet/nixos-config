@@ -78,6 +78,7 @@ in
     bind = SUPER, D, exec, rofi -show drun
     bind = SUPER, B, exec, zen || zen-browser || brave || google-chrome-stable || tor-browser
     bind = SUPER, E, exec, thunar
+    bind = SUPER, A, exec, pavucontrol
     bind = SUPER SHIFT, E, exec, ghostty -e yazi || alacritty -e yazi || wezterm start yazi
     bind = SUPER, Q, killactive
     bind = SUPER SHIFT, R, exec, hyprctl reload
@@ -87,6 +88,27 @@ in
     bind = SUPER, V, exec, cliphist list | rofi -dmenu | cliphist decode | wl-copy
     bind = SUPER, Print, exec, dir="$(xdg-user-dir PICTURES 2>/dev/null || echo "$HOME/Pictures")" && mkdir -p "$dir" && grim -g "$(slurp)" "$dir/screenshot-$(date +%Y%m%d-%H%M%S).png"
     bind = , Print, exec, dir="$(xdg-user-dir PICTURES 2>/dev/null || echo "$HOME/Pictures")" && mkdir -p "$dir" && grim "$dir/screenshot-$(date +%Y%m%d-%H%M%S).png"
+
+    bind = SUPER, 1, workspace, 1
+    bind = SUPER, 2, workspace, 2
+    bind = SUPER, 3, workspace, 3
+    bind = SUPER, 4, workspace, 4
+    bind = SUPER, 5, workspace, 5
+    bind = SUPER, 6, workspace, 6
+    bind = SUPER, 7, workspace, 7
+    bind = SUPER, 8, workspace, 8
+    bind = SUPER, 9, workspace, 9
+    bind = SUPER, 0, workspace, 10
+    bind = SUPER SHIFT, 1, movetoworkspace, 1
+    bind = SUPER SHIFT, 2, movetoworkspace, 2
+    bind = SUPER SHIFT, 3, movetoworkspace, 3
+    bind = SUPER SHIFT, 4, movetoworkspace, 4
+    bind = SUPER SHIFT, 5, movetoworkspace, 5
+    bind = SUPER SHIFT, 6, movetoworkspace, 6
+    bind = SUPER SHIFT, 7, movetoworkspace, 7
+    bind = SUPER SHIFT, 8, movetoworkspace, 8
+    bind = SUPER SHIFT, 9, movetoworkspace, 9
+    bind = SUPER SHIFT, 0, movetoworkspace, 10
 
     bindel = , XF86AudioRaiseVolume, exec, pamixer -i 5
     bindel = , XF86AudioLowerVolume, exec, pamixer -d 5
