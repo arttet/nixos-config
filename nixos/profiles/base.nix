@@ -1,4 +1,4 @@
-{ lib, ... }:
+{ build, lib, ... }:
 {
   imports = [
     ../modules/core/users.nix
@@ -17,6 +17,14 @@
   ];
 
   users.users.root.hashedPassword = "!";
+
+  system.nixos.tags = [
+    build.fullVersion
+  ];
+  environment.variables.CONFIG_VERSION = build.fullVersion;
+  environment.etc."build-info".text = ''
+    Version: ${build.fullVersion}
+  '';
 
   system.stateVersion = "25.11";
 }

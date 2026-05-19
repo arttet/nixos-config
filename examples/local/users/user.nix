@@ -4,6 +4,15 @@ let
   userDescription = "User";
   userHome = "/home/${userName}";
   userSources = null;
+  # userSources =
+  #   let
+  #     dotfiles = /home/user/.dotfiles;
+  #   in
+  #   {
+  #     inherit dotfiles;
+  #     dotfilesModule = dotfiles + "/nixos/home.nix";
+  #     dotfilesRoot = dotfiles + "/dotfiles";
+  #   };
 in
 {
   imports = lib.optional (userSources != null) ./${userName}/dotfiles.nix;

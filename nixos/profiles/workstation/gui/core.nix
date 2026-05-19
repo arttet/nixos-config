@@ -36,7 +36,7 @@ in
     enable = lib.mkDefault true;
     plugins = with pkgs; [
       thunar-archive-plugin
-      xfce.thunar-volman
+      thunar-volman
     ];
   };
 
@@ -58,7 +58,6 @@ in
     pkgs.cifs-utils
     pkgs.hyprpolkitagent
     pkgs.rofi
-    pkgs.samba
     pkgs.udiskie
     pkgs.xdg-user-dirs
   ];

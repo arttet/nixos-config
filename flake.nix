@@ -25,7 +25,15 @@
     }:
     let
       system = "x86_64-linux";
-      pkgs = nixpkgs.legacyPackages.${system};
+      pkgs = import nixpkgs {
+        inherit system;
+      };
+      version = "0.1.0";
+      revision = if self ? rev then self.shortRev else "dev";
+      fullVersion = "${version}-${revision}";
+      build = {
+        inherit version revision fullVersion;
+      };
       treefmtEval = import ./formatter.nix {
         inherit pkgs treefmt-nix;
       };
@@ -57,7 +65,7 @@
           );
         };
       moduleArgs = localOverlayArgs // {
-        inherit home-manager zen-browser;
+        inherit build home-manager zen-browser;
       };
       workstationStorageExample = nixpkgs.lib.nixosSystem {
         inherit system;
@@ -76,9 +84,20 @@
       workstationStorageLayout = workstationStorageExample.config.platform.storage.diskoLayout;
     in
     {
+      lib.build = build;
+
       formatter.${system} = treefmtEval.config.build.wrapper;
+      packages.${system}.default = self.nixosConfigurations.default.config.system.build.toplevel;
 
       apps.${system} = {
+        version = {
+          type = "app";
+          program = "${pkgs.writeShellScript "nixos-config-version" ''
+            printf '%s\n' '${fullVersion}'
+          ''}";
+          meta.description = "Print the nixos-config build version";
+        };
+
         disko = {
           type = "app";
           program = "${disko.packages.${system}.default}/bin/disko";
