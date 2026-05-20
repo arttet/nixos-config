@@ -12,6 +12,7 @@
     pkg:
     builtins.elem (lib.getName pkg) [
       "brave"
+      "claude-code"
       "cloudflare-warp"
       "google-chrome"
       "obsidian"
