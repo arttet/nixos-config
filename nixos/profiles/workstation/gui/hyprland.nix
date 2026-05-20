@@ -22,7 +22,16 @@ in
 {
   programs.hyprland = {
     enable = lib.mkDefault true;
+    withUWSM = lib.mkDefault true;
     xwayland.enable = lib.mkDefault true;
+  };
+  programs.uwsm = {
+    enable = lib.mkDefault true;
+    waylandCompositors.hyprland = {
+      prettyName = "Hyprland";
+      comment = "Hyprland compositor managed by UWSM";
+      binPath = "/run/current-system/sw/bin/start-hyprland";
+    };
   };
 
   xdg.portal.extraPortals = [
@@ -57,12 +66,15 @@ in
     env = XDG_SESSION_TYPE,wayland
 
     input {
-      kb_layout = us
+      kb_layout = us,ru
+      kb_options = grp:alt_shift_toggle
       follow_mouse = 1
       touchpad {
         natural_scroll = yes
       }
     }
+
+    gesture = 3, horizontal, workspace
 
     general {
       gaps_in = 4
@@ -74,20 +86,17 @@ in
       rounding = 6
     }
 
-    bind = SUPER, Return, exec, ghostty || alacritty || wezterm
-    bind = SUPER, D, exec, rofi -show drun
-    bind = SUPER, B, exec, zen || zen-browser || brave || google-chrome-stable || tor-browser
+    bind = SUPER, Return, exec, ghostty
+    bind = SUPER, R, exec, rofi -show drun
+    bind = SUPER, B, exec, zen
     bind = SUPER, E, exec, thunar
     bind = SUPER, A, exec, pavucontrol
-    bind = SUPER SHIFT, E, exec, ghostty -e yazi || alacritty -e yazi || wezterm start yazi
+    bind = SUPER SHIFT, E, exec, ghostty -e yazi
     bind = SUPER, Q, killactive
     bind = SUPER SHIFT, R, exec, hyprctl reload
     bind = SUPER, L, exec, hyprlock
     bind = SUPER SHIFT, P, exec, workstation-session-menu
 
-    bind = SUPER, V, exec, cliphist list | rofi -dmenu | cliphist decode | wl-copy
-    bind = SUPER, Print, exec, dir="$(xdg-user-dir PICTURES 2>/dev/null || echo "$HOME/Pictures")" && mkdir -p "$dir" && grim -g "$(slurp)" "$dir/screenshot-$(date +%Y%m%d-%H%M%S).png"
-    bind = , Print, exec, dir="$(xdg-user-dir PICTURES 2>/dev/null || echo "$HOME/Pictures")" && mkdir -p "$dir" && grim "$dir/screenshot-$(date +%Y%m%d-%H%M%S).png"
 
     bind = SUPER, 1, workspace, 1
     bind = SUPER, 2, workspace, 2

@@ -1,7 +1,12 @@
-{ pkgs, lib, ... }:
+{
+  config,
+  pkgs,
+  lib,
+  ...
+}:
 let
   tuigreet = if builtins.hasAttr "tuigreet" pkgs then pkgs.tuigreet else pkgs.greetd.tuigreet;
-  hyprlandCommand = lib.getExe pkgs.hyprland;
+  uwsm = lib.getExe config.programs.uwsm.package;
 in
 {
   hardware.graphics.enable = lib.mkDefault true;
@@ -20,7 +25,7 @@ in
   services.greetd = {
     enable = lib.mkDefault true;
     settings.default_session = {
-      command = "${lib.getExe tuigreet} --time --remember --cmd ${hyprlandCommand}";
+      command = "${lib.getExe tuigreet} --time --remember --cmd '${uwsm} start hyprland-uwsm.desktop'";
       user = "greeter";
     };
   };

@@ -6,7 +6,7 @@ let
   userSources = null;
   # userSources =
   #   let
-  #     dotfiles = /home/user/.dotfiles;
+  #     dotfiles = ${userHome}/.dotfiles;
   #   in
   #   {
   #     inherit dotfiles;

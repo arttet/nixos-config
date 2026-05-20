@@ -44,6 +44,10 @@
   services.timesyncd.enable = lib.mkDefault true;
   system.autoUpgrade.enable = lib.mkDefault false;
   console.keyMap = lib.mkDefault "us";
+  services.xserver.xkb = {
+    layout = lib.mkDefault "us,ru";
+    options = lib.mkDefault "grp:alt_shift_toggle";
+  };
 
   nix = {
     gc = {
