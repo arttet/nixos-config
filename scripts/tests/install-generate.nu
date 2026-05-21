@@ -93,7 +93,7 @@ def write-hardware-stub [path: string] {
 }
 
 def assert-generated-config-imports [paths: record] {
-  for target in [ "default" "workstation" "workstation-gui" ] {
+  for target in [ "default" "workstation" "desktop" ] {
     let prefix = $"nixosConfigurations.($target)"
 
     let user_check = (
@@ -139,7 +139,7 @@ def assert-generated-config-imports [paths: record] {
 }
 
 def assert-generated-config-build-plans [paths: record] {
-  for target in [ "workstation" "workstation-gui" ] {
+  for target in [ "workstation" "desktop" ] {
     let result = (
       with-env {
         NIX_CONFIG_LOCAL_USER: $paths.overlay

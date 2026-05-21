@@ -39,7 +39,7 @@ build profile="default":
 test profile="default":
     just build {{ profile }}
     nu scripts/tests/run.nu
-    case "{{ profile }}" in default|workstation-gui) nix build .#checks.x86_64-linux.workstation-gui-policy --no-link ;; workstation) nix build .#checks.x86_64-linux.workstation-policy --no-link ;; vm) nix build .#checks.x86_64-linux.vm-policy --no-link ;; *) echo "No policy check is defined for profile: {{ profile }}"; exit 1 ;; esac
+    case "{{ profile }}" in default|desktop) nix build .#checks.x86_64-linux.desktop-policy --no-link ;; workstation) nix build .#checks.x86_64-linux.workstation-policy --no-link ;; vm) nix build .#checks.x86_64-linux.vm-policy --no-link ;; *) echo "No policy check is defined for profile: {{ profile }}"; exit 1 ;; esac
 
 [doc('Switch the installed NixOS system to a profile')]
 [group('Development')]
@@ -60,8 +60,8 @@ mod vm 'misc/justfiles/vm.just'
 [group: 'Workstation']
 mod workstation 'misc/justfiles/workstation.just'
 
-[group: 'Workstation GUI']
-mod workstation-gui 'misc/justfiles/workstation-gui.just'
+[group: 'Desktop']
+mod desktop 'misc/justfiles/desktop.just'
 
 # ==============================================================================
 # Local Overlay

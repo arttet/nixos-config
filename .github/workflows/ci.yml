@@ -216,7 +216,7 @@ jobs:
       - name: Validate headless workstation
         run: just workstation test
 
-  workstation-gui:
+  desktop:
     name: Desktop
     runs-on: ubuntu-latest
     needs: [security, static, docs]
@@ -245,7 +245,7 @@ jobs:
         uses: extractions/setup-just@v4
 
       - name: Validate desktop
-        run: just workstation-gui test
+        run: just desktop test
 
   deploy-gh-pages:
     name: Deploy GitHub Pages
@@ -258,12 +258,12 @@ jobs:
       needs.docs.result == 'success' &&
       needs.vm.result == 'success' &&
       needs.workstation.result == 'success' &&
-      needs['workstation-gui'].result == 'success' &&
+      needs['desktop'].result == 'success' &&
       github.event_name == 'push' &&
       github.ref == 'refs/heads/main' &&
       github.actor != 'dependabot[bot]'
     runs-on: ubuntu-latest
-    needs: [installer, disko, security, static, docs, vm, workstation, workstation-gui]
+    needs: [installer, disko, security, static, docs, vm, workstation, desktop]
 
     permissions:
       contents: read
@@ -292,10 +292,10 @@ jobs:
       needs.docs.result == 'success' &&
       needs.vm.result == 'success' &&
       needs.workstation.result == 'success' &&
-      needs['workstation-gui'].result == 'success' &&
+      needs['desktop'].result == 'success' &&
       github.actor != 'dependabot[bot]'
     runs-on: ubuntu-latest
-    needs: [installer, disko, security, static, docs, vm, workstation, workstation-gui]
+    needs: [installer, disko, security, static, docs, vm, workstation, desktop]
 
     permissions:
       contents: read

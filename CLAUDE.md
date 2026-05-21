@@ -23,16 +23,16 @@ just build [profile]        # nix build of nixosConfigurations.<profile>.config.
 just test  [profile]        # build + scripts/tests/run.nu + GRUB / Secure-Boot tool assertions
 just switch [profile]       # doas nixos-rebuild switch --install-bootloader --flake path:<repo>#<profile> --impure
 just vm test                # QEMU smoke: daemon start, SSH reach, network
-just workstation-gui test   # build + headless validate of GUI profile (no GPU)
+just desktop test   # build + headless validate of Desktop profile (no GPU)
 just docs build             # VitePress build under docs/
 ```
 
-`profile` defaults to `default` (= `workstation-gui`). For runtime install on real hardware the entry point is `./install.sh`, which runs `nu scripts/install/bootstrap.nu --apply`.
+`profile` defaults to `default` (= `desktop`). For runtime install on real hardware the entry point is `./install.sh`, which runs `nu scripts/install/bootstrap.nu --apply`.
 
 Pre-flight before opening a PR (from `docs/dev/reference/validation.md`):
 
 ```sh
-just check && just docs build && just vm test && just workstation-gui test
+just check && just docs build && just vm test && just desktop test
 ```
 
 Destructive loopback storage test (Linux root only):
@@ -43,11 +43,11 @@ RUN_DISKO_LOOP_TEST=1 just test
 
 ## Architecture
 
-Three flake targets exposed by `flake.nix`. The user-facing product is `workstation-gui`; the others exist for validation:
+Three flake targets exposed by `flake.nix`. The user-facing product is `desktop`; the others exist for validation:
 
 | Target | Purpose |
 | --- | --- |
-| `workstation-gui` | Default real-hardware install (Hyprland, PipeWire, browsers) |
+| `desktop` | Default real-hardware install (Hyprland, PipeWire, browsers) |
 | `workstation` | Headless baseline used by checks and dev workflows |
 | `vm` | Disposable QEMU profile for runtime smoke tests |
 
@@ -60,7 +60,7 @@ nixos/hosts/<target>/           →  final composition entry point per flake tar
 local overlay (outside git)     →  machine identity: hostname, user, passwords, hardware-configuration.nix
 ```
 
-The headless `workstation` profile must remain fully functional without X11/Wayland; `workstation-gui` imports it and adds the UI stack only. Do not leak desktop apps into core modules.
+The headless `workstation` profile must remain fully functional without X11/Wayland; `desktop` imports it and adds the UI stack only. Do not leak desktop apps into core modules.
 
 ### Local overlay (machine identity)
 
@@ -95,7 +95,7 @@ From `AGENTS.md` — load before touching anything:
 - Every module wraps its body in `lib.mkIf cfg.enable { … }`; importing a module must not activate it.
 - No `with pkgs;`, no `builtins.readDir` auto-import — explicit only.
 - Pin every flake input in `flake.nix`.
-- Unfree packages only in `workstation-gui`, declared explicitly.
+- Unfree packages only in `desktop`, declared explicitly.
 
 ## Flake checks worth knowing
 

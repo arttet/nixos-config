@@ -146,14 +146,14 @@
         ];
       };
 
-      nixosConfigurations.default = self.nixosConfigurations.workstation-gui;
+      nixosConfigurations.default = self.nixosConfigurations.desktop;
 
-      nixosConfigurations.workstation-gui = nixpkgs.lib.nixosSystem {
+      nixosConfigurations.desktop = nixpkgs.lib.nixosSystem {
         inherit system;
         specialArgs = moduleArgs;
         modules = [
           disko.nixosModules.disko
-          ./nixos/hosts/workstation-gui/default.nix
+          ./nixos/hosts/desktop/default.nix
         ];
       };
 

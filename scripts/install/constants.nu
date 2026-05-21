@@ -14,7 +14,7 @@ export def default-state [] {
 }
 
 export def allowed-profiles [] {
-  [ "default" "workstation" "workstation-gui" ]
+  [ "default" "workstation" "desktop" ]
 }
 
 export def disko-mode [] {

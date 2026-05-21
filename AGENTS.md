@@ -7,12 +7,12 @@ belong in `docs/` and should be linked from here instead of duplicated.
 
 ## Active Scope
 
-For users, the product is the graphical workstation installed on real hardware.
-In Nix terms, that is the `workstation-gui` flake target.
+For users, the product is the desktop installed on real hardware.
+In Nix terms, that is the `desktop` flake target.
 
 | Target | Role |
 | --- | --- |
-| `workstation-gui` | Default real-hardware workstation install |
+| `desktop` | Default real-hardware workstation install |
 | `workstation` | Non-graphical base used by checks and development workflows |
 | `vm` | Disposable local QEMU system for testing without real hardware |
 
@@ -97,15 +97,15 @@ Common checks:
 ```sh
 just check
 just docs build
-just workstation-gui build
-just workstation-gui test
+just desktop build
+just desktop test
 just workstation build
 just workstation test
 just vm build
 just vm test
 ```
 
-Use `workstation-gui` for the default real-hardware workstation path. Use
+Use `desktop` for the default real-hardware workstation path. Use
 `workstation` only for headless/core validation. Use `vm` only for disposable
 local QEMU testing.
 
@@ -125,7 +125,7 @@ Default overlay path:
 Environment override:
 
 ```sh
-NIX_CONFIG_LOCAL_USER=/path/to/user.nix just workstation-gui build
+NIX_CONFIG_LOCAL_USER=/path/to/user.nix just desktop build
 ```
 
 The committed example overlay in `examples/local/` must use fake values only.
