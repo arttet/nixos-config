@@ -53,6 +53,7 @@ in
     pkgs.gnupg
     pkgs.keepassxc
     pkgs.proton-pass
+    pkgs.yubikey-manager
     veracrypt
   ];
 }

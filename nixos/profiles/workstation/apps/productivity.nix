@@ -3,8 +3,10 @@
   xdg.mime.defaultApplications."application/pdf" = lib.mkDefault "org.pwmt.zathura.desktop";
 
   environment.systemPackages = with pkgs; [
+    mission-center
     obsidian
-    libreoffice
+    onlyoffice-desktopeditors
+    typst
     zathura
   ];
 }

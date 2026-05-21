@@ -8,5 +8,6 @@
     starship
     tmux
     fastfetch
+    carapace
   ];
 }
