@@ -63,9 +63,7 @@ test: _require_sshpass daemon
 [doc('Validate the VM profile without starting QEMU')]
 [no-cd]
 validate:
-    nix eval .#nixosConfigurations.vm.config.services.qemuGuest.enable --apply 'enabled: if enabled then "ok" else throw "vm must enable qemuGuest"'
-    nix eval .#nixosConfigurations.vm.config.boot.kernelParams --apply 'params: if builtins.elem "console=ttyS0,115200n8" params then "ok" else throw "vm must include serial console settings"'
-    nix eval .#nixosConfigurations.vm.config.virtualisation.vmVariant.virtualisation.graphics --apply 'graphics: if graphics then throw "vm must be headless" else "ok"'
+    nix build .#checks.x86_64-linux.vm-policy --no-link
     @echo "VM profile validation passed."
 
 _require_sshpass:

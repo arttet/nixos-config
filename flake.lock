@@ -28,14 +28,18 @@
         ]
       },
       "locked": {
-        "lastModified": 1778905220,
-        "narHash": "sha256-ox/5IHc8uwy6UTw6N7Shp6uCHIgu/S2PsWeuXsOHSo8=",
-        "type": "tarball",
-        "url": "https://github.com/nix-community/home-manager/archive/release-25.11.tar.gz"
+        "lastModified": 1779336838,
+        "narHash": "sha256-n1+l78hJRABp4cQHKeD0BVByT0vZLPqd09Tvoq8Q+d8=",
+        "owner": "nix-community",
+        "repo": "home-manager",
+        "rev": "928d72376949e222ea4f07b44828a55b0136422e",
+        "type": "github"
       },
       "original": {
-        "type": "tarball",
-        "url": "https://github.com/nix-community/home-manager/archive/release-25.11.tar.gz"
+        "owner": "nix-community",
+        "ref": "master",
+        "repo": "home-manager",
+        "type": "github"
       }
     },
     "nixpkgs": {

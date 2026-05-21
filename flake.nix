@@ -5,7 +5,7 @@
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
     disko.url = "github:nix-community/disko/latest";
     disko.inputs.nixpkgs.follows = "nixpkgs";
-    home-manager.url = "https://github.com/nix-community/home-manager/archive/release-25.11.tar.gz";
+    home-manager.url = "github:nix-community/home-manager/master";
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
     treefmt-nix.url = "github:numtide/treefmt-nix";
     treefmt-nix.inputs.nixpkgs.follows = "nixpkgs";
@@ -28,6 +28,7 @@
       pkgs = import nixpkgs {
         inherit system;
       };
+      inherit (nixpkgs) lib;
       version = "0.1.0";
       revision = if self ? rev then self.shortRev else "dev";
       fullVersion = "${version}-${revision}";
@@ -95,6 +96,14 @@
         ];
       };
       workstationStorageLayout = workstationStorageExample.config.platform.storage.diskoLayout;
+      policyChecks = import ./nixos/checks/policy.nix {
+        inherit
+          lib
+          pkgs
+          self
+          workstationStorageLayout
+          ;
+      };
     in
     {
       lib.build = build;
@@ -215,6 +224,7 @@
             == "/swap";
           builtins.toJSON workstationStorageLayout
         );
-      };
+      }
+      // policyChecks;
     };
 }

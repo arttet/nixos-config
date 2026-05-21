@@ -53,8 +53,8 @@ jobs:
       - name: Semgrep
         run: semgrep scan --config p/default --error
 
-  validate:
-    name: Validate
+  static:
+    name: Static
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -69,25 +69,15 @@ jobs:
       - name: Magic Nix Cache
         uses: DeterminateSystems/magic-nix-cache-action@v13
 
-      - name: Setup Just
-        uses: extractions/setup-just@v4
+      - name: Check formatting
+        run: nix build .#checks.x86_64-linux.formatting
 
-      - name: Validate scripts
-        run: nix shell nixpkgs#just nixpkgs#nushell nixpkgs#openssl -c just test
-
-      - name: Install loopback disk test dependencies
-        run: sudo apt-get update && sudo apt-get install --yes cryptsetup-bin
-
-      - name: Validate real disko on loopback disk
-        run: nix shell nixpkgs#just nixpkgs#nushell nixpkgs#openssl -c sh -c 'sudo env "PATH=$PATH" RUN_DISKO_LOOP_TEST=1 just test'
-
-      - name: Run repository checks
-        run: just check
+      - name: Check flake
+        run: nix flake check
 
   docs:
     name: Documentation
     runs-on: ubuntu-latest
-    needs: [validate, security]
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -127,10 +117,41 @@ jobs:
           name: github-pages
           path: docs/.vitepress/dist
 
+  validate:
+    name: Validate
+    runs-on: ubuntu-latest
+    needs: [security, static, docs]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Install Nix
+        uses: cachix/install-nix-action@v31
+        with:
+          extra_nix_config: |
+            experimental-features = nix-command flakes
+
+      - name: Magic Nix Cache
+        uses: DeterminateSystems/magic-nix-cache-action@v13
+
+      - name: Setup Just
+        uses: extractions/setup-just@v4
+
+      - name: Validate scripts
+        run: nix shell nixpkgs#just nixpkgs#nushell nixpkgs#openssl -c just test
+
+      - name: Install loopback disk test dependencies
+        run: sudo apt-get update && sudo apt-get install --yes cryptsetup-bin
+
+      - name: Validate real disko on loopback disk
+        run: |
+          # shellcheck disable=SC2016
+          nix shell nixpkgs#just nixpkgs#nushell nixpkgs#openssl -c sh -c 'sudo env "PATH=$PATH" RUN_DISKO_LOOP_TEST=1 just test'
+
   vm:
     name: VM
     runs-on: ubuntu-latest
-    needs: [validate, security]
+    needs: [security, static, docs]
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -156,7 +177,7 @@ jobs:
   workstation:
     name: Headless Workstation
     runs-on: ubuntu-latest
-    needs: [validate, security]
+    needs: [security, static, docs]
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -179,7 +200,7 @@ jobs:
   workstation-gui:
     name: GUI Workstation
     runs-on: ubuntu-latest
-    needs: [validate, security]
+    needs: [security, static, docs]
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -213,6 +234,7 @@ jobs:
       !cancelled() &&
       needs.validate.result == 'success' &&
       needs.security.result == 'success' &&
+      needs.static.result == 'success' &&
       needs.docs.result == 'success' &&
       needs.vm.result == 'success' &&
       needs.workstation.result == 'success' &&
@@ -221,7 +243,7 @@ jobs:
       github.ref == 'refs/heads/main' &&
       github.actor != 'dependabot[bot]'
     runs-on: ubuntu-latest
-    needs: [validate, security, docs, vm, workstation, workstation-gui]
+    needs: [validate, security, static, docs, vm, workstation, workstation-gui]
 
     permissions:
       contents: read
@@ -245,13 +267,14 @@ jobs:
       !cancelled() &&
       needs.validate.result == 'success' &&
       needs.security.result == 'success' &&
+      needs.static.result == 'success' &&
       needs.docs.result == 'success' &&
       needs.vm.result == 'success' &&
       needs.workstation.result == 'success' &&
       needs['workstation-gui'].result == 'success' &&
       github.actor != 'dependabot[bot]'
     runs-on: ubuntu-latest
-    needs: [validate, security, docs, vm, workstation, workstation-gui]
+    needs: [validate, security, static, docs, vm, workstation, workstation-gui]
 
     permissions:
       contents: read

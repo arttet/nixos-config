@@ -21,7 +21,7 @@ just check                  # nix flake check (formatting + policy assertions)
 just fmt                    # nixfmt via treefmt
 just build [profile]        # nix build of nixosConfigurations.<profile>.config.system.build.toplevel
 just test  [profile]        # build + scripts/tests/run.nu + GRUB / Secure-Boot tool assertions
-just switch [profile]       # doas nixos-rebuild switch --install-bootloader --flake .#<profile> --impure
+just switch [profile]       # doas nixos-rebuild switch --install-bootloader --flake path:<repo>#<profile> --impure
 just vm test                # QEMU smoke: daemon start, SSH reach, network
 just workstation-gui test   # build + headless validate of GUI profile (no GPU)
 just docs build             # VitePress build under docs/
@@ -70,7 +70,7 @@ Machine-specific config never goes in git. The flake reads it from a path suppli
 - Override: `NIX_CONFIG_LOCAL_USER=/path/to/user.nix` and `NIX_CONFIG_LOCAL_HARDWARE=/path/to/hardware-configuration.nix`
 - The legacy `/etc/nixos/local/default.nix` + `/etc/nixos/hardware-configuration.nix` are still auto-discovered via `localPathOrNull` in `flake.nix` (uses `builtins.pathExists` + `tryEval` so missing files degrade to `null` instead of breaking pure evaluation).
 - Assertions in `nixos/modules/core/local-overlay.nix` only fire if env vars point to a non-existent path.
-- The committed `examples/local/user.nix` and `examples/local/default.nix` must contain fake values only.
+- The committed `examples/local/` examples must contain fake values only.
 
 `just switch` always passes `--impure` so `builtins.getEnv` resolves these env vars; `just check` runs pure (CI-safe).
 
@@ -79,9 +79,10 @@ Machine-specific config never goes in git. The flake reads it from a path suppli
 From `AGENTS.md` — load before touching anything:
 
 - Documentation is English; planning/chat may be Russian.
-- No Home Manager. No active laptop or VPN targets yet.
+- Home Manager is allowed only through the existing flake input and NixOS module integration. Treat it as a lightweight dotfiles/symlink wrapper, similar to Stow, for local user overlays only. Do not move system policy, package baselines, services, secrets, or real user identity/state into Home Manager. Do not add standalone Home Manager roots. No active laptop or VPN targets yet.
 - Custom scripts must be Nushell.
 - Never commit real usernames, hostnames, SSH keys, tokens, hardware configs, or any secret material.
+- Do not use or modify the user's global Git configuration for agent actions; use repository-local Git config, command-scoped environment overrides, or provide explicit commands for the user to run.
 - Main branch must stay buildable.
 - Agents cannot validate real hardware or Windows WSL2/QEMU runtime directly — provide exact commands and expected results; treat user-run output as the acceptance result. Do not claim runtime success without user confirmation.
 - Deferred features (not currently implemented): TPM unlock, YubiKey unlock, automatic snapshots, impermanence, hibernation, automated backups. See `docs/evolution/roadmap/deferred-features.md`.
