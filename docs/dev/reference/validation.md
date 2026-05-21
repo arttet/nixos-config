@@ -13,6 +13,17 @@ just workstation build
 just workstation-gui build
 ```
 
+`just check` is the production static validation gate. It runs:
+
+- `nix flake check`
+
+The flake check includes:
+
+- formatting through `treefmt-nix`
+- `statix`
+- `deadnix`
+- repository policy assertions
+
 ## 🧪 Runtime Validation (QEMU)
 
 Validate actual system behavior using a disposable virtual machine. This is the primary way to verify network, SSH, and service logic:

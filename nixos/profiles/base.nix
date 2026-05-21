@@ -25,7 +25,7 @@
       # Keep third-party packages that still reference pkgs.xorg.lndir working
       # without forcing the deprecated nixpkgs alias during evaluation.
       xorg = prev.xorg // {
-        lndir = prev.lndir;
+        inherit (prev) lndir;
       };
     })
   ];
