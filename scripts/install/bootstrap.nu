@@ -2,7 +2,7 @@
 
 use common.nu *
 use constants.nu *
-use ui.nu *
+use ../common/ui.nu *
 
 # Runtime path helpers are grouped first; stable defaults live in constants.nu.
 
@@ -22,11 +22,11 @@ def ensure-private-install-dir [session: string] {
 }
 
 def overlay-path [session: string] {
-  join-path [ (install-dir $session) "user.nix" ]
+  join-path [ (install-dir $session) "default.nix" ]
 }
 
-def dotfiles-path [session: string, username: string] {
-  join-path [ (install-dir $session) "users" $username "dotfiles.nix" ]
+def install-state-path [session: string] {
+  join-path [ (install-dir $session) "state.json" ]
 }
 
 def volatile-root [] {
@@ -96,10 +96,6 @@ def mounted-target-password-path [username: string] {
   join-path [ (target-local-dir) "users" $username $"($username).passwd" ]
 }
 
-def mounted-target-dotfiles-path [username: string] {
-  join-path [ (target-local-dir) "users" $username "dotfiles.nix" ]
-}
-
 def env-path [session: string] {
   join-path [ (install-dir $session) "install.env" ]
 }
@@ -108,8 +104,8 @@ def hardware-config-path [] {
   "/mnt/etc/nixos/hardware-configuration.nix"
 }
 
-def disko-config-path [session: string] {
-  join-path [ (runtime-dir $session) "workstation-disko.nix" ]
+def disko-state-path [session: string] {
+  join-path [ (runtime-dir $session) "disko-state.json" ]
 }
 
 def luks-password-path [session: string] {
@@ -130,12 +126,6 @@ export def flake-uri [profile: string] {
 
 def prompt-default [label: string, default: string] {
   prompt-text $label $default
-}
-
-def clear-screen-once [] {
-  if ($env.TERM? | default "") != "dumb" {
-    print $"(ansi cls)(ansi home)"
-  }
 }
 
 def prompt-validated [label: string, default: string, validator: closure] {
@@ -542,85 +532,68 @@ def choose-disk [state: record] {
   }
 }
 
-def write-overlay [state: record] {
+def local-template-path [] {
+  join-path [ (repo-root) "templates" "local" "default.nix" ]
+}
+
+def disko-template-path [] {
+  join-path [ (repo-root) "templates" "disko" "default.nix" ]
+}
+
+def install-state [state: record] {
+  {
+    schemaVersion: 1
+    session: $state.session
+    profile: $state.profile
+    host: {
+      hostname: $state.hostname
+      timezone: $state.timezone
+    }
+    users: [
+      {
+        name: $state.user
+        description: $state.user_description
+        hashedPasswordFile: (target-password-path $state.user)
+        isAdmin: true
+        extraGroups: []
+        shell: "nushell"
+        sources: null
+      }
+    ]
+  }
+}
+
+def disko-state [
+  state: record
+  --luks-password-file: string = ""
+] {
+  let base = {
+    schemaVersion: 1
+    disk: {
+      device: $state.disk
+    }
+  }
+
+  if $luks_password_file == "" {
+    $base
+  } else {
+    $base | upsert luks {
+      passwordFile: $luks_password_file
+    }
+  }
+}
+
+def write-install-state [state: record] {
   ensure-private-install-dir $state.session | ignore
-
-  let overlay = $"
-{ pkgs, lib, ... }:
-let
-  userName = \"($state.user)\";
-  userDescription = \"($state.user_description)\";
-  userHome = \"/home/${userName}\";
-  userSources = null;
-in
-{
-  imports = lib.optional (userSources != null) ./users/${userName}/dotfiles.nix;
-
-  networking.hostName = lib.mkForce \"($state.hostname)\";
-  time.timeZone = lib.mkForce \"($state.timezone)\";
-
-  _module.args = {
-    inherit
-      userDescription
-      userHome
-      userName
-      userSources
-      ;
-  };
-
-  users.users.${userName} = {
-    isNormalUser = true;
-    description = userDescription;
-    shell = pkgs.nushell;
-    hashedPasswordFile = \"/etc/nixos/local/users/${userName}/${userName}.passwd\";
-    extraGroups = [ \"wheel\" ];
-  };
-}
-"
-
-  $overlay | save --force (overlay-path $state.session)
+  cp (local-template-path) (overlay-path $state.session)
+  write-json-contract (schema-path (install-state-schema)) (install-state-path $state.session) (install-state $state)
 }
 
-def write-dotfiles-skeleton [state: record] {
-  let path = (dotfiles-path $state.session $state.user)
-  mkdir ($path | path dirname)
-
-  let content = $"
-{
-  home-manager,
-  lib,
-  userHome,
-  userName,
-  userSources,
-  ...
-}:
-{
-  imports = [
-    home-manager.nixosModules.home-manager
-  ];
-
-  home-manager.useGlobalPkgs = true;
-  home-manager.useUserPackages = true;
-
-  home-manager.users.${userName} = {
-    home.username = userName;
-    home.homeDirectory = userHome;
-    home.stateVersion = \"25.11\";
-
-    programs.home-manager.enable = true;
-
-    home.file =
-      lib.optionalAttrs (userSources ? dotfiles) {
-        \".config\".source = \"${userSources.dotfiles}/.config\";
-        \".local\".source = \"${userSources.dotfiles}/.local\";
-        \".zshrc\".source = \"${userSources.dotfiles}/.zshrc\";
-        \".gitconfig\".source = \"${userSources.dotfiles}/.gitconfig\";
-      };
-  };
-}
-"
-
-  $content | save --force $path
+def write-disko-state [
+  state: record
+  --luks-password-file: string = ""
+] {
+  write-json-contract (schema-path (disko-state-schema)) (disko-state-path $state.session) (disko-state $state --luks-password-file $luks_password_file)
 }
 
 def write-password-file [state: record] {
@@ -702,7 +675,8 @@ export def print-summary [state: record] {
     { label: "Hostname", value: $state.hostname }
     { label: "Timezone", value: $state.timezone }
     { label: "Disk", value: $state.disk }
-    { label: "Local overlay", value: (overlay-path $state.session) }
+    { label: "Local template", value: (overlay-path $state.session) }
+    { label: "Install state", value: (install-state-path $state.session) }
     { label: "Install env", value: (env-path $state.session) }
     { label: "Hardware config", value: (hardware-config-path) }
   ]
@@ -714,16 +688,16 @@ def print-next-commands [state: record] {
 
   print-section "Generated Files" [
     (overlay-path $state.session)
-    (dotfiles-path $state.session $state.user)
+    (install-state-path $state.session)
     (env-path $state.session)
-    (disko-config-path $state.session)
+    (disko-state-path $state.session)
   ]
 
   print (paint success "Dry-run complete. No destructive command was run.")
   print ""
   print "To apply after review:"
   print $"  source \"(env-path $state.session)\""
-  print $"  nu \"($repo)/scripts/install/disko.nu\" \"($state.disk)\""
+  print $"  nu \"($repo)/scripts/install/disko.nu\" --state \"(disko-state-path $state.session)\""
   print "  nixos-generate-config --root /mnt"
   print "  test -f /mnt/etc/nixos/hardware-configuration.nix"
   print $"  NIX_CONFIG_LOCAL_USER=\"(overlay-path $state.session)\" \\"
@@ -842,16 +816,16 @@ def run-apply [state: record] {
 
   let repo = (repo-root)
   let flake = (flake-uri $state.profile)
-  let disko_config = (disko-config-path $state.session)
+  let disko_state = (disko-state-path $state.session)
   let luks_password = (luks-password-path $state.session)
 
-  let disko_command = $"nu \"($repo)/scripts/install/disko.nu\" \"($state.disk)\" --yes --config \"($disko_config)\""
+  let disko_command = $"nu \"($repo)/scripts/install/disko.nu\" --yes --state \"($disko_state)\""
   let generate_config_command = "nixos-generate-config --root /mnt"
 
   let persistent_user_dir = (target-local-dir)
   let persistent_users_dir = (join-path [ $persistent_user_dir "users" ])
-  let persistent_dotfiles_dir = (join-path [ $persistent_users_dir $state.user ])
-  let persistence_command = $"mkdir ($persistent_user_dir)\ncp .../default.nix ($persistent_user_dir)/\ncp .../dotfiles.nix ($persistent_dotfiles_dir)/\ninstall -m 600 .../($state.user).passwd ($persistent_dotfiles_dir)/"
+  let persistent_user_secret_dir = (join-path [ $persistent_users_dir $state.user ])
+  let persistence_command = $"mkdir ($persistent_user_dir)\ncp .../default.nix ($persistent_user_dir)/\ncp .../state.json ($persistent_user_dir)/\ninstall -m 600 .../($state.user).passwd ($persistent_user_secret_dir)/"
 
   let install_command = $"NIX_CONFIG_LOCAL_USER=\"($persistent_user_dir)/default.nix\" NIX_CONFIG_LOCAL_HARDWARE=\"(hardware-config-path)\" nixos-install --impure --flake \"($flake)\" --no-root-passwd"
 
@@ -873,8 +847,8 @@ def run-apply [state: record] {
     let luks_passphrase = (prompt-luks-passphrase)
     write-luks-password-file $state.session $luks_passphrase
     write-password-file $state
-    write-disko-config $state.disk $disko_config --luks-password-file $luks_password
-    append-install-log $state.session $"PREPARED disko_config=($disko_config) luks_password_file=($luks_password)"
+    write-disko-state $state --luks-password-file $luks_password
+    append-install-log $state.session $"PREPARED disko_state=($disko_state) luks_password_file=($luks_password)"
   } catch {|error|
     cleanup-secrets-dir $state.session
     print-step 1 6 "Preparing encryption" "failed"
@@ -912,12 +886,12 @@ def run-apply [state: record] {
   print-step 4 6 "Persisting local installer state" "running"
   mkdir $persistent_user_dir
   mkdir $persistent_users_dir
-  mkdir $persistent_dotfiles_dir
+  mkdir $persistent_user_secret_dir
   chmod 700 $persistent_user_dir
   chmod 700 $persistent_users_dir
-  chmod 700 $persistent_dotfiles_dir
+  chmod 700 $persistent_user_secret_dir
   cp (overlay-path $state.session) $"($persistent_user_dir)/default.nix"
-  cp (dotfiles-path $state.session $state.user) (mounted-target-dotfiles-path $state.user)
+  cp (install-state-path $state.session) $"($persistent_user_dir)/state.json"
   let password_copy = (
     install -m 600 (password-hash-path $state.session) (mounted-target-password-path $state.user)
     | complete
@@ -1097,7 +1071,6 @@ def main [
   --dry-run
   --apply
   --profile: string = ""
-  --target: string = ""
   --session: string = ""
   --user-description: string = ""
   --user: string = ""
@@ -1105,10 +1078,13 @@ def main [
   --hostname: string = ""
   --timezone: string = ""
   --disk: string = ""
+  --no-ui
 ] {
+  apply-ui-mode $no_ui
   require-ui-tools
   require-password-hash-tool
   require-file-permission-tools
+  require-json-schema-tool
 
   if $dry_run and $apply {
     error make { msg: "use either --dry-run or --apply, not both" }
@@ -1116,14 +1092,9 @@ def main [
 
   mut initial = (default-state)
 
-  if $profile != "" and $target != "" {
-    error make { msg: "use either --profile or deprecated --target, not both" }
-  }
-
-  let selected_profile = if $profile != "" { $profile } else { $target }
-  if $selected_profile != "" {
-    validate-profile $selected_profile
-    $initial = ($initial | upsert profile $selected_profile)
+  if $profile != "" {
+    validate-profile $profile
+    $initial = ($initial | upsert profile $profile)
   }
 
   if $session != "" {
@@ -1179,13 +1150,12 @@ def main [
   }
   let final = (with-password-hash $selected)
 
-  write-overlay $final
-  write-dotfiles-skeleton $final
+  write-install-state $final
   write-env $final
 
   if $final.action == "dry-run" {
     ensure-private-runtime-dir $final.session | ignore
-    write-disko-config $final.disk (disko-config-path $final.session)
+    write-disko-state $final
   }
 
   print-summary $final

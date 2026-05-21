@@ -19,7 +19,7 @@
   assertions = [
     {
       assertion = localUserOverlay == null || builtins.pathExists localUserOverlay;
-      message = "local user overlay is required but was not found; copy examples/local/default.nix to /etc/nixos/local/default.nix";
+      message = "local user overlay is required but was not found; copy templates/local/default.nix to /etc/nixos/local/default.nix";
     }
     {
       assertion = localHardwareConfig == null || builtins.pathExists localHardwareConfig;

@@ -14,6 +14,10 @@ export def temp-root [] {
   $env.NIX_CONFIG_INSTALL_TMP? | default "/run/nixos-config-installer/runtime"
 }
 
+export def schema-path [name: string] {
+  join-path [ (repo-root) "schemas" $name ]
+}
+
 export def validate-disk [disk_device: string] {
   if ($disk_device | str trim) == "" {
     error make { msg: "disk device is required" }
@@ -36,92 +40,26 @@ export def ensure-dir [dir: string] {
   }
 }
 
-export def write-disko-config [
-  disk_device: string
-  config_path: string
-  --luks-password-file: string = ""
-] {
-  let dir = ($config_path | path dirname)
-  let password_file_line = if $luks_password_file == "" {
-    ""
-  } else {
-    $"              passwordFile = \"($luks_password_file)\";\n"
+export def validate-json [schema: string, data: string] {
+  require-json-schema-tool
+
+  let result = (check-jsonschema --schemafile $schema $data | complete)
+  if $result.exit_code != 0 {
+    let stderr = ($result.stderr | str trim)
+    let stdout = ($result.stdout | str trim)
+    let detail = if $stderr != "" { $stderr } else { $stdout }
+    error make { msg: $"JSON contract validation failed for ($data): ($detail)" }
   }
-  let config = $"
-{
-  disko.devices = {
-    disk.workstation = {
-      type = \"disk\";
-      device = \"($disk_device)\";
-      content = {
-        type = \"gpt\";
-        partitions = {
-          ESP = {
-            size = \"512M\";
-            type = \"EF00\";
-            content = {
-              type = \"filesystem\";
-              format = \"vfat\";
-              mountpoint = \"/boot/efi\";
-              mountOptions = [ \"umask=0077\" ];
-            };
-          };
-
-          boot = {
-            size = \"512M\";
-            content = {
-              type = \"filesystem\";
-              format = \"ext4\";
-              mountpoint = \"/boot\";
-            };
-          };
-
-          luks = {
-            size = \"100%\";
-            content = {
-              type = \"luks\";
-              name = \"cryptroot\";
-              extraFormatArgs = [ \"--type\" \"luks2\" ];
-($password_file_line)              settings.allowDiscards = true;
-              content = {
-                type = \"btrfs\";
-                extraArgs = [ \"-f\" ];
-                subvolumes = {
-                  \"@root\" = {
-                    mountpoint = \"/\";
-                    mountOptions = [ \"compress=zstd\" \"noatime\" \"discard=async\" ];
-                  };
-
-                  \"@nix\" = {
-                    mountpoint = \"/nix\";
-                    mountOptions = [ \"compress=zstd\" \"noatime\" \"discard=async\" ];
-                  };
-
-                  \"@home\" = {
-                    mountpoint = \"/home\";
-                    mountOptions = [ \"compress=zstd\" \"noatime\" \"discard=async\" ];
-                  };
-
-                  \"@log\" = {
-                    mountpoint = \"/var/log\";
-                    mountOptions = [ \"compress=zstd\" \"noatime\" \"discard=async\" ];
-                  };
-
-                  \"@swap\" = {
-                    mountpoint = \"/swap\";
-                    mountOptions = [ \"compress=zstd\" \"noatime\" \"discard=async\" ];
-                  };
-                };
-              };
-            };
-          };
-        };
-      };
-    };
-  };
 }
-"
 
-  ensure-dir $dir
-  $config | save --force $config_path
+export def write-json-contract [schema: string, path: string, value: record] {
+  ensure-dir ($path | path dirname)
+  $value | to json --indent 2 | save --force $path
+  validate-json $schema $path
+}
+
+export def require-json-schema-tool [] {
+  if (which check-jsonschema | length) == 0 {
+    error make { msg: "check-jsonschema is required to validate installer JSON contracts" }
+  }
 }

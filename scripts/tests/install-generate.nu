@@ -20,7 +20,7 @@ def has-compatible-mkpasswd [] {
 }
 
 def has-nix-validation-tools [] {
-  (has-command "nix") and (has-command "nix-instantiate")
+  (has-command "nix") and (has-command "check-jsonschema")
 }
 
 def assert-clean-stderr [label: string, stderr: string] {
@@ -40,13 +40,13 @@ def assert-command-ok [label: string, result: record<exit_code: int, stdout: str
 
 def generated-paths [root: string] {
   {
-    state: $"($root)/state/vm"
+    state_dir: $"($root)/state/vm"
     volatile: $"($root)/run"
-    overlay: $"($root)/state/vm/user.nix"
-    dotfiles: $"($root)/state/vm/users/user/dotfiles.nix"
+    overlay: $"($root)/state/vm/default.nix"
+    install_state: $"($root)/state/vm/state.json"
     password: $"($root)/run/vm/secrets/user.passwd"
     env: $"($root)/state/vm/install.env"
-    disko: $"($root)/run/vm/runtime/workstation-disko.nix"
+    disko: $"($root)/run/vm/runtime/disko-state.json"
     hardware: $"($root)/hardware-configuration.nix"
   }
 }
@@ -59,19 +59,18 @@ def assert-file [path: string] {
   assert ($path | path exists) $"expected generated file to exist: ($path)"
 }
 
-def assert-nix-parses [path: string] {
-  let result = (nix-instantiate --parse $path | complete)
-  assert-command-ok $"parse ($path)" $result
-}
-
-def assert-generated-disko-shape [path: string] {
+def assert-disko-template-shape [path: string] {
   let device_check = (
-    nix eval --file $path --apply $'cfg: if cfg.disko.devices.disk.workstation.device == "(test-disk-path)" then "ok" else throw "generated disko device was not applied"' | complete
+    with-env { NIX_CONFIG_DISKO_STATE: $path } {
+      nix eval --impure --file templates/disko/default.nix --apply $'cfg: if cfg.disko.devices.disk.workstation.device == "(test-disk-path)" then "ok" else throw "disko state device was not applied"' | complete
+    }
   )
   assert-command-ok "generated disko device shape" $device_check
 
   let mount_check = (
-    nix eval --file $path --apply 'cfg: if cfg.disko.devices.disk.workstation.content.partitions.luks.content.content.subvolumes."@root".mountpoint == "/" then "ok" else throw "generated disko root subvolume is missing"' | complete
+    with-env { NIX_CONFIG_DISKO_STATE: $path } {
+      nix eval --impure --file templates/disko/default.nix --apply 'cfg: if cfg.disko.devices.disk.workstation.content.partitions.luks.content.content.subvolumes."@root".mountpoint == "/" then "ok" else throw "disko root subvolume is missing"' | complete
+    }
   )
   assert-command-ok "generated disko root subvolume shape" $mount_check
 }
@@ -101,7 +100,7 @@ def assert-generated-config-imports [paths: record] {
         NIX_CONFIG_LOCAL_USER: $paths.overlay
         NIX_CONFIG_LOCAL_HARDWARE: $paths.hardware
       } {
-        nix eval --impure $".#($prefix).config.users.users.user" --apply 'user: if user.description == "User" && user.hashedPasswordFile == "/etc/nixos/local/users/user/user.passwd" && builtins.elem "wheel" user.extraGroups then "ok" else throw "generated user overlay was not applied correctly"' | complete
+        nix eval --impure $".#($prefix).config.users.users.user" --apply 'user: if user.description == "User" && user.hashedPasswordFile == "/etc/nixos/local/users/user/user.passwd" && user.shell.pname == "nushell" && builtins.elem "wheel" user.extraGroups then "ok" else throw "generated user overlay was not applied correctly"' | complete
       }
     )
     assert-command-ok $"generated user overlay on ($target)" $user_check
@@ -131,7 +130,7 @@ def assert-generated-config-imports [paths: record] {
         NIX_CONFIG_LOCAL_USER: $paths.overlay
         NIX_CONFIG_LOCAL_HARDWARE: $paths.hardware
       } {
-        nix eval --impure $".#($prefix).config" --apply 'cfg: if !(cfg ? home-manager) then "ok" else throw "home-manager must be inactive while userSources is null"' | complete
+        nix eval --impure $".#($prefix).config.home-manager.users" --apply 'users: if users == {} then "ok" else throw "home-manager users must be inactive while users[].sources is null"' | complete
       }
     )
     assert-command-ok $"generated home-manager inactive on ($target)" $hm_inactive_check
@@ -150,6 +149,137 @@ def assert-generated-config-build-plans [paths: record] {
     )
     assert-command-ok $"generated config build plan for ($target)" $result
   }
+}
+
+def assert-multi-user-state [root: string, hardware: string] {
+  let local = $"($root)/multi-user-local"
+  let overlay = $"($local)/default.nix"
+  let state = $"($local)/state.json"
+
+  mkdir $local
+  cp templates/local/default.nix $overlay
+  {
+    schemaVersion: 1
+    session: "multi"
+    profile: "desktop"
+    host: {
+      hostname: "multi"
+      timezone: "UTC"
+    }
+    users: [
+      {
+        name: "user"
+        description: "User"
+        hashedPasswordFile: "/etc/nixos/local/users/user/user.passwd"
+        isAdmin: true
+        extraGroups: []
+        shell: "nushell"
+        sources: null
+      }
+      {
+        name: "admin"
+        description: "Admin User"
+        hashedPasswordFile: "/etc/nixos/local/users/admin/admin.passwd"
+        isAdmin: false
+        extraGroups: [ "audio" ]
+        shell: "bash"
+        homeStateVersion: "25.05"
+        sources: null
+      }
+    ]
+  } | to json --indent 2 | save --force $state
+
+  let schema_check = (check-jsonschema --schemafile schemas/install-state.v1.schema.json $state | complete)
+  assert-command-ok "validate multi-user state" $schema_check
+
+  let user_check = (
+    with-env {
+      NIX_CONFIG_LOCAL_USER: $overlay
+      NIX_CONFIG_LOCAL_HARDWARE: $hardware
+    } {
+      nix eval --impure ".#nixosConfigurations.desktop.config.users.users" --apply 'users: if users.user.description == "User" && builtins.elem "wheel" users.user.extraGroups && users.admin.description == "Admin User" && users.admin.shell.pname == "bash-interactive" && users.admin.extraGroups == [ "audio" ] then "ok" else throw "multi-user state was not applied"' | complete
+    }
+  )
+  assert-command-ok "generated multi-user platform state" $user_check
+}
+
+def assert-missing-state-error [root: string, hardware: string] {
+  let local = $"($root)/missing-state-local"
+  let overlay = $"($local)/default.nix"
+
+  mkdir $local
+  cp templates/local/default.nix $overlay
+
+  let result = (
+    with-env {
+      NIX_CONFIG_LOCAL_USER: $overlay
+      NIX_CONFIG_LOCAL_HARDWARE: $hardware
+    } {
+      nix eval --impure ".#nixosConfigurations.desktop.config.system.build.toplevel.drvPath" | complete
+    }
+  )
+
+  assert ($result.exit_code != 0) "missing platform state must fail evaluation"
+  assert ($result.stderr | str contains "platform.state.file points to a missing state.json file.") "missing platform state error should be explicit"
+}
+
+def assert-home-state-version [root: string, hardware: string] {
+  let local = $"($root)/home-state-version-local"
+  let overlay = $"($local)/default.nix"
+  let state = $"($local)/state.json"
+  let home_module = $"($root)/home-state-version.nix"
+
+  mkdir $local
+  cp templates/local/default.nix $overlay
+  "{ ... }: { }" | save --force $home_module
+  {
+    schemaVersion: 1
+    session: "home-version"
+    profile: "desktop"
+    host: {
+      hostname: "home-version"
+      timezone: "UTC"
+    }
+    users: [
+      {
+        name: "user"
+        description: "User"
+        hashedPasswordFile: "/etc/nixos/local/users/user/user.passwd"
+        isAdmin: true
+        extraGroups: []
+        shell: "nushell"
+        homeStateVersion: "25.05"
+        sources: {
+          dotfiles: $root
+          dotfilesModule: $home_module
+          dotfilesRoot: $root
+        }
+      }
+    ]
+  } | to json --indent 2 | save --force $state
+
+  let version_check = (
+    with-env {
+      NIX_CONFIG_LOCAL_USER: $overlay
+      NIX_CONFIG_LOCAL_HARDWARE: $hardware
+    } {
+      nix eval --impure ".#nixosConfigurations.desktop.config.home-manager.users.user.home.stateVersion" | complete
+    }
+  )
+  assert-command-ok "generated home state version" $version_check
+  assert equal ($version_check.stdout | str trim) '"25.05"'
+
+  let source_check = (
+    with-env {
+      NIX_CONFIG_LOCAL_USER: $overlay
+      NIX_CONFIG_LOCAL_HARDWARE: $hardware
+    } {
+      nix eval --impure ".#nixosConfigurations.desktop.config.home-manager.users.user.home.file.\".config/nushell\".source" | complete
+    }
+  )
+  assert-command-ok "generated out-of-store dotfile source" $source_check
+  assert not ($source_check.stdout | str contains "/nix/store") "dotfile symlink source must remain out of the Nix store"
+  assert ($source_check.stdout | str contains $root) "dotfile symlink source must point at the mutable dotfiles root"
 }
 
 def main [] {
@@ -181,44 +311,56 @@ def main [] {
 
     assert equal $result.exit_code 0 $"installer dry-run failed; stderr: ($result.stderr)"
 
-    for path in [ $paths.overlay $paths.dotfiles $paths.env $paths.disko ] {
+    for path in [ $paths.overlay $paths.install_state $paths.env $paths.disko ] {
       assert-file $path
     }
 
     assert not ($paths.password | path exists) "dry-run must not persist generated password hash in installer state or volatile secrets"
 
     let overlay = (open $paths.overlay)
-    assert ($overlay | str contains 'networking.hostName = lib.mkForce "vm";')
-    assert ($overlay | str contains 'time.timeZone = lib.mkForce "UTC";')
-    assert ($overlay | str contains 'userSources = null;')
-    assert ($overlay | str contains 'imports = lib.optional (userSources != null) ./users/${userName}/dotfiles.nix;')
-    assert ($overlay | str contains 'users.users.${userName}')
-    assert ($overlay | str contains 'description = userDescription;')
-    assert ($overlay | str contains 'hashedPasswordFile = "/etc/nixos/local/users/${userName}/${userName}.passwd";')
+    assert ($overlay | str contains 'platform.state')
+    assert ($overlay | str contains 'file = ./state.json;')
+    assert not ($overlay | str contains 'networking.hostName = lib.mkForce "vm";')
+    assert not ($overlay | str contains 'users.users.${userName}')
     assert not ($overlay | str contains "ci-password")
 
-    let dotfiles = (open $paths.dotfiles)
-    assert ($dotfiles | str contains "home-manager.nixosModules.home-manager")
-    assert ($dotfiles | str contains 'home.stateVersion = "25.11";')
-    assert ($dotfiles | str contains "programs.home-manager.enable = true;")
+    let install_state = (open $paths.install_state | from json)
+    assert equal $install_state.schemaVersion 1
+    assert equal $install_state.profile "default"
+    assert equal $install_state.host.hostname "vm"
+    assert equal $install_state.host.timezone "UTC"
+    assert equal ($install_state.users | length) 1
+    let install_user = ($install_state.users | get 0)
+    assert equal $install_user.name "user"
+    assert equal $install_user.description "User"
+    assert equal $install_user.hashedPasswordFile "/etc/nixos/local/users/user/user.passwd"
+    assert equal $install_user.isAdmin true
+    assert equal $install_user.extraGroups []
+    assert equal $install_user.shell "nushell"
+    assert equal $install_user.sources null
 
     let env_file = (open $paths.env)
     assert ($env_file | str contains 'export NIX_CONFIG_LOCAL_USER=')
     assert ($env_file | str contains 'export NIX_CONFIG_LOCAL_HARDWARE="/mnt/etc/nixos/hardware-configuration.nix"')
 
-    let disko = (open $paths.disko)
-    assert ($disko | str contains 'disko.devices =')
-    assert ($disko | str contains $"device = \"(test-disk-path)\";")
-    assert not ($disko | str contains "passwordFile")
+    let disko_state = (open $paths.disko | from json)
+    assert equal $disko_state.schemaVersion 1
+    assert equal $disko_state.disk.device (test-disk-path)
+    assert not ($disko_state | columns | any {|column| $column == "luks" })
 
     if (has-nix-validation-tools) {
-      assert-nix-parses $paths.overlay
-      assert-nix-parses $paths.dotfiles
-      assert-nix-parses $paths.disko
-      assert-nix-parses $paths.hardware
-      assert-generated-disko-shape $paths.disko
+      let schema_check = (check-jsonschema --schemafile schemas/install-state.v1.schema.json $paths.install_state | complete)
+      assert-command-ok "validate generated install state" $schema_check
+
+      let disko_schema_check = (check-jsonschema --schemafile schemas/disko-state.v1.schema.json $paths.disko | complete)
+      assert-command-ok "validate generated disko state" $disko_schema_check
+
+      assert-disko-template-shape $paths.disko
       assert-generated-config-imports $paths
       assert-generated-config-build-plans $paths
+      assert-multi-user-state $root $paths.hardware
+      assert-missing-state-error $root $paths.hardware
+      assert-home-state-version $root $paths.hardware
     } else {
       print "skipping Nix-dependent generated config checks; nix or nix-instantiate is missing"
     }

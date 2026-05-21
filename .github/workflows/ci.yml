@@ -135,7 +135,7 @@ jobs:
         uses: DeterminateSystems/magic-nix-cache-action@v13
 
       - name: Validate scripts
-        run: nix shell nixpkgs#nushell nixpkgs#openssl -c nu scripts/tests/run.nu
+        run: nix shell nixpkgs#nushell nixpkgs#openssl nixpkgs#check-jsonschema -c nu scripts/tests/run.nu
 
   disko:
     name: Disko
@@ -160,7 +160,7 @@ jobs:
       - name: Validate real disko on loopback disk
         run: |
           # shellcheck disable=SC2016
-          nix shell nixpkgs#nushell nixpkgs#openssl -c sh -c '
+          nix shell nixpkgs#nushell nixpkgs#openssl nixpkgs#check-jsonschema -c sh -c '
             sudo env "PATH=$PATH" unshare --mount --propagation private sh -c '"'"'
               umount -R /mnt 2>/dev/null || true
               RUN_DISKO_LOOP_TEST=1 nu scripts/tests/run.nu

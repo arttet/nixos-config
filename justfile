@@ -38,7 +38,7 @@ build profile="default":
 [group('Development')]
 test profile="default":
     just build {{ profile }}
-    nu scripts/tests/run.nu
+    nix shell nixpkgs#nushell nixpkgs#openssl nixpkgs#check-jsonschema -c nu scripts/tests/run.nu
     case "{{ profile }}" in default|desktop) nix build .#checks.x86_64-linux.desktop-policy --no-link ;; workstation) nix build .#checks.x86_64-linux.workstation-policy --no-link ;; vm) nix build .#checks.x86_64-linux.vm-policy --no-link ;; *) echo "No policy check is defined for profile: {{ profile }}"; exit 1 ;; esac
 
 [doc('Switch the installed NixOS system to a profile')]

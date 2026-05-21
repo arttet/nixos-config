@@ -1,0 +1,114 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://nixos-config.local/schemas/install-state.v1.schema.json",
+  "title": "NixOS Config installer state",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "session", "profile", "host", "users"],
+  "properties": {
+    "schemaVersion": {
+      "const": 1
+    },
+    "session": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9_-]+$"
+    },
+    "profile": {
+      "enum": ["default", "workstation", "desktop"]
+    },
+    "host": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["hostname", "timezone"],
+      "properties": {
+        "hostname": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9-]{0,62}$"
+        },
+        "timezone": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_+.-]+(/[A-Za-z0-9_+.-]+)*$"
+        }
+      }
+    },
+    "users": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "description", "hashedPasswordFile", "sources"],
+        "properties": {
+          "name": {
+            "type": "string",
+            "pattern": "^[a-z_][a-z0-9_-]*$",
+            "not": {
+              "const": "root"
+            }
+          },
+          "description": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9 ._-]+$"
+          },
+          "hashedPasswordFile": {
+            "type": "string",
+            "pattern": "^/[^\\u0000]*$"
+          },
+          "isAdmin": {
+            "type": "boolean"
+          },
+          "extraGroups": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^[a-z_][a-z0-9_-]*$"
+            },
+            "uniqueItems": true
+          },
+          "shell": {
+            "enum": ["bash", "nushell", "zsh"]
+          },
+          "homeStateVersion": {
+            "type": "string",
+            "pattern": "^[0-9]{2}\\.[0-9]{2}$"
+          },
+          "sources": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["dotfiles", "dotfilesModule", "dotfilesRoot"],
+                "properties": {
+                  "dotfiles": {
+                    "type": "string",
+                    "pattern": "^/[^\\u0000]*$"
+                  },
+                  "dotfilesModule": {
+                    "type": "string",
+                    "pattern": "^/[^\\u0000]*$"
+                  },
+                  "dotfilesRoot": {
+                    "type": "string",
+                    "pattern": "^/[^\\u0000]*$"
+                  },
+                  "links": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "pattern": "^(?!/)(?!.*\\.\\.)[^\\u0000]+$"
+                    },
+                    "uniqueItems": true
+                  }
+                }
+              }
+            ]
+          }
+        }
+      }
+    }
+  }
+}

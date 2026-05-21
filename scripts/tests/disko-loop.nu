@@ -48,14 +48,23 @@ def main [] {
     try { cryptsetup close cryptroot | ignore }
 
     with-env { NIX_CONFIG_INSTALL_TMP: $root } {
+      let disko_state = $"($root)/disko-state.json"
+      {
+        schemaVersion: 1
+        disk: {
+          device: $loop_device
+        }
+        luks: {
+          passwordFile: $luks_key
+        }
+      } | to json --indent 2 | save --force $disko_state
+
       run-ok "run disko on loop device" [
         "nu"
         "scripts/install/disko.nu"
-        $loop_device
+        "--state"
+        $disko_state
         "--yes"
-        "--non-interactive"
-        "--luks-password-file"
-        $luks_key
       ] | ignore
     }
 

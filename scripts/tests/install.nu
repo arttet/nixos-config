@@ -5,7 +5,7 @@ use std assert
 use ../install/bootstrap.nu *
 use ../install/constants.nu *
 use ../install/disko.nu *
-use ../install/ui.nu *
+use ../common/ui.nu *
 
 def assert-source-ok [path: string] {
   let result = (nu --no-config-file --commands $"source ($path)" | complete)
@@ -133,75 +133,41 @@ def test-disko-mode-is-current [] {
   assert not ($source | str contains "--mode disko")
 }
 
-def write-test-disko-config [path: string, body: string] {
-  $body | save --force $path
+def write-test-json [path: string, body: record] {
+  $body | to json --indent 2 | save --force $path
 }
 
 def test-disko-config-disk-validation [] {
   let root = (mktemp -d | str trim)
 
   try {
-    let matching = ([$root matching.nix] | path join)
-    let mismatched = ([$root mismatched.nix] | path join)
-    let missing = ([$root missing.nix] | path join)
-    let multiple = ([$root multiple.nix] | path join)
-    let function_style = ([$root function-style.nix] | path join)
+    let matching = ([$root matching.json] | path join)
+    let mismatched = ([$root mismatched.json] | path join)
+    let invalid = ([$root invalid.json] | path join)
     let disk = ([$root disk.img] | path join)
     let other_disk = ([$root other-disk.img] | path join)
 
     touch $disk
     touch $other_disk
 
-    write-test-disko-config $matching $"
-{
-  disko.devices.disk.main = {
-    type = \"disk\";
-    device = \"($disk)\";
-  };
-}
-"
-
-    write-test-disko-config $mismatched $"
-{
-  disko.devices.disk.main = {
-    type = \"disk\";
-    device = \"($other_disk)\";
-  };
-}
-"
-
-    write-test-disko-config $missing "{}"
-
-    write-test-disko-config $multiple $"
-{
-  disko.devices.disk.main = {
-    type = \"disk\";
-    device = \"($disk)\";
-  };
-  disko.devices.disk.other = {
-    type = \"disk\";
-    device = \"($other_disk)\";
-  };
-}
-"
-
-    write-test-disko-config $function_style $"
-{ ... }:
-{
-  disko.devices.disk.main = {
-    type = \"disk\";
-    device = \"($disk)\";
-  };
-}
-"
+    write-test-json $matching {
+      schemaVersion: 1
+      disk: { device: $disk }
+    }
+    write-test-json $mismatched {
+      schemaVersion: 1
+      disk: { device: $other_disk }
+    }
+    write-test-json $invalid {
+      schemaVersion: 1
+      disk: { device: "not-a-dev-path" }
+    }
 
     assert equal (config-disk-devices $matching) [ $disk ]
     validate-config-disk $disk $matching
-    validate-config-disk $disk $function_style
 
     assert-error-message { validate-config-disk $disk $mismatched } "does not match confirmed disk"
-    assert-error-message { validate-config-disk $disk $missing } "must define exactly one disk device"
-    assert-error-message { validate-config-disk $disk $multiple } "must define exactly one disk device"
+    assert-error-message { validate-config-disk $disk $invalid } "JSON contract validation failed"
   } finally {
     rm --recursive --force $root
   }
@@ -211,16 +177,37 @@ def test-disko-config-password-file [] {
   let root = (mktemp -d | str trim)
 
   try {
-    let config = ([$root disko.nix] | path join)
+    let state = ([$root disko-state.json] | path join)
     let key = ([$root luks.key] | path join)
+    let disk = ([$root disk.img] | path join)
+    touch $disk
 
-    write-disko-config "/dev/nixos-config-test-disk" $config --luks-password-file $key
+    write-test-json $state {
+      schemaVersion: 1
+      disk: { device: $disk }
+      luks: { passwordFile: $key }
+    }
 
-    let source = (open $config)
-    assert ($source | str contains $"passwordFile = \"($key)\";") "expected generated disko config to include passwordFile"
+    let result = (
+      with-env { NIX_CONFIG_DISKO_STATE: $state } {
+        nix eval --impure --file templates/disko/default.nix --apply 'cfg: cfg.disko.devices.disk.workstation.content.partitions.luks.content.passwordFile' | complete
+      }
+    )
+    assert equal $result.exit_code 0 $"expected disko template to evaluate passwordFile; stderr: ($result.stderr)"
+    assert ($result.stdout | str contains $key) "expected disko template to include passwordFile from disko-state.json"
   } finally {
     rm --recursive --force $root
   }
+}
+
+def test-installer-contract-schemas [] {
+  let result = (check-jsonschema --check-metaschema schemas/install-state.v1.schema.json schemas/disko-state.v1.schema.json | complete)
+  assert equal $result.exit_code 0 $"JSON schemas must be valid metaschemas; stderr: ($result.stderr)"
+}
+
+def test-target-flag-removed [] {
+  let source = (open scripts/install/bootstrap.nu)
+  assert not ($source | str contains "--target") "installer must not keep deprecated --target before first release"
 }
 
 def test-installer-file-permission-contract [] {
@@ -256,10 +243,11 @@ def test-installer-output-logging-contract [] {
 
 assert-source-ok "scripts/install/common.nu"
 assert-source-ok "scripts/install/constants.nu"
-assert-source-ok "scripts/install/ui.nu"
+assert-source-ok "scripts/common/ui.nu"
 assert-source-ok "scripts/install/bootstrap.nu"
 assert-source-ok "scripts/install/disko.nu"
 assert-source-ok "scripts/install/workstation.nu"
+assert-source-ok "scripts/local/sync.nu"
 
 test-profile-validation
 test-user-validation
@@ -274,6 +262,8 @@ test-summary-does-not-print-password-hash-path
 test-disko-mode-is-current
 test-disko-config-disk-validation
 test-disko-config-password-file
+test-installer-contract-schemas
+test-target-flag-removed
 test-installer-file-permission-contract
 test-installer-preflight-contract
 test-installer-output-logging-contract

@@ -116,16 +116,20 @@ output path.
 
 Real identity is local-only.
 
-Default overlay path:
+Default local profile paths:
 
 ```txt
-~/.nix-config-local/user.nix
+/etc/nixos/local/default.nix
+/etc/nixos/local/state.json
 ```
 
 Environment override:
 
 ```sh
-NIX_CONFIG_LOCAL_USER=/path/to/user.nix just desktop build
+NIX_CONFIG_LOCAL_USER=/path/to/default.nix just desktop build
 ```
 
-The committed example overlay in `examples/local/` must use fake values only.
+The overlay shim is static and should load `platform.state` from
+`state.json`. User identity, hostname, timezone, password paths, and dotfiles
+sources belong in `state.json` under `users[]`, not in generated per-user Nix
+files.
