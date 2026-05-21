@@ -6,6 +6,7 @@
     ../../modules/core/security.nix
     ../../modules/core/secure-boot.nix
     ../../modules/core/tuning.nix
+    ../../modules/core/power.nix
     ../../modules/core/boot-ux.nix
     ../../modules/storage/disko.nix
     ../../modules/storage/swap.nix

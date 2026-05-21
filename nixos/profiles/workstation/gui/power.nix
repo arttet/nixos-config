@@ -1,4 +1,4 @@
 { lib, ... }:
 {
-  services.upower.enable = lib.mkDefault true;
+  platform.power.enable = lib.mkDefault true;
 }
