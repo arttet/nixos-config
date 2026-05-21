@@ -1,6 +1,13 @@
-{ build, lib, ... }:
+{
+  build,
+  home-manager,
+  lib,
+  ...
+}:
 {
   imports = [
+    home-manager.nixosModules.home-manager
+    ../modules/core/state.nix
     ../modules/core/users.nix
     ../modules/core/local-overlay.nix
   ];

@@ -1,9 +1,20 @@
 #!/usr/bin/env nu
 
-use constants.nu *
+use ../install/constants.nu *
+
+export def no-ui [] {
+  ($env.NIX_CONFIG_NO_UI? | default "") != ""
+}
 
 export def plain-ui [] {
-  ($env.NIX_CONFIG_INSTALL_PLAIN_UI? | default "") != "" or ($env.NO_COLOR? | default "") != ""
+  (no-ui) or ($env.NIX_CONFIG_INSTALL_PLAIN_UI? | default "") != "" or ($env.NO_COLOR? | default "") != ""
+}
+
+export def --env apply-ui-mode [no_ui: bool] {
+  if $no_ui {
+    $env.NIX_CONFIG_NO_UI = "1"
+    $env.NIX_CONFIG_INSTALL_PLAIN_UI = "1"
+  }
 }
 
 export def use-gum [] {
@@ -13,6 +24,12 @@ export def use-gum [] {
 export def require-ui-tools [] {
   if not (plain-ui) and ((which gum | length) == 0) {
     error make { msg: "gum is required for the interactive installer UI; set NIX_CONFIG_INSTALL_PLAIN_UI=1 for plain test output" }
+  }
+}
+
+export def clear-screen-once [] {
+  if not (plain-ui) and ($env.TERM? | default "") != "dumb" {
+    print $"(ansi cls)(ansi home)"
   }
 }
 
@@ -70,6 +87,10 @@ export def render-screen [
   rows: list<string>
   --danger
 ] {
+  if (no-ui) {
+    return ([ $title ] | append $rows | str join "\n")
+  }
+
   if (use-gum) {
     let border_color = if $danger { "1" } else { "6" }
     let body = ([ $title "" ] | append $rows | str join "\n")

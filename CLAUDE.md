@@ -66,11 +66,12 @@ The headless `workstation` profile must remain fully functional without X11/Wayl
 
 Machine-specific config never goes in git. The flake reads it from a path supplied at evaluation time:
 
-- Default path: `~/.nix-config-local/user.nix` (per `misc/justfiles/overlay.just`)
-- Override: `NIX_CONFIG_LOCAL_USER=/path/to/user.nix` and `NIX_CONFIG_LOCAL_HARDWARE=/path/to/hardware-configuration.nix`
-- The legacy `/etc/nixos/local/default.nix` + `/etc/nixos/hardware-configuration.nix` are still auto-discovered via `localPathOrNull` in `flake.nix` (uses `builtins.pathExists` + `tryEval` so missing files degrade to `null` instead of breaking pure evaluation).
+- Default overlay shim: `/etc/nixos/local/default.nix` (per `misc/justfiles/overlay.just`)
+- Default state contract: `/etc/nixos/local/state.json`
+- Override: `NIX_CONFIG_LOCAL_USER=/path/to/default.nix` and `NIX_CONFIG_LOCAL_HARDWARE=/path/to/hardware-configuration.nix`
+- `/etc/nixos/local/default.nix` + `/etc/nixos/hardware-configuration.nix` are auto-discovered via `localPathOrNull` in `flake.nix` (uses `builtins.pathExists` + `tryEval` so missing files degrade to `null` instead of breaking pure evaluation).
 - Assertions in `nixos/modules/core/local-overlay.nix` only fire if env vars point to a non-existent path.
-- The committed `examples/local/` examples must contain fake values only.
+- User identity, hostname, timezone, password paths, and dotfiles sources belong in `state.json` under `users[]`, not in generated per-user Nix files.
 
 `just switch` always passes `--impure` so `builtins.getEnv` resolves these env vars; `just check` runs pure (CI-safe).
 

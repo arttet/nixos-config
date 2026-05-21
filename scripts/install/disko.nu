@@ -4,7 +4,11 @@ use common.nu *
 use constants.nu *
 
 def default-config-path [] {
-  join-path [ (temp-root) "workstation-disko.nix" ]
+  join-path [ (temp-root) "disko-state.json" ]
+}
+
+def disko-template-path [] {
+  join-path [ (repo-root) "templates" "disko" "default.nix" ]
 }
 
 def confirm-disk [disk_device: string] {
@@ -20,10 +24,14 @@ def confirm-disk [disk_device: string] {
   }
 }
 
-export def config-disk-devices [config_path: string] {
+export def config-disk-devices [state_path: string] {
+  validate-json (schema-path (disko-state-schema)) $state_path
+
   let result = (
-    nix --extra-experimental-features "nix-command flakes" eval --json --file $config_path --apply 'f: let cfg = if builtins.isFunction f then f {} else f; in builtins.map (disk: disk.device) (builtins.attrValues (cfg.disko.devices.disk or {}))'
-    | complete
+    with-env { NIX_CONFIG_DISKO_STATE: $state_path } {
+      nix --extra-experimental-features "nix-command flakes" eval --impure --json --file (disko-template-path) --apply 'f: let cfg = if builtins.isFunction f then f {} else f; in builtins.map (disk: disk.device) (builtins.attrValues (cfg.disko.devices.disk or {}))'
+      | complete
+    }
   )
 
   if $result.exit_code != 0 {
@@ -35,8 +43,8 @@ export def config-disk-devices [config_path: string] {
   $result.stdout | from json
 }
 
-export def validate-config-disk [disk_device: string, config_path: string] {
-  let devices = (config-disk-devices $config_path)
+export def validate-config-disk [disk_device: string, state_path: string] {
+  let devices = (config-disk-devices $state_path)
 
   if ($devices | length) != 1 {
     error make { msg: $"disko config must define exactly one disk device; found: ($devices | str join ', ')" }
@@ -60,29 +68,18 @@ export def canonical-device-path [device: string] {
 }
 
 def main [
-  disk_device: string
+  --state: string = ""
   --yes
-  --non-interactive
-  --config: string = ""
-  --luks-password-file: string = ""
 ] {
-  let config_path = if $config == "" { default-config-path } else { $config }
-  let config_provided = $config != ""
+  require-json-schema-tool
 
-  if $non_interactive and not $config_provided and $luks_password_file == "" {
-    error make { msg: "non-interactive disko mode requires --luks-password-file when generating the config" }
-  }
+  let state_path = if $state == "" { default-config-path } else { $state }
 
+  validate-json (schema-path (disko-state-schema)) $state_path
+  let disko_state = (open $state_path)
+  let disk_device = $disko_state.disk.device
   validate-disk $disk_device
-  if $config_provided {
-    if not ($config_path | path exists) {
-      error make { msg: $"provided disko config does not exist: ($config_path)" }
-    }
-  } else {
-    write-disko-config $disk_device $config_path --luks-password-file $luks_password_file
-  }
-
-  validate-config-disk $disk_device $config_path
+  validate-config-disk $disk_device $state_path
 
   if not $yes {
     confirm-disk $disk_device
@@ -90,10 +87,8 @@ def main [
 
   print "Running disko..."
   let repo = (repo-root)
-  if $non_interactive {
-    nix --extra-experimental-features "nix-command flakes" run $"path:($repo)#disko" -- --mode (disko-mode) --yes-wipe-all-disks $config_path
-  } else {
-    nix --extra-experimental-features "nix-command flakes" run $"path:($repo)#disko" -- --mode (disko-mode) --yes-wipe-all-disks $config_path
+  with-env { NIX_CONFIG_DISKO_STATE: $state_path } {
+    nix --extra-experimental-features "nix-command flakes" run --impure $"path:($repo)#disko" -- --mode (disko-mode) --yes-wipe-all-disks (disko-template-path)
   }
   let disko_exit_code = $env.LAST_EXIT_CODE
   if $disko_exit_code != 0 {

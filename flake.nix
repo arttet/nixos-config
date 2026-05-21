@@ -169,6 +169,11 @@
           statix check .
           touch $out
         '';
+        json-schemas = pkgs.runCommand "json-schemas" { nativeBuildInputs = [ pkgs.check-jsonschema ]; } ''
+          cd ${cleanSource}
+          check-jsonschema --check-metaschema schemas/*.schema.json
+          touch $out
+        '';
         workstation-kernel-policy = pkgs.writeText "workstation-kernel-policy.txt" (
           assert
             self.nixosConfigurations.workstation.config.boot.kernelPackages.kernel.outPath

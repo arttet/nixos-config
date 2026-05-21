@@ -21,6 +21,14 @@ export def disko-mode [] {
   "destroy,format,mount"
 }
 
+export def install-state-schema [] {
+  "install-state.v1.schema.json"
+}
+
+export def disko-state-schema [] {
+  "disko-state.v1.schema.json"
+}
+
 export def ui-width [] {
   let size = (try { term size } catch { { columns: 80 } })
   let columns = ($size.columns? | default 80)

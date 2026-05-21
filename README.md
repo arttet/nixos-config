@@ -51,10 +51,11 @@ Available recipes:
         network-report # Print real-hardware workstation network validation commands
         logs-report    # Print real-hardware workstation log validation commands
 
-    [Workstation GUI]
-    workstation-gui:
-        build # Build the graphical workstation system closure
-        test  # Validate the graphical workstation profile
+    [Desktop]
+    desktop:
+        build        # Build the desktop system closure
+        test         # Validate the desktop profile
+        power-checks # Print real-hardware desktop power validation commands
 
     [Local Overlay]
     overlay:
