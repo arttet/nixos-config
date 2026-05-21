@@ -18,7 +18,15 @@
     lnav
     micro
     procs
+    speedtest-go
+    strace
+    sysz
+    systemctl-tui
+    timeshift
     vendir
     zoxide
+    nix-index
+    nix-output-monitor
+    nh
   ];
 }

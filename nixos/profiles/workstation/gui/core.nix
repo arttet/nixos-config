@@ -22,6 +22,8 @@ in
     openFirewall = lib.mkDefault true;
   };
 
+  services.blueman.enable = lib.mkDefault true;
+
   services.greetd = {
     enable = lib.mkDefault true;
     settings.default_session = {
@@ -58,12 +60,29 @@ in
     defaultApplications."inode/directory" = lib.mkDefault "thunar.desktop";
   };
 
+  # Libvirt is installed but not auto-started. Start the daemon manually
+  # when you want to use QEMU/KVM virtual machines.
+  #   doas systemctl start libvirtd
+  virtualisation.libvirtd = {
+    enable = lib.mkDefault true;
+    qemu = {
+      package = pkgs.qemu_kvm;
+      swtpm.enable = true;
+    };
+  };
+  systemd.services.libvirtd.wantedBy = lib.mkForce [ ];
+
+  programs.virt-manager.enable = lib.mkDefault true;
+
   environment.systemPackages = [
     tuigreet
+    pkgs.blueman
     pkgs.cifs-utils
     pkgs.hyprpolkitagent
-    pkgs.rofi
+    pkgs.qemu
     pkgs.udiskie
+    pkgs.virt-manager
+    pkgs.walker
     pkgs.xdg-user-dirs
   ];
 }

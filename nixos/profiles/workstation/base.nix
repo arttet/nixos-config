@@ -72,6 +72,24 @@
     };
   };
 
+  services.fail2ban = {
+    enable = lib.mkDefault false;
+    maxretry = lib.mkDefault 5;
+    bantime = lib.mkDefault "1h";
+    bantime-increment = {
+      enable = lib.mkDefault true;
+      multipliers = lib.mkDefault "1 2 4 8 16 32 64";
+      maxtime = lib.mkDefault "168h";
+      overalljails = lib.mkDefault true;
+    };
+    daemonSettings = {
+      DEFAULT = {
+        backend = "systemd";
+        findtime = "10m";
+      };
+    };
+  };
+
   environment.systemPackages = with pkgs; [
     bzip2
     btop

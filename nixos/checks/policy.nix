@@ -47,14 +47,18 @@ let
     "network-manager-applet"
     "wl-clipboard"
     "cliphist"
-    "grim"
-    "slurp"
     "pamixer"
     "playerctl"
     "brightnessctl"
     "yazi"
     "thunar"
     "xdg-user-dirs"
+    "walker"
+    "wlogout"
+    "wiremix"
+    "blueman"
+    "hyprshot"
+    "wlsunset"
   ];
 
   requiredGuiApplicationPackages = [
@@ -82,6 +86,15 @@ let
     "bat"
     "eza"
     "zoxide"
+    "speedtest-go"
+    "carapace"
+    "strace"
+    "sysz"
+    "systemctl-tui"
+    "timeshift"
+    "nix-index"
+    "nix-output-monitor"
+    "nh"
     "cmake"
     "ninja"
     "clang"
@@ -106,22 +119,29 @@ let
     "docker"
     "docker-compose"
     "docker-buildx"
+    "podman"
+    "podman-compose"
     "telegram-desktop"
+    "thunderbird"
     "zoom"
     "obsidian"
-    "libreoffice"
+    "onlyoffice-desktopeditors"
+    "typst"
     "zathura"
     "gnupg"
     "keepassxc"
     "sudo"
     "veracrypt"
+    "yubikey-manager"
     "cloudflare-warp"
     "protonmail-desktop"
     "proton-pass"
     "yandex-disk"
     "imv"
+    "mission-center"
     "vlc"
     "transmission"
+    "virt-manager"
   ];
 
   requiredGuiFontPackages = [
@@ -380,6 +400,30 @@ in
       message = "workstation journald storage must be persistent";
     }
     {
+      assertion = !workstation.services.fail2ban.enable;
+      message = "workstation must keep fail2ban disabled when ssh is off";
+    }
+    {
+      assertion = workstation.services.fail2ban.maxretry == 5;
+      message = "workstation fail2ban maxretry must be 5";
+    }
+    {
+      assertion = workstation.services.fail2ban.daemonSettings.DEFAULT.findtime == "10m";
+      message = "workstation fail2ban daemonSettings must set findtime to 10m";
+    }
+    {
+      assertion = workstation.services.fail2ban.bantime == "1h";
+      message = "workstation fail2ban bantime must be 1h";
+    }
+    {
+      assertion = workstation.services.fail2ban.bantime-increment.enable;
+      message = "workstation fail2ban must enable bantime-increment";
+    }
+    {
+      assertion = !vm.services.fail2ban.enable;
+      message = "vm must keep fail2ban disabled";
+    }
+    {
       assertion = workstation.boot.kernel.sysctl."kernel.perf_event_paranoid" == 3;
       message = "workstation perf_event_paranoid must be 3";
     }
@@ -597,8 +641,11 @@ in
         && contains "pamixer" text
         && contains "brightnessctl" text
         && contains "hyprlock" text
+        && contains "wlogout" text
+        && contains "wlsunset" text
+        && contains "hyprshot" text
         && contains "workstation-session-menu" text;
-      message = "desktop Hyprland config must cover terminal, notifications, clipboard, touchpad gestures, keyboard layout switching, audio, brightness, lock, and session menu";
+      message = "desktop Hyprland config must cover terminal, notifications, clipboard, touchpad gestures, keyboard layout switching, audio, brightness, lock, wlogout, wlsunset, hyprshot, and session menu";
     }
     {
       assertion =
@@ -692,6 +739,18 @@ in
       message = "desktop must enable Docker";
     }
     {
+      assertion = desktop.virtualisation.podman.enable;
+      message = "desktop must enable Podman";
+    }
+    {
+      assertion = desktop.virtualisation.libvirtd.enable;
+      message = "desktop must enable libvirtd";
+    }
+    {
+      assertion = desktop.programs.virt-manager.enable;
+      message = "desktop must enable virt-manager";
+    }
+    {
       assertion = hasAllPackages desktop.environment.systemPackages requiredGuiRuntimePackages;
       message = "desktop must include baseline runtime UX tools";
     }
@@ -711,8 +770,9 @@ in
         !(builtins.elem "waybar" names)
         && !(builtins.elem "eww" names)
         && !(builtins.elem "nautilus" names)
-        && !(builtins.elem "dolphin" names);
-      message = "desktop must not include Waybar, EWW, Nautilus, or Dolphin as baseline";
+        && !(builtins.elem "dolphin" names)
+        && !(builtins.elem "rofi" names);
+      message = "desktop must not include Waybar, EWW, Nautilus, Dolphin, or Rofi as baseline";
     }
   ];
 }

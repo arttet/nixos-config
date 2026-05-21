@@ -7,11 +7,11 @@ let
     text = ''
       #!${lib.getExe pkgs.nushell}
 
-      let action = ["lock" "logout" "reboot" "shutdown"] | str join "\n" | ^rofi -dmenu -p "session"
+      let action = ["lock" "logout" "reboot" "shutdown"] | str join "\n" | ^walker -d -p "session"
 
       match $action {
         "lock" => { ^hyprlock }
-        "logout" => { ^hyprctl dispatch exit }
+        "logout" => { ^uwsm stop }
         "reboot" => { ^systemctl reboot }
         "shutdown" => { ^systemctl poweroff }
         _ => { null }
@@ -60,6 +60,7 @@ in
     exec-once=wl-paste --type image --watch cliphist store
     exec-once=hypridle
     exec-once=udiskie --tray
+    exec-once=wlsunset -t 5000 -T 6500
 
     env = XDG_CURRENT_DESKTOP,Hyprland
     env = XDG_SESSION_DESKTOP,Hyprland
@@ -87,7 +88,7 @@ in
     }
 
     bind = SUPER, Return, exec, ghostty
-    bind = SUPER, R, exec, rofi -show drun
+    bind = SUPER, R, exec, walker
     bind = SUPER, B, exec, zen
     bind = SUPER, E, exec, thunar
     bind = SUPER, A, exec, pavucontrol
@@ -95,8 +96,8 @@ in
     bind = SUPER, Q, killactive
     bind = SUPER SHIFT, R, exec, hyprctl reload
     bind = SUPER, L, exec, hyprlock
+    bind = SUPER, Backspace, exec, wlogout
     bind = SUPER SHIFT, P, exec, workstation-session-menu
-
 
     bind = SUPER, 1, workspace, 1
     bind = SUPER, 2, workspace, 2
@@ -127,6 +128,9 @@ in
     bindl = , XF86AudioPlay, exec, playerctl play-pause
     bindl = , XF86AudioNext, exec, playerctl next
     bindl = , XF86AudioPrev, exec, playerctl previous
+
+    bind = SUPER SHIFT, S, exec, hyprshot -m region --clipboard
+    bind = , Print, exec, hyprshot -m output --clipboard
   '';
 
   environment.etc."xdg/hypr/hypridle.conf".text = ''
@@ -160,4 +164,75 @@ in
       valign = center
     }
   '';
+
+  environment.etc."wlogout/layout".text = ''
+    {
+      "label" : "lock",
+      "action" : "hyprlock",
+      "text" : "Lock",
+      "keybind" : "l"
+    }
+    {
+      "label" : "logout",
+      "action" : "uwsm stop",
+      "text" : "Logout",
+      "keybind" : "e"
+    }
+    {
+      "label" : "reboot",
+      "action" : "systemctl reboot",
+      "text" : "Reboot",
+      "keybind" : "r"
+    }
+    {
+      "label" : "shutdown",
+      "action" : "systemctl poweroff",
+      "text" : "Shutdown",
+      "keybind" : "s"
+    }
+  '';
+
+  environment.etc."walker/config.json".text = builtins.toJSON {
+    app = {
+      show_icon_when_single = true;
+      show_sub_when_single = true;
+    };
+    list = {
+      max_entries = 50;
+      show_initial_entries = true;
+    };
+    search = {
+      placeholder = "Search...";
+    };
+    builtins = {
+      applications = {
+        weight = 5;
+      };
+      clipboard = {
+        weight = 3;
+      };
+      commands = {
+        weight = 1;
+      };
+      emojis = {
+        weight = 2;
+      };
+      switcher = {
+        weight = 0;
+      };
+      custom = [
+        {
+          name = "session";
+          placeholder = "Session...";
+          cmd = "printf 'lock\nlogout\nreboot\nshutdown'";
+          weight = 0;
+        }
+      ];
+    };
+    modules = [ ];
+    activation_mode = {
+      disabled = false;
+    };
+    ignore_mouse = false;
+  };
 }
