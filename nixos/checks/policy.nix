@@ -8,7 +8,7 @@
 let
   vm = self.nixosConfigurations.vm.config;
   workstation = self.nixosConfigurations.workstation.config;
-  workstationGui = self.nixosConfigurations.workstation-gui.config;
+  desktop = self.nixosConfigurations.desktop.config;
 
   mkPolicy =
     name: checks:
@@ -543,51 +543,51 @@ in
     }
   ];
 
-  workstation-gui-policy = mkPolicy "workstation-gui-policy" [
+  desktop-policy = mkPolicy "desktop-policy" [
     {
       assertion = !workstation.services.xserver.enable;
-      message = "headless workstation must remain GUI-free";
+      message = "headless workstation must remain desktop-free";
     }
     {
-      assertion = !workstationGui.services.xserver.enable;
-      message = "workstation-gui must not enable an X11 desktop/session";
+      assertion = !desktop.services.xserver.enable;
+      message = "desktop must not enable an X11 desktop/session";
     }
     {
-      assertion = workstationGui.services.greetd.enable;
-      message = "workstation-gui must enable greetd";
+      assertion = desktop.services.greetd.enable;
+      message = "desktop must enable greetd";
     }
     {
       assertion =
-        builtins.match ".*tuigreet.*--cmd .*uwsm start hyprland-uwsm.desktop.*" workstationGui.services.greetd.settings.default_session.command
+        builtins.match ".*tuigreet.*--cmd .*uwsm start hyprland-uwsm.desktop.*" desktop.services.greetd.settings.default_session.command
         != null;
-      message = "workstation-gui greetd must launch Hyprland through UWSM";
+      message = "desktop greetd must launch Hyprland through UWSM";
     }
     {
-      assertion = workstationGui.boot.kernel.sysctl."user.max_user_namespaces" > 0;
-      message = "workstation-gui must allow browser sandbox user namespaces";
+      assertion = desktop.boot.kernel.sysctl."user.max_user_namespaces" > 0;
+      message = "desktop must allow browser sandbox user namespaces";
     }
     {
-      assertion = workstationGui.programs.hyprland.enable;
-      message = "workstation-gui must enable Hyprland";
+      assertion = desktop.programs.hyprland.enable;
+      message = "desktop must enable Hyprland";
     }
     {
-      assertion = workstationGui.programs.hyprland.withUWSM;
-      message = "workstation-gui must launch Hyprland through UWSM";
+      assertion = desktop.programs.hyprland.withUWSM;
+      message = "desktop must launch Hyprland through UWSM";
     }
     {
       assertion =
-        workstationGui.programs.uwsm.waylandCompositors.hyprland.binPath
+        desktop.programs.uwsm.waylandCompositors.hyprland.binPath
         == "/run/current-system/sw/bin/start-hyprland";
-      message = "workstation-gui UWSM must launch Hyprland through start-hyprland";
+      message = "desktop UWSM must launch Hyprland through start-hyprland";
     }
     {
-      assertion = workstationGui.programs.hyprland.xwayland.enable;
-      message = "workstation-gui must enable XWayland only as an explicit compatibility exception";
+      assertion = desktop.programs.hyprland.xwayland.enable;
+      message = "desktop must enable XWayland only as an explicit compatibility exception";
     }
     {
       assertion =
         let
-          text = workstationGui.environment.etc."xdg/hypr/hyprland.conf".text;
+          text = desktop.environment.etc."xdg/hypr/hyprland.conf".text;
         in
         contains "SUPER, Return, exec" text
         && contains "mako" text
@@ -598,121 +598,121 @@ in
         && contains "brightnessctl" text
         && contains "hyprlock" text
         && contains "workstation-session-menu" text;
-      message = "workstation-gui Hyprland config must cover terminal, notifications, clipboard, touchpad gestures, keyboard layout switching, audio, brightness, lock, and session menu";
+      message = "desktop Hyprland config must cover terminal, notifications, clipboard, touchpad gestures, keyboard layout switching, audio, brightness, lock, and session menu";
     }
     {
       assertion =
-        contains "lock_cmd" workstationGui.environment.etc."xdg/hypr/hypridle.conf".text
-        && contains "hyprlock" workstationGui.environment.etc."xdg/hypr/hypridle.conf".text;
-      message = "workstation-gui must provide a minimal hypridle config";
+        contains "lock_cmd" desktop.environment.etc."xdg/hypr/hypridle.conf".text
+        && contains "hyprlock" desktop.environment.etc."xdg/hypr/hypridle.conf".text;
+      message = "desktop must provide a minimal hypridle config";
     }
     {
-      assertion = contains "input-field" workstationGui.environment.etc."xdg/hypr/hyprlock.conf".text;
-      message = "workstation-gui must provide a minimal hyprlock config";
+      assertion = contains "input-field" desktop.environment.etc."xdg/hypr/hyprlock.conf".text;
+      message = "desktop must provide a minimal hyprlock config";
     }
     {
-      assertion = workstationGui.services.dbus.enable;
-      message = "workstation-gui must enable dbus";
+      assertion = desktop.services.dbus.enable;
+      message = "desktop must enable dbus";
     }
     {
-      assertion = workstationGui.security.polkit.enable;
-      message = "workstation-gui must enable polkit";
+      assertion = desktop.security.polkit.enable;
+      message = "desktop must enable polkit";
     }
     {
-      assertion = workstationGui.hardware.graphics.enable;
-      message = "workstation-gui must enable hardware graphics support";
+      assertion = desktop.hardware.graphics.enable;
+      message = "desktop must enable hardware graphics support";
     }
     {
       assertion = !workstation.platform.power.enable;
       message = "headless workstation must not enable desktop power policy";
     }
     {
-      assertion = workstationGui.platform.power.enable;
-      message = "workstation-gui must enable platform power policy";
+      assertion = desktop.platform.power.enable;
+      message = "desktop must enable platform power policy";
     }
     {
-      assertion = workstationGui.services.upower.enable;
-      message = "workstation-gui must enable UPower through the power layer";
+      assertion = desktop.services.upower.enable;
+      message = "desktop must enable UPower through the power layer";
     }
     {
-      assertion = workstationGui.services.upower.criticalPowerAction == "PowerOff";
-      message = "workstation-gui low battery action must be PowerOff";
+      assertion = desktop.services.upower.criticalPowerAction == "PowerOff";
+      message = "desktop low battery action must be PowerOff";
     }
     {
-      assertion = workstationGui.services.tlp.enable;
-      message = "workstation-gui must enable TLP through the power layer";
+      assertion = desktop.services.tlp.enable;
+      message = "desktop must enable TLP through the power layer";
     }
     {
-      assertion = !workstationGui.services.power-profiles-daemon.enable;
-      message = "workstation-gui must use TLP instead of power-profiles-daemon";
-    }
-    {
-      assertion =
-        workstationGui.services.tlp.settings.STOP_CHARGE_THRESH_BAT0 == 80
-        && workstationGui.services.tlp.settings.START_CHARGE_THRESH_BAT0 == 75
-        && workstationGui.services.tlp.settings.PLATFORM_PROFILE_ON_BAT == "low-power";
-      message = "workstation-gui TLP charge and profile policy changed unexpectedly";
+      assertion = !desktop.services.power-profiles-daemon.enable;
+      message = "desktop must use TLP instead of power-profiles-daemon";
     }
     {
       assertion =
-        workstationGui.systemd.sleep.settings.Sleep.AllowHibernation == false
-        && workstationGui.systemd.sleep.settings.Sleep.AllowHybridSleep == false
-        && workstationGui.systemd.sleep.settings.Sleep.AllowSuspendThenHibernate == false;
-      message = "workstation-gui must explicitly disable hibernation modes";
-    }
-    {
-      assertion = workstationGui.services.pipewire.enable;
-      message = "workstation-gui must enable PipeWire";
-    }
-    {
-      assertion = workstationGui.services.pipewire.wireplumber.enable;
-      message = "workstation-gui must enable WirePlumber";
-    }
-    {
-      assertion = workstationGui.xdg.portal.enable;
-      message = "workstation-gui must enable XDG portals";
+        desktop.services.tlp.settings.STOP_CHARGE_THRESH_BAT0 == 80
+        && desktop.services.tlp.settings.START_CHARGE_THRESH_BAT0 == 75
+        && desktop.services.tlp.settings.PLATFORM_PROFILE_ON_BAT == "low-power";
+      message = "desktop TLP charge and profile policy changed unexpectedly";
     }
     {
       assertion =
-        workstationGui.xdg.mime.defaultApplications."inode/directory" == "thunar.desktop"
-        && workstationGui.xdg.mime.defaultApplications."application/pdf" == "org.pwmt.zathura.desktop"
-        && workstationGui.xdg.mime.defaultApplications."x-scheme-handler/https" == "zen.desktop";
-      message = "workstation-gui must define minimal MIME defaults";
+        desktop.systemd.sleep.settings.Sleep.AllowHibernation == false
+        && desktop.systemd.sleep.settings.Sleep.AllowHybridSleep == false
+        && desktop.systemd.sleep.settings.Sleep.AllowSuspendThenHibernate == false;
+      message = "desktop must explicitly disable hibernation modes";
     }
     {
-      assertion = workstationGui.programs.thunar.enable;
-      message = "workstation-gui must enable Thunar through the NixOS module";
+      assertion = desktop.services.pipewire.enable;
+      message = "desktop must enable PipeWire";
     }
     {
-      assertion = workstationGui.programs.zsh.enable;
-      message = "workstation-gui must enable zsh availability";
+      assertion = desktop.services.pipewire.wireplumber.enable;
+      message = "desktop must enable WirePlumber";
     }
     {
-      assertion = workstationGui.virtualisation.docker.enable;
-      message = "workstation-gui must enable Docker";
+      assertion = desktop.xdg.portal.enable;
+      message = "desktop must enable XDG portals";
     }
     {
-      assertion = hasAllPackages workstationGui.environment.systemPackages requiredGuiRuntimePackages;
-      message = "workstation-gui must include baseline runtime UX tools";
+      assertion =
+        desktop.xdg.mime.defaultApplications."inode/directory" == "thunar.desktop"
+        && desktop.xdg.mime.defaultApplications."application/pdf" == "org.pwmt.zathura.desktop"
+        && desktop.xdg.mime.defaultApplications."x-scheme-handler/https" == "zen.desktop";
+      message = "desktop must define minimal MIME defaults";
     }
     {
-      assertion = hasAllPackages workstationGui.environment.systemPackages requiredGuiApplicationPackages;
-      message = "workstation-gui application and development baseline is incomplete";
+      assertion = desktop.programs.thunar.enable;
+      message = "desktop must enable Thunar through the NixOS module";
     }
     {
-      assertion = hasAllPackages workstationGui.fonts.packages requiredGuiFontPackages;
-      message = "workstation-gui font baseline is incomplete";
+      assertion = desktop.programs.zsh.enable;
+      message = "desktop must enable zsh availability";
+    }
+    {
+      assertion = desktop.virtualisation.docker.enable;
+      message = "desktop must enable Docker";
+    }
+    {
+      assertion = hasAllPackages desktop.environment.systemPackages requiredGuiRuntimePackages;
+      message = "desktop must include baseline runtime UX tools";
+    }
+    {
+      assertion = hasAllPackages desktop.environment.systemPackages requiredGuiApplicationPackages;
+      message = "desktop application and development baseline is incomplete";
+    }
+    {
+      assertion = hasAllPackages desktop.fonts.packages requiredGuiFontPackages;
+      message = "desktop font baseline is incomplete";
     }
     {
       assertion =
         let
-          names = packageNames workstationGui.environment.systemPackages;
+          names = packageNames desktop.environment.systemPackages;
         in
         !(builtins.elem "waybar" names)
         && !(builtins.elem "eww" names)
         && !(builtins.elem "nautilus" names)
         && !(builtins.elem "dolphin" names);
-      message = "workstation-gui must not include Waybar, EWW, Nautilus, or Dolphin as baseline";
+      message = "desktop must not include Waybar, EWW, Nautilus, or Dolphin as baseline";
     }
   ];
 }

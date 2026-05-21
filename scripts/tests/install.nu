@@ -29,10 +29,10 @@ def assert-error-message [code: closure, expected: string] {
 def test-profile-validation [] {
   validate-profile "default"
   validate-profile "workstation"
-  validate-profile "workstation-gui"
+  validate-profile "desktop"
 
   assert-error-message { validate-profile "vm" } "disposable QEMU test target"
-  assert-error-message { validate-profile "desktop" } "profile must be one of"
+  assert-error-message { validate-profile "workstation-gui" } "profile must be one of"
 }
 
 def test-user-validation [] {
@@ -70,7 +70,7 @@ def test-hostname-derivation [] {
 def test-flake-uri [] {
   assert ($"(flake-uri "default")" | str starts-with "path:")
   assert ($"(flake-uri "default")" | str ends-with "#default")
-  assert ($"(flake-uri "workstation-gui")" | str ends-with "#workstation-gui")
+  assert ($"(flake-uri "desktop")" | str ends-with "#desktop")
 }
 
 def test-presentation-no-color [] {
