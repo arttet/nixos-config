@@ -42,7 +42,7 @@ approximately 5-15 seconds after GRUB, excluding manual LUKS passphrase entry.
 
 ## Power
 
-The workstation uses:
+The headless workstation baseline uses:
 
 ```nix
 powerManagement.cpuFreqGovernor = "powersave";
@@ -52,9 +52,30 @@ This is the default because workstation hardware may be a laptop, mini-PC, or
 desktop. Battery life, heat, and fan noise are more important than maximum
 benchmark performance. Modern CPUs can still boost under load.
 
-The current tuning target is AMD Zen 2, but the baseline stays generic. The
-profile does not enable `thermald`, `auto-cpufreq`, or
-`power-profiles-daemon` yet.
+The graphical workstation additionally enables the `platform.power` layer. It
+uses TLP as the single power policy daemon and disables
+`power-profiles-daemon` to avoid competing profile managers. TLP provides the
+generic charge threshold policy:
+
+```nix
+START_CHARGE_THRESH_BAT0 = 75;
+STOP_CHARGE_THRESH_BAT0 = 80;
+```
+
+Charge thresholds only take effect on hardware whose EC/sysfs driver exposes
+the required controls. On unsupported desktops or laptops, TLP still applies
+the generic runtime power profile and leaves battery charge thresholds inert.
+
+UPower provides desktop battery reporting and owns the low-battery action. The
+critical policy is intentionally set to power off instead of hibernate:
+
+```nix
+services.upower.criticalPowerAction = "PowerOff";
+```
+
+Hibernation, hybrid sleep, and suspend-then-hibernate are explicitly disabled
+until encrypted resume policy is designed and validated. Lid close suspends on
+battery, locks on external power, and is ignored while docked.
 
 ## Memory
 
@@ -190,12 +211,26 @@ resolvectl status
 resolvectl query example.com
 timedatectl status
 nft list ruleset
+upower -e
+upower -d
+tlp-stat -b
+tlp-stat -s
+tlp-stat -p
+systemctl status tlp
+systemctl status power-profiles-daemon
+systemd-analyze cat-config systemd/sleep.conf
 ```
 
-From the repository, print the same command list with:
+From the repository, print the generic command list with:
 
 ```sh
 just workstation runtime-checks
+```
+
+Print the graphical workstation power command list with:
+
+```sh
+just workstation-gui power-checks
 ```
 
 ## Overrides

@@ -21,7 +21,14 @@ test: build
     nix eval .#nixosConfigurations.workstation-gui.config.services.dbus.enable --apply 'enabled: if enabled then "ok" else throw "workstation-gui must enable dbus"'
     nix eval .#nixosConfigurations.workstation-gui.config.security.polkit.enable --apply 'enabled: if enabled then "ok" else throw "workstation-gui must enable polkit"'
     nix eval .#nixosConfigurations.workstation-gui.config.hardware.graphics.enable --apply 'enabled: if enabled then "ok" else throw "workstation-gui must enable hardware graphics support"'
+    nix eval .#nixosConfigurations.workstation.config.platform.power.enable --apply 'enabled: if enabled then throw "headless workstation must not enable desktop power policy" else "ok"'
+    nix eval .#nixosConfigurations.workstation-gui.config.platform.power.enable --apply 'enabled: if enabled then "ok" else throw "workstation-gui must enable platform power policy"'
     nix eval .#nixosConfigurations.workstation-gui.config.services.upower.enable --apply 'enabled: if enabled then "ok" else throw "workstation-gui must enable UPower through the power layer"'
+    nix eval .#nixosConfigurations.workstation-gui.config.services.upower.criticalPowerAction --apply 'action: if action == "PowerOff" then "ok" else throw "workstation-gui low battery action must be PowerOff"'
+    nix eval .#nixosConfigurations.workstation-gui.config.services.tlp.enable --apply 'enabled: if enabled then "ok" else throw "workstation-gui must enable TLP through the power layer"'
+    nix eval .#nixosConfigurations.workstation-gui.config.services.power-profiles-daemon.enable --apply 'enabled: if enabled then throw "workstation-gui must use TLP instead of power-profiles-daemon" else "ok"'
+    nix eval .#nixosConfigurations.workstation-gui.config.services.tlp.settings --apply 'settings: if settings.STOP_CHARGE_THRESH_BAT0 == 80 && settings.START_CHARGE_THRESH_BAT0 == 75 && settings.PLATFORM_PROFILE_ON_BAT == "low-power" then "ok" else throw "workstation-gui TLP charge and profile policy changed unexpectedly"'
+    nix eval .#nixosConfigurations.workstation-gui.config.systemd.sleep.settings.Sleep --apply 'sleep: if sleep.AllowHibernation == false && sleep.AllowHybridSleep == false && sleep.AllowSuspendThenHibernate == false then "ok" else throw "workstation-gui must explicitly disable hibernation modes"'
     nix eval .#nixosConfigurations.workstation-gui.config.services.pipewire.enable --apply 'enabled: if enabled then "ok" else throw "workstation-gui must enable PipeWire"'
     nix eval .#nixosConfigurations.workstation-gui.config.services.pipewire.wireplumber.enable --apply 'enabled: if enabled then "ok" else throw "workstation-gui must enable WirePlumber"'
     nix eval .#nixosConfigurations.workstation-gui.config.xdg.portal.enable --apply 'enabled: if enabled then "ok" else throw "workstation-gui must enable XDG portals"'
@@ -34,3 +41,16 @@ test: build
     nix eval .#nixosConfigurations.workstation-gui.config.fonts.packages --apply 'packages: let has = name: builtins.any (pkg: let pname = pkg.pname or ""; full = pkg.name or ""; in pname == name || full == name || builtins.match "${name}-.*" full != null) packages; required = [ "inter" "noto-fonts" "noto-fonts-cjk-sans" "noto-fonts-color-emoji" ]; in if builtins.all has required then "ok" else throw "workstation-gui font baseline is incomplete"'
     nix eval .#nixosConfigurations.workstation-gui.config.environment.systemPackages --apply 'packages: let names = map (pkg: pkg.pname or pkg.name) packages; in if builtins.elem "waybar" names || builtins.elem "eww" names || builtins.elem "nautilus" names || builtins.elem "dolphin" names then throw "workstation-gui must not include Waybar, EWW, Nautilus, or Dolphin as baseline" else "ok"'
     @echo "Workstation GUI validation passed."
+
+[doc('Print real-hardware graphical workstation power validation commands')]
+[no-cd]
+power-checks:
+    @echo "Run these commands on installed real hardware:"
+    @echo "upower -e"
+    @echo "upower -d"
+    @echo "tlp-stat -b"
+    @echo "tlp-stat -s"
+    @echo "tlp-stat -p"
+    @echo "systemctl status tlp"
+    @echo "systemctl status power-profiles-daemon"
+    @echo "systemd-analyze cat-config systemd/sleep.conf"
