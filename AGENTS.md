@@ -24,11 +24,18 @@ For local VM testing, see `docs/user/installation/vm.md`.
 
 - Documentation must be written in English.
 - Planning or chat may be in Russian.
-- Do not use Home Manager.
+- Home Manager is allowed only through the existing flake input and NixOS module
+  integration. Treat it as a lightweight dotfiles/symlink wrapper, similar to
+  Stow, for local user overlays only. Do not move system policy, package
+  baselines, services, secrets, or real user identity/state into Home Manager.
+  Do not add standalone Home Manager roots.
 - Do not add active laptop-specific targets yet.
 - Do not add active VPN targets yet.
 - Do not commit real usernames, hostnames, SSH keys, API tokens, VPN tokens,
   hardware configuration, encrypted secrets, or secrets of any kind.
+- Do not use or modify the user's global Git configuration for agent actions.
+  Use repository-local Git config, command-scoped environment overrides, or
+  provide explicit commands for the user to run when a global setting is needed.
 - Custom scripts must use Nushell if scripts are needed.
 - Keep the main branch buildable.
 - Agents cannot validate Windows WSL2/QEMU runtime or real hardware installs
@@ -121,5 +128,4 @@ Environment override:
 NIX_CONFIG_LOCAL_USER=/path/to/user.nix just workstation-gui build
 ```
 
-The committed example overlay in `examples/local/user.nix` must use fake values
-only.
+The committed example overlay in `examples/local/` must use fake values only.
