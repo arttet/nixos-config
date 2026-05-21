@@ -1,0 +1,4 @@
+disabled = [
+  # NixOS modules are easier to scan when related options keep their full paths.
+  "repeated_keys",
+]

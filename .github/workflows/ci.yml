@@ -69,8 +69,8 @@ jobs:
       - name: Magic Nix Cache
         uses: DeterminateSystems/magic-nix-cache-action@v13
 
-      - name: Check formatting
-        run: nix fmt -- --ci
+      - name: Setup Just
+        uses: extractions/setup-just@v4
 
       - name: Validate scripts
         run: nix shell nixpkgs#just nixpkgs#nushell nixpkgs#openssl -c just test
@@ -81,8 +81,8 @@ jobs:
       - name: Validate real disko on loopback disk
         run: nix shell nixpkgs#just nixpkgs#nushell nixpkgs#openssl -c sh -c 'sudo env "PATH=$PATH" RUN_DISKO_LOOP_TEST=1 just test'
 
-      - name: Check flake
-        run: nix flake check
+      - name: Run repository checks
+        run: just check
 
   docs:
     name: Documentation

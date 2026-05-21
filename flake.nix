@@ -34,6 +34,19 @@
       build = {
         inherit version revision fullVersion;
       };
+      cleanSource = nixpkgs.lib.cleanSourceWith {
+        src = nixpkgs.lib.cleanSource ./.;
+        filter =
+          path: type:
+          let
+            rel = nixpkgs.lib.removePrefix "/" (nixpkgs.lib.removePrefix (toString ./.) (toString path));
+          in
+          rel != "docs"
+          && rel != "target"
+          && !(nixpkgs.lib.hasPrefix "docs/" rel)
+          && !(nixpkgs.lib.hasPrefix "target/" rel)
+          && type != "symlink";
+      };
       treefmtEval = import ./formatter.nix {
         inherit pkgs treefmt-nix;
       };
@@ -137,6 +150,16 @@
 
       checks.${system} = {
         formatting = treefmtEval.config.build.check self;
+        deadnix = pkgs.runCommand "deadnix" { nativeBuildInputs = [ pkgs.deadnix ]; } ''
+          cd ${cleanSource}
+          deadnix --fail .
+          touch $out
+        '';
+        statix = pkgs.runCommand "statix" { nativeBuildInputs = [ pkgs.statix ]; } ''
+          cd ${cleanSource}
+          statix check .
+          touch $out
+        '';
         workstation-kernel-policy = pkgs.writeText "workstation-kernel-policy.txt" (
           assert
             self.nixosConfigurations.workstation.config.boot.kernelPackages.kernel.outPath
