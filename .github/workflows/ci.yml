@@ -117,8 +117,8 @@ jobs:
           name: github-pages
           path: docs/.vitepress/dist
 
-  validate:
-    name: Validate
+  installer:
+    name: Installer
     runs-on: ubuntu-latest
     needs: [security, static, docs]
     steps:
@@ -134,11 +134,25 @@ jobs:
       - name: Magic Nix Cache
         uses: DeterminateSystems/magic-nix-cache-action@v13
 
-      - name: Setup Just
-        uses: extractions/setup-just@v4
-
       - name: Validate scripts
-        run: nix shell nixpkgs#just nixpkgs#nushell nixpkgs#openssl -c just test
+        run: nix shell nixpkgs#nushell nixpkgs#openssl -c nu scripts/tests/run.nu
+
+  disko:
+    name: Disko
+    runs-on: ubuntu-latest
+    needs: [security, static, docs]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Install Nix
+        uses: cachix/install-nix-action@v31
+        with:
+          extra_nix_config: |
+            experimental-features = nix-command flakes
+
+      - name: Magic Nix Cache
+        uses: DeterminateSystems/magic-nix-cache-action@v13
 
       - name: Install loopback disk test dependencies
         run: sudo apt-get update && sudo apt-get install --yes cryptsetup-bin
@@ -146,7 +160,12 @@ jobs:
       - name: Validate real disko on loopback disk
         run: |
           # shellcheck disable=SC2016
-          nix shell nixpkgs#just nixpkgs#nushell nixpkgs#openssl -c sh -c 'sudo env "PATH=$PATH" RUN_DISKO_LOOP_TEST=1 just test'
+          nix shell nixpkgs#nushell nixpkgs#openssl -c sh -c '
+            sudo env "PATH=$PATH" unshare --mount --propagation private sh -c '"'"'
+              umount -R /mnt 2>/dev/null || true
+              RUN_DISKO_LOOP_TEST=1 nu scripts/tests/run.nu
+            '"'"'
+          '
 
   vm:
     name: VM
@@ -198,14 +217,14 @@ jobs:
         run: just workstation test
 
   workstation-gui:
-    name: GUI Workstation
+    name: Desktop
     runs-on: ubuntu-latest
     needs: [security, static, docs]
     steps:
       - name: Checkout
         uses: actions/checkout@v6
 
-      - name: Free Disk Space for GUI Workstation
+      - name: Free Disk Space for Desktop
         uses: endersonmenezes/free-disk-space@v3
         with:
           remove_android: true
@@ -225,14 +244,15 @@ jobs:
       - name: Setup Just
         uses: extractions/setup-just@v4
 
-      - name: Validate GUI workstation
+      - name: Validate desktop
         run: just workstation-gui test
 
   deploy-gh-pages:
     name: Deploy GitHub Pages
     if: |
       !cancelled() &&
-      needs.validate.result == 'success' &&
+      needs.installer.result == 'success' &&
+      needs.disko.result == 'success' &&
       needs.security.result == 'success' &&
       needs.static.result == 'success' &&
       needs.docs.result == 'success' &&
@@ -243,7 +263,7 @@ jobs:
       github.ref == 'refs/heads/main' &&
       github.actor != 'dependabot[bot]'
     runs-on: ubuntu-latest
-    needs: [validate, security, static, docs, vm, workstation, workstation-gui]
+    needs: [installer, disko, security, static, docs, vm, workstation, workstation-gui]
 
     permissions:
       contents: read
@@ -265,7 +285,8 @@ jobs:
     name: Deploy Cloudflare Pages
     if: |
       !cancelled() &&
-      needs.validate.result == 'success' &&
+      needs.installer.result == 'success' &&
+      needs.disko.result == 'success' &&
       needs.security.result == 'success' &&
       needs.static.result == 'success' &&
       needs.docs.result == 'success' &&
@@ -274,7 +295,7 @@ jobs:
       needs['workstation-gui'].result == 'success' &&
       github.actor != 'dependabot[bot]'
     runs-on: ubuntu-latest
-    needs: [validate, security, static, docs, vm, workstation, workstation-gui]
+    needs: [installer, disko, security, static, docs, vm, workstation, workstation-gui]
 
     permissions:
       contents: read
