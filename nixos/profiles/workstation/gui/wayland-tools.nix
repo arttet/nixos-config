@@ -5,14 +5,14 @@
     cliphist
     mako
     networkmanagerapplet
+    blueman
+    bluetui
     brightnessctl
     pavucontrol
     playerctl
     pamixer
     wiremix
-    walker
     wlogout
-    blueman
     hyprshot
     wlsunset
   ];

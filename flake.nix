@@ -11,6 +11,10 @@
     treefmt-nix.inputs.nixpkgs.follows = "nixpkgs";
     zen-browser.url = "github:youwen5/zen-browser-flake";
     zen-browser.inputs.nixpkgs.follows = "nixpkgs";
+    walker.url = "github:abenz1267/walker";
+    walker.inputs.nixpkgs.follows = "nixpkgs";
+    walker.inputs.systems.follows = "systems";
+    systems.url = "github:nix-systems/default-linux";
   };
 
   outputs =
@@ -21,6 +25,7 @@
       nixpkgs,
       treefmt-nix,
       zen-browser,
+      walker,
       ...
     }:
     let
@@ -91,7 +96,12 @@
           ) (envHardwareConfig != "");
         };
       moduleArgs = localOverlayArgs // {
-        inherit build home-manager zen-browser;
+        inherit
+          build
+          home-manager
+          zen-browser
+          walker
+          ;
       };
       workstationStorageExample = nixpkgs.lib.nixosSystem {
         inherit system;
