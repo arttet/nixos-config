@@ -52,7 +52,7 @@
         inherit pkgs treefmt-nix;
       };
       localPathOrNull =
-        path:
+        path: required:
         if path == "" then
           null
         else
@@ -60,11 +60,15 @@
             resolved = if nixpkgs.lib.hasPrefix "/" path then /. + path else ./. + "/${path}";
             check = builtins.tryEval (builtins.pathExists resolved);
           in
-          if check.success && check.value then resolved else null;
+          if check.success && check.value then
+            resolved
+          else if required then
+            resolved
+          else
+            null;
       localOverlayArgs =
         let
           envUserOverlay = builtins.getEnv "NIX_CONFIG_LOCAL_USER";
-          envSystemOverlay = builtins.getEnv "NIX_CONFIG_LOCAL_SYSTEM";
           envHardwareConfig = builtins.getEnv "NIX_CONFIG_LOCAL_HARDWARE";
           defaultUserOverlay = "/etc/nixos/local/default.nix";
           defaultHardwareConfig = "/etc/nixos/hardware-configuration.nix";
@@ -72,11 +76,10 @@
         {
           localUserOverlay = localPathOrNull (
             if envUserOverlay != "" then envUserOverlay else defaultUserOverlay
-          );
-          localSystemOverlay = localPathOrNull (if envSystemOverlay != "" then envSystemOverlay else "");
+          ) (envUserOverlay != "");
           localHardwareConfig = localPathOrNull (
             if envHardwareConfig != "" then envHardwareConfig else defaultHardwareConfig
-          );
+          ) (envHardwareConfig != "");
         };
       moduleArgs = localOverlayArgs // {
         inherit build home-manager zen-browser;

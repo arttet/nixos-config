@@ -140,8 +140,6 @@ def parse-extra-groups [value: string] {
 }
 
 def build-state [
-  session: string
-  profile: string
   hostname: string
   timezone: string
   user: string
@@ -153,8 +151,6 @@ def build-state [
   dotfiles_module: string
   dotfiles_root: string
 ] {
-  validate-id $session
-  validate-profile $profile
   validate-hostname $hostname
   validate-timezone $timezone
   validate-user $user
@@ -162,8 +158,6 @@ def build-state [
 
   {
     schemaVersion: 1
-    session: $session
-    profile: $profile
     host: {
       hostname: $hostname
       timezone: $timezone
@@ -188,9 +182,7 @@ def prompt-state [] {
     "Leave dotfiles empty to keep Home Manager inactive."
   ]
 
-  let session = prompt-default "Session" "system"
-  let profile = prompt-default "Profile" "desktop"
-  let hostname = prompt-default "Hostname" $session
+  let hostname = prompt-default "Hostname" "pc"
   let timezone = prompt-default "Timezone" "UTC"
   let user_description = prompt-default "User description" "User"
   let user = prompt-default "Username" "user"
@@ -209,7 +201,7 @@ def prompt-state [] {
     prompt-optional "Dotfiles root path, empty for <repo>/dotfiles"
   }
 
-  build-state $session $profile $hostname $timezone $user $user_description $user_shell $is_admin $extra_groups $dotfiles $dotfiles_module $dotfiles_root
+  build-state $hostname $timezone $user $user_description $user_shell $is_admin $extra_groups $dotfiles $dotfiles_module $dotfiles_root
 }
 
 def ensure-state [
@@ -222,7 +214,7 @@ def ensure-state [
   let should_write = $configure or not ($destination | path exists)
 
   if not $should_write {
-    validate-json (schema-path (install-state-schema)) $destination
+    validate-json (schema-path (platform-state-schema)) $destination
     print $"  (status-text 'ok') state.json"
     return
   }
@@ -236,7 +228,7 @@ def ensure-state [
   if ($destination | path exists) {
     cp $destination (backup-path $destination)
   }
-  write-json-contract (schema-path (install-state-schema)) $destination $state
+  write-json-contract (schema-path (platform-state-schema)) $destination $state
   print $"  (paint success 'write') state.json"
 }
 
@@ -275,8 +267,6 @@ def main [
   --target: string = ""
   --apply
   --configure
-  --session: string = "system"
-  --profile: string = "desktop"
   --hostname: string = ""
   --timezone: string = "UTC"
   --user: string = "user"
@@ -294,8 +284,8 @@ def main [
 
   let target_root = if $target == "" { default-target } else { $target }
   let state_file = state-path $target_root
-  let effective_hostname = if $hostname == "" { $session } else { $hostname }
-  let provided_state = build-state $session $profile $effective_hostname $timezone $user $user_description $shell (not $no_admin) $extra_groups $dotfiles $dotfiles_module $dotfiles_root
+  let effective_hostname = if $hostname == "" { "pc" } else { $hostname }
+  let provided_state = build-state $effective_hostname $timezone $user $user_description $shell (not $no_admin) $extra_groups $dotfiles $dotfiles_module $dotfiles_root
   let next_state = if $interactive and $apply and ($configure or not ($state_file | path exists)) {
     prompt-state
   } else {
