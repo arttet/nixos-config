@@ -1,4 +1,9 @@
-{ pkgs, lib, ... }:
+{
+  config,
+  pkgs,
+  lib,
+  ...
+}:
 let
   sessionMenu = pkgs.writeTextFile {
     name = "workstation-session-menu";
@@ -18,6 +23,8 @@ let
       }
     '';
   };
+  uwsm = lib.getExe config.programs.uwsm.package;
+  tuigreet = if builtins.hasAttr "tuigreet" pkgs then pkgs.tuigreet else pkgs.greetd.tuigreet;
 in
 {
   programs.hyprland = {
@@ -25,6 +32,7 @@ in
     withUWSM = lib.mkDefault true;
     xwayland.enable = lib.mkDefault true;
   };
+
   programs.uwsm = {
     enable = lib.mkDefault true;
     waylandCompositors.hyprland = {
@@ -34,17 +42,22 @@ in
     };
   };
 
-  xdg.portal.extraPortals = [
-    pkgs.xdg-desktop-portal-hyprland
-  ];
+  xdg.portal = {
+    configPackages = [ pkgs.hyprland ];
+    extraPortals = [ pkgs.xdg-desktop-portal-hyprland ];
+  };
+
+  services.greetd.settings.default_session.command =
+    lib.mkForce "${lib.getExe tuigreet} --time --remember --cmd '${uwsm} start hyprland-uwsm.desktop'";
 
   environment.systemPackages = [
-    pkgs.hyprland
     pkgs.hyprpaper
     pkgs.hypridle
     pkgs.hyprlock
     pkgs.hyprpicker
-    pkgs.xdg-desktop-portal-hyprland
+    pkgs.hyprpolkitagent
+    pkgs.networkmanagerapplet
+    pkgs.walker
     sessionMenu
   ];
 
@@ -55,11 +68,15 @@ in
 
     exec-once=dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP
     exec-once=systemctl --user import-environment WAYLAND_DISPLAY XDG_CURRENT_DESKTOP
+    exec-once=walker --gapplication-service
     exec-once=mako
     exec-once=wl-paste --type text --watch cliphist store
     exec-once=wl-paste --type image --watch cliphist store
+    exec-once=hyprpolkitagent
     exec-once=hypridle
     exec-once=udiskie --tray
+    exec-once=blueman-applet
+    exec-once=nm-applet --indicator
     exec-once=wlsunset -t 5000 -T 6500
 
     env = XDG_CURRENT_DESKTOP,Hyprland
