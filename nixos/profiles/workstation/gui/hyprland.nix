@@ -76,6 +76,10 @@ in
       ExecStart = lib.getExe pkgs.elephant;
       Restart = "on-failure";
       RestartSec = 1;
+      PassEnvironment = [
+        "WAYLAND_DISPLAY"
+        "XDG_CURRENT_DESKTOP"
+      ];
     };
   };
 
@@ -94,6 +98,10 @@ in
       } --gapplication-service";
       Restart = "on-failure";
       RestartSec = 1;
+      PassEnvironment = [
+        "WAYLAND_DISPLAY"
+        "XDG_CURRENT_DESKTOP"
+      ];
     };
   };
 
