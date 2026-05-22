@@ -175,6 +175,13 @@
         json-schemas = pkgs.runCommand "json-schemas" { nativeBuildInputs = [ pkgs.check-jsonschema ]; } ''
           cd ${cleanSource}
           check-jsonschema --check-metaschema schemas/*.schema.json
+          check-jsonschema --schemafile schemas/platform-state.v1.schema.json schemas/fixtures/platform-state.*.valid.json
+          for fixture in schemas/fixtures/platform-state.*.invalid.json; do
+            if check-jsonschema --schemafile schemas/platform-state.v1.schema.json "$fixture" >/dev/null 2>&1; then
+              echo "invalid platform state fixture $fixture unexpectedly passed schema validation" >&2
+              exit 1
+            fi
+          done
           touch $out
         '';
         workstation-kernel-policy = pkgs.writeText "workstation-kernel-policy.txt" (

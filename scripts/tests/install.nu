@@ -215,7 +215,7 @@ def test-installer-file-permission-contract [] {
 
   assert ($source | str contains "def ensure-private-secrets-dir") "expected a dedicated secrets directory helper"
   assert ($source | str contains "chmod 700 $dir") "expected private installer directories to be chmod 700"
-  assert ($source | str contains "chmod 700 $persistent_user_dir") "expected target local overlay directory to be chmod 700"
+  assert ($source | str contains "chmod 700 $persistent_user_dir") "expected target local platform state directory to be chmod 700"
   assert ($source | str contains "install -m 600 /dev/null $path") "expected secret files to be created mode 600"
   assert ($source | str contains "install -m 600 (password-hash-path $state.session) (mounted-target-password-path $state.user)") "expected target password hash to be copied mode 600"
 }

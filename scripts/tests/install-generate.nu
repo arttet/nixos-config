@@ -43,7 +43,7 @@ def generated-paths [root: string] {
     state_dir: $"($root)/state/vm"
     volatile: $"($root)/run"
     overlay: $"($root)/state/vm/default.nix"
-    install_state: $"($root)/state/vm/state.json"
+    platform_state: $"($root)/state/vm/state.json"
     password: $"($root)/run/vm/secrets/user.passwd"
     env: $"($root)/state/vm/install.env"
     disko: $"($root)/run/vm/runtime/disko-state.json"
@@ -100,10 +100,10 @@ def assert-generated-config-imports [paths: record] {
         NIX_CONFIG_LOCAL_USER: $paths.overlay
         NIX_CONFIG_LOCAL_HARDWARE: $paths.hardware
       } {
-        nix eval --impure $".#($prefix).config.users.users.user" --apply 'user: if user.description == "User" && user.hashedPasswordFile == "/etc/nixos/local/users/user/user.passwd" && user.shell.pname == "nushell" && builtins.elem "wheel" user.extraGroups then "ok" else throw "generated user overlay was not applied correctly"' | complete
+        nix eval --impure $".#($prefix).config.users.users.user" --apply 'user: if user.description == "User" && user.hashedPasswordFile == "/etc/nixos/local/users/user/user.passwd" && user.shell.pname == "nushell" && builtins.elem "wheel" user.extraGroups then "ok" else throw "generated platform state user was not applied correctly"' | complete
       }
     )
-    assert-command-ok $"generated user overlay on ($target)" $user_check
+    assert-command-ok $"generated platform state user on ($target)" $user_check
 
     let host_check = (
       with-env {
@@ -307,11 +307,11 @@ def main [] {
 
     assert equal $result.exit_code 0 $"installer dry-run failed; stderr: ($result.stderr)"
 
-    for path in [ $paths.overlay $paths.install_state $paths.env $paths.disko ] {
+    for path in [ $paths.overlay $paths.platform_state $paths.env $paths.disko ] {
       assert-file $path
     }
 
-    assert not ($paths.password | path exists) "dry-run must not persist generated password hash in installer state or volatile secrets"
+    assert not ($paths.password | path exists) "dry-run must not persist generated password hash in platform state or volatile secrets"
 
     let overlay = (open $paths.overlay)
     assert ($overlay | str contains 'platform.state')
@@ -320,21 +320,21 @@ def main [] {
     assert not ($overlay | str contains 'users.users.${userName}')
     assert not ($overlay | str contains "ci-password")
 
-    let install_state = (open $paths.install_state | from json)
-    assert equal $install_state.schemaVersion 1
-    assert not ($install_state | columns | any {|column| $column == "session" })
-    assert not ($install_state | columns | any {|column| $column == "profile" })
-    assert equal $install_state.host.hostname "vm"
-    assert equal $install_state.host.timezone "UTC"
-    assert equal ($install_state.users | length) 1
-    let install_user = ($install_state.users | get 0)
-    assert equal $install_user.name "user"
-    assert equal $install_user.description "User"
-    assert equal $install_user.hashedPasswordFile "/etc/nixos/local/users/user/user.passwd"
-    assert equal $install_user.isAdmin true
-    assert equal $install_user.extraGroups []
-    assert equal $install_user.shell "nushell"
-    assert equal $install_user.sources null
+    let platform_state = (open $paths.platform_state | from json)
+    assert equal $platform_state.schemaVersion 1
+    assert not ($platform_state | columns | any {|column| $column == "session" })
+    assert not ($platform_state | columns | any {|column| $column == "profile" })
+    assert equal $platform_state.host.hostname "vm"
+    assert equal $platform_state.host.timezone "UTC"
+    assert equal ($platform_state.users | length) 1
+    let platform_user = ($platform_state.users | get 0)
+    assert equal $platform_user.name "user"
+    assert equal $platform_user.description "User"
+    assert equal $platform_user.hashedPasswordFile "/etc/nixos/local/users/user/user.passwd"
+    assert equal $platform_user.isAdmin true
+    assert equal $platform_user.extraGroups []
+    assert equal $platform_user.shell "nushell"
+    assert equal $platform_user.sources null
 
     let env_file = (open $paths.env)
     assert ($env_file | str contains 'export NIX_CONFIG_LOCAL_USER=')
@@ -346,7 +346,7 @@ def main [] {
     assert not ($disko_state | columns | any {|column| $column == "luks" })
 
     if (has-nix-validation-tools) {
-      let schema_check = (check-jsonschema --schemafile schemas/platform-state.v1.schema.json $paths.install_state | complete)
+      let schema_check = (check-jsonschema --schemafile schemas/platform-state.v1.schema.json $paths.platform_state | complete)
       assert-command-ok "validate generated platform state" $schema_check
 
       let disko_schema_check = (check-jsonschema --schemafile schemas/disko-state.v1.schema.json $paths.disko | complete)
