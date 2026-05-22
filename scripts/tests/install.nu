@@ -201,7 +201,7 @@ def test-disko-config-password-file [] {
 }
 
 def test-installer-contract-schemas [] {
-  let result = (check-jsonschema --check-metaschema schemas/install-state.v1.schema.json schemas/disko-state.v1.schema.json | complete)
+  let result = (check-jsonschema --check-metaschema schemas/platform-state.v1.schema.json schemas/disko-state.v1.schema.json | complete)
   assert equal $result.exit_code 0 $"JSON schemas must be valid metaschemas; stderr: ($result.stderr)"
 }
 

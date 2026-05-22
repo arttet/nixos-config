@@ -540,11 +540,9 @@ def disko-template-path [] {
   join-path [ (repo-root) "templates" "disko" "default.nix" ]
 }
 
-def install-state [state: record] {
+def platform-state [state: record] {
   {
     schemaVersion: 1
-    session: $state.session
-    profile: $state.profile
     host: {
       hostname: $state.hostname
       timezone: $state.timezone
@@ -586,7 +584,7 @@ def disko-state [
 def write-install-state [state: record] {
   ensure-private-install-dir $state.session | ignore
   cp (local-template-path) (overlay-path $state.session)
-  write-json-contract (schema-path (install-state-schema)) (install-state-path $state.session) (install-state $state)
+  write-json-contract (schema-path (platform-state-schema)) (install-state-path $state.session) (platform-state $state)
 }
 
 def write-disko-state [

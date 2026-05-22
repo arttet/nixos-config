@@ -1,5 +1,6 @@
 { lib, ... }:
 {
+  # Keep a committed non-login placeholder; real users come from platform.state.
   users.users.void = {
     isNormalUser = false;
     isSystemUser = true;

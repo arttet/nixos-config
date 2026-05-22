@@ -20,8 +20,6 @@ def main [] {
     mkdir ($user_secret | path dirname)
     {
       schemaVersion: 1
-      session: "existing"
-      profile: "desktop"
       host: {
         hostname: "existing"
         timezone: "UTC"
@@ -43,10 +41,6 @@ def main [] {
       "--target"
       $target
       "--apply"
-      "--session"
-      "vm"
-      "--profile"
-      "desktop"
       "--hostname"
       "vm"
       "--timezone"
@@ -58,7 +52,9 @@ def main [] {
     ] | ignore
 
     assert ($"($target)/default.nix" | path exists) "expected managed local default.nix template to be copied"
-    assert equal (open $state | from json | get session) "existing"
+    assert equal (open $state | from json | get host.hostname) "existing"
+    assert not ((open $state | from json | columns) | any {|column| $column == "session" })
+    assert not ((open $state | from json | columns) | any {|column| $column == "profile" })
     assert equal (open $user_secret | str trim) "keep-secret"
     assert not ($"($target)/users/user.nix" | path exists) "local sync must not copy template users subtree"
 
@@ -69,10 +65,6 @@ def main [] {
       "--target"
       $target
       "--apply"
-      "--session"
-      "vm"
-      "--profile"
-      "desktop"
       "--hostname"
       "vm"
       "--timezone"
@@ -87,6 +79,8 @@ def main [] {
 
     let generated_state = (open $state | from json)
     assert equal $generated_state.schemaVersion 1
+    assert not ($generated_state | columns | any {|column| $column == "session" })
+    assert not ($generated_state | columns | any {|column| $column == "profile" })
     let generated_user = ($generated_state.users | get 0)
     assert equal $generated_user.isAdmin true
     assert equal $generated_user.extraGroups []
@@ -105,10 +99,6 @@ def main [] {
       "--target"
       $target
       "--apply"
-      "--session"
-      "vm"
-      "--profile"
-      "desktop"
       "--hostname"
       "vm"
       "--timezone"

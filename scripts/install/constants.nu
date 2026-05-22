@@ -21,8 +21,8 @@ export def disko-mode [] {
   "destroy,format,mount"
 }
 
-export def install-state-schema [] {
-  "install-state.v1.schema.json"
+export def platform-state-schema [] {
+  "platform-state.v1.schema.json"
 }
 
 export def disko-state-schema [] {

@@ -160,8 +160,6 @@ def assert-multi-user-state [root: string, hardware: string] {
   cp templates/local/default.nix $overlay
   {
     schemaVersion: 1
-    session: "multi"
-    profile: "desktop"
     host: {
       hostname: "multi"
       timezone: "UTC"
@@ -189,7 +187,7 @@ def assert-multi-user-state [root: string, hardware: string] {
     ]
   } | to json --indent 2 | save --force $state
 
-  let schema_check = (check-jsonschema --schemafile schemas/install-state.v1.schema.json $state | complete)
+  let schema_check = (check-jsonschema --schemafile schemas/platform-state.v1.schema.json $state | complete)
   assert-command-ok "validate multi-user state" $schema_check
 
   let user_check = (
@@ -234,8 +232,6 @@ def assert-home-state-version [root: string, hardware: string] {
   "{ ... }: { }" | save --force $home_module
   {
     schemaVersion: 1
-    session: "home-version"
-    profile: "desktop"
     host: {
       hostname: "home-version"
       timezone: "UTC"
@@ -326,7 +322,8 @@ def main [] {
 
     let install_state = (open $paths.install_state | from json)
     assert equal $install_state.schemaVersion 1
-    assert equal $install_state.profile "default"
+    assert not ($install_state | columns | any {|column| $column == "session" })
+    assert not ($install_state | columns | any {|column| $column == "profile" })
     assert equal $install_state.host.hostname "vm"
     assert equal $install_state.host.timezone "UTC"
     assert equal ($install_state.users | length) 1
@@ -349,8 +346,8 @@ def main [] {
     assert not ($disko_state | columns | any {|column| $column == "luks" })
 
     if (has-nix-validation-tools) {
-      let schema_check = (check-jsonschema --schemafile schemas/install-state.v1.schema.json $paths.install_state | complete)
-      assert-command-ok "validate generated install state" $schema_check
+      let schema_check = (check-jsonschema --schemafile schemas/platform-state.v1.schema.json $paths.install_state | complete)
+      assert-command-ok "validate generated platform state" $schema_check
 
       let disko_schema_check = (check-jsonschema --schemafile schemas/disko-state.v1.schema.json $paths.disko | complete)
       assert-command-ok "validate generated disko state" $disko_schema_check

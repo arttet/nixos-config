@@ -1,20 +1,13 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://nixos-config.local/schemas/install-state.v1.schema.json",
-  "title": "NixOS Config installer state",
+  "$id": "https://nixos-config.local/schemas/platform-state.v1.schema.json",
+  "title": "NixOS Config platform state",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schemaVersion", "session", "profile", "host", "users"],
+  "required": ["schemaVersion", "host", "users"],
   "properties": {
     "schemaVersion": {
       "const": 1
-    },
-    "session": {
-      "type": "string",
-      "pattern": "^[A-Za-z0-9_-]+$"
-    },
-    "profile": {
-      "enum": ["default", "workstation", "desktop"]
     },
     "host": {
       "type": "object",
