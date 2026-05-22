@@ -66,9 +66,6 @@ jobs:
           extra_nix_config: |
             experimental-features = nix-command flakes
 
-      - name: Magic Nix Cache
-        uses: DeterminateSystems/magic-nix-cache-action@v13
-
       - name: Check formatting
         run: nix build .#checks.x86_64-linux.formatting
 
@@ -131,9 +128,6 @@ jobs:
           extra_nix_config: |
             experimental-features = nix-command flakes
 
-      - name: Magic Nix Cache
-        uses: DeterminateSystems/magic-nix-cache-action@v13
-
       - name: Validate scripts
         run: nix shell nixpkgs#nushell nixpkgs#openssl nixpkgs#check-jsonschema -c nu scripts/tests/run.nu
 
@@ -150,9 +144,6 @@ jobs:
         with:
           extra_nix_config: |
             experimental-features = nix-command flakes
-
-      - name: Magic Nix Cache
-        uses: DeterminateSystems/magic-nix-cache-action@v13
 
       - name: Install loopback disk test dependencies
         run: sudo apt-get update && sudo apt-get install --yes cryptsetup-bin
@@ -181,9 +172,6 @@ jobs:
           extra_nix_config: |
             experimental-features = nix-command flakes
 
-      - name: Magic Nix Cache
-        uses: DeterminateSystems/magic-nix-cache-action@v13
-
       - name: Setup Just
         uses: extractions/setup-just@v4
 
@@ -206,9 +194,6 @@ jobs:
         with:
           extra_nix_config: |
             experimental-features = nix-command flakes
-
-      - name: Magic Nix Cache
-        uses: DeterminateSystems/magic-nix-cache-action@v13
 
       - name: Setup Just
         uses: extractions/setup-just@v4
@@ -237,9 +222,6 @@ jobs:
         with:
           extra_nix_config: |
             experimental-features = nix-command flakes
-
-      - name: Magic Nix Cache
-        uses: DeterminateSystems/magic-nix-cache-action@v13
 
       - name: Setup Just
         uses: extractions/setup-just@v4
