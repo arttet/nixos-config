@@ -8,6 +8,7 @@ let
 in
 {
   hardware.graphics.enable = lib.mkDefault true;
+  hardware.bluetooth.enable = lib.mkDefault true;
 
   services.dbus.enable = lib.mkDefault true;
   security.polkit.enable = lib.mkDefault true;
@@ -20,11 +21,7 @@ in
     openFirewall = lib.mkDefault true;
   };
 
-  services.blueman.enable = lib.mkDefault true;
-
-  networking.networkmanager.enable = lib.mkDefault true;
-  networking.wireless.iwd.enable = lib.mkDefault true;
-  networking.networkmanager.wifi.backend = lib.mkDefault "iwd";
+  services.blueman.enable = lib.mkDefault false;
 
   services.greetd = {
     enable = lib.mkDefault true;
@@ -92,9 +89,10 @@ in
   environment.systemPackages = [
     tuigreet
     pkgs.adwaita-icon-theme
-    pkgs.blueman
     pkgs.cifs-utils
+    pkgs.libsForQt5.qtwayland
     pkgs.qemu
+    pkgs.qt6.qtwayland
     pkgs.udiskie
     pkgs.virt-manager
     pkgs.xdg-user-dirs

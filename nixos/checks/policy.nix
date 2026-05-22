@@ -54,9 +54,11 @@ let
     "thunar"
     "xdg-user-dirs"
     "walker"
+    "elephant"
     "wlogout"
     "wiremix"
     "blueman"
+    "bluetui"
     "hyprshot"
     "wlsunset"
   ];

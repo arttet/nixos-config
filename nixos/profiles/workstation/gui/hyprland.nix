@@ -2,6 +2,7 @@
   config,
   pkgs,
   lib,
+  walker,
   ...
 }:
 let
@@ -51,14 +52,54 @@ in
     lib.mkForce "${lib.getExe tuigreet} --time --remember --cmd '${uwsm} start hyprland-uwsm.desktop'";
 
   environment.systemPackages = [
+    walker.packages.${pkgs.stdenv.hostPlatform.system}.default
+    pkgs.elephant
     pkgs.hyprpaper
     pkgs.hypridle
     pkgs.hyprlock
     pkgs.hyprpicker
     pkgs.hyprpolkitagent
     pkgs.networkmanagerapplet
-    pkgs.walker
     sessionMenu
+  ];
+
+  systemd.user.services.elephant = {
+    description = "Elephant data provider service for Walker";
+    partOf = [ "graphical-session.target" ];
+    environment = {
+      PATH = lib.mkForce (
+        lib.makeBinPath [ pkgs.bash ] + ":/run/current-system/sw/bin:/nix/var/nix/profiles/default/bin"
+      );
+    };
+    serviceConfig = {
+      Type = "simple";
+      ExecStart = lib.getExe pkgs.elephant;
+      Restart = "on-failure";
+      RestartSec = 1;
+    };
+  };
+
+  systemd.user.services.walker = {
+    description = "Walker Launcher Service";
+    requires = [ "elephant.service" ];
+    after = [ "elephant.service" ];
+    partOf = [ "graphical-session.target" ];
+    environment = {
+      PATH = lib.mkForce "/run/current-system/sw/bin:/nix/var/nix/profiles/default/bin";
+    };
+    serviceConfig = {
+      Type = "simple";
+      ExecStart = "${
+        lib.getExe walker.packages.${pkgs.stdenv.hostPlatform.system}.default
+      } --gapplication-service";
+      Restart = "on-failure";
+      RestartSec = 1;
+    };
+  };
+
+  systemd.user.targets.graphical-session.wants = [
+    "elephant.service"
+    "walker.service"
   ];
 
   environment.etc."xdg/hypr/hyprland.conf".text = ''
@@ -68,14 +109,12 @@ in
 
     exec-once=dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP
     exec-once=systemctl --user import-environment WAYLAND_DISPLAY XDG_CURRENT_DESKTOP
-    exec-once=walker --gapplication-service
     exec-once=mako
     exec-once=wl-paste --type text --watch cliphist store
     exec-once=wl-paste --type image --watch cliphist store
     exec-once=hyprpolkitagent
     exec-once=hypridle
     exec-once=udiskie --tray
-    exec-once=blueman-applet
     exec-once=nm-applet --indicator
     exec-once=wlsunset -t 5000 -T 6500
 
