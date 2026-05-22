@@ -7,9 +7,9 @@
 {
   imports = [
     home-manager.nixosModules.home-manager
+    ../modules/core/local.nix
     ../modules/core/state.nix
     ../modules/core/users.nix
-    ../modules/core/local-overlay.nix
   ];
 
   networking.hostName = lib.mkDefault "nixos";
