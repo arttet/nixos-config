@@ -1,12 +1,10 @@
 {
-  config,
   pkgs,
   lib,
   ...
 }:
 let
   tuigreet = if builtins.hasAttr "tuigreet" pkgs then pkgs.tuigreet else pkgs.greetd.tuigreet;
-  uwsm = lib.getExe config.programs.uwsm.package;
 in
 {
   hardware.graphics.enable = lib.mkDefault true;
@@ -24,10 +22,14 @@ in
 
   services.blueman.enable = lib.mkDefault true;
 
+  networking.networkmanager.enable = lib.mkDefault true;
+  networking.wireless.iwd.enable = lib.mkDefault true;
+  networking.networkmanager.wifi.backend = lib.mkDefault "iwd";
+
   services.greetd = {
     enable = lib.mkDefault true;
     settings.default_session = {
-      command = "${lib.getExe tuigreet} --time --remember --cmd '${uwsm} start hyprland-uwsm.desktop'";
+      command = lib.mkDefault "${lib.getExe tuigreet} --time --remember";
       user = "greeter";
     };
   };
@@ -74,15 +76,27 @@ in
 
   programs.virt-manager.enable = lib.mkDefault true;
 
+  environment.sessionVariables = {
+    QT_QPA_PLATFORM = "wayland";
+    QT_WAYLAND_DISABLE_WINDOWDECORATION = "1";
+    SDL_VIDEODRIVER = "wayland";
+    _JAVA_AWT_WM_NONREPARENTING = "1";
+    NIXOS_OZONE_WL = "1";
+    MOZ_ENABLE_WAYLAND = "1";
+    MOZ_DBUS_REMOTE = "1";
+    XCURSOR_THEME = "Adwaita";
+    XCURSOR_SIZE = "24";
+    GTK_USE_PORTAL = "1";
+  };
+
   environment.systemPackages = [
     tuigreet
+    pkgs.adwaita-icon-theme
     pkgs.blueman
     pkgs.cifs-utils
-    pkgs.hyprpolkitagent
     pkgs.qemu
     pkgs.udiskie
     pkgs.virt-manager
-    pkgs.walker
     pkgs.xdg-user-dirs
   ];
 }
