@@ -24,6 +24,7 @@
       stateUsers = state.users or [ ];
       defaultHomeStateVersion = config.system.stateVersion;
       userNames = map (user: user.name or "") stateUsers;
+      userPasswordFiles = map (user: user.hashedPasswordFile or "") stateUsers;
       shells = {
         bash = pkgs.bashInteractive;
         inherit (pkgs) nushell zsh;
@@ -46,6 +47,31 @@
         ".zshrc"
       ];
       userSourcesFor = user: user.sources or null;
+      isValidDotfileLink =
+        link:
+        (builtins.isString link) && link != "" && !(lib.hasPrefix "/" link) && !(lib.hasInfix ".." link);
+      userLinkAssertions = lib.flatten (
+        map (
+          user:
+          let
+            userName = user.name or "<unknown>";
+            sources = userSourcesFor user;
+            links = if sources == null then [ ] else sources.links or defaultDotfileLinks;
+          in
+          lib.optional (sources != null) {
+            assertion = builtins.all isValidDotfileLink links;
+            message = "platform state users[].sources.links for ${userName} must contain relative dotfile paths without '..'.";
+          }
+          ++ lib.optional (sources != null) {
+            assertion = (lib.length links) == (lib.length (lib.unique links));
+            message = "platform state users[].sources.links for ${userName} must be unique.";
+          }
+          ++ lib.optional (sources != null && links != [ ]) {
+            assertion = (sources.dotfilesRoot or null) != null;
+            message = "platform state users[].sources.dotfilesRoot for ${userName} is required when links are configured.";
+          }
+        ) stateUsers
+      );
       mkUser =
         user:
         let
@@ -162,7 +188,12 @@
             assertion = builtins.all (shellName: builtins.hasAttr shellName shells) userShellNames;
             message = "platform state users[].shell must be one of: ${lib.concatStringsSep ", " (builtins.attrNames shells)}.";
           }
-        ];
+          {
+            assertion = builtins.all (path: builtins.isString path && lib.hasPrefix "/" path) userPasswordFiles;
+            message = "platform state users[].hashedPasswordFile must be an absolute path.";
+          }
+        ]
+        ++ userLinkAssertions;
 
         networking.hostName = lib.mkIf (host ? hostname) (lib.mkForce host.hostname);
         time.timeZone = lib.mkIf (host ? timezone) (lib.mkForce host.timezone);

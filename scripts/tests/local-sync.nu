@@ -35,7 +35,7 @@ def main [] {
     } | to json --indent 2 | save --force $state
     "keep-secret" | save --force $user_secret
 
-    run-ok "apply local template sync" [
+    run-ok "validate existing local state" [
       "nu"
       "scripts/local/sync.nu"
       "--target"
@@ -51,7 +51,7 @@ def main [] {
       "User"
     ] | ignore
 
-    assert ($"($target)/default.nix" | path exists) "expected managed local default.nix template to be copied"
+    assert not ($"($target)/default.nix" | path exists) "local sync must not create a local default.nix shim"
     assert equal (open $state | from json | get host.hostname) "existing"
     assert not ((open $state | from json | columns) | any {|column| $column == "session" })
     assert not ((open $state | from json | columns) | any {|column| $column == "profile" })

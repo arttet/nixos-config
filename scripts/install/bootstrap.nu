@@ -21,10 +21,6 @@ def ensure-private-install-dir [session: string] {
   $dir
 }
 
-def overlay-path [session: string] {
-  join-path [ (install-dir $session) "default.nix" ]
-}
-
 def platform-state-path [session: string] {
   join-path [ (install-dir $session) "state.json" ]
 }
@@ -532,10 +528,6 @@ def choose-disk [state: record] {
   }
 }
 
-def local-template-path [] {
-  join-path [ (repo-root) "templates" "local" "default.nix" ]
-}
-
 def disko-template-path [] {
   join-path [ (repo-root) "templates" "disko" "default.nix" ]
 }
@@ -583,7 +575,6 @@ def disko-state [
 
 def write-platform-state [state: record] {
   ensure-private-install-dir $state.session | ignore
-  cp (local-template-path) (overlay-path $state.session)
   write-json-contract (schema-path (platform-state-schema)) (platform-state-path $state.session) (platform-state $state)
 }
 
@@ -650,7 +641,7 @@ def disable-active-swap [session: string] {
 
 def write-env [state: record] {
   let env_file = $"
-export NIX_CONFIG_LOCAL_USER=\"(overlay-path $state.session)\"
+export NIX_CONFIG_LOCAL_STATE=\"(platform-state-path $state.session)\"
 export NIX_CONFIG_LOCAL_HARDWARE=\"(hardware-config-path)\"
 "
 
@@ -667,16 +658,21 @@ export def print-summary [state: record] {
   print-kv-section "Install Summary" [
     { label: "Session", value: $state.session }
     { label: "Profile", value: $state.profile }
+    { label: "Disk", value: $state.disk }
+    { label: "Password set", value: $password_set }
+  ]
+
+  print-kv-section "Platform State" [
     { label: "User", value: $state.user_description }
     { label: "Username", value: $state.user }
-    { label: "Password set", value: $password_set }
     { label: "Hostname", value: $state.hostname }
     { label: "Timezone", value: $state.timezone }
-    { label: "Disk", value: $state.disk }
-    { label: "Local template", value: (overlay-path $state.session) }
     { label: "Platform state", value: (platform-state-path $state.session) }
-    { label: "Install env", value: (env-path $state.session) }
     { label: "Hardware config", value: (hardware-config-path) }
+  ]
+
+  print-kv-section "Installer Runtime" [
+    { label: "Install env", value: (env-path $state.session) }
   ]
 }
 
@@ -684,8 +680,7 @@ def print-next-commands [state: record] {
   let repo = (repo-root)
   let flake = (flake-uri $state.profile)
 
-  print-section "Generated Files" [
-    (overlay-path $state.session)
+  print-section "Generated Runtime Files" [
     (platform-state-path $state.session)
     (env-path $state.session)
     (disko-state-path $state.session)
@@ -693,12 +688,12 @@ def print-next-commands [state: record] {
 
   print (paint success "Dry-run complete. No destructive command was run.")
   print ""
-  print "To apply after review:"
+  print "To apply this reviewed runtime state:"
   print $"  source \"(env-path $state.session)\""
   print $"  nu \"($repo)/scripts/install/disko.nu\" --state \"(disko-state-path $state.session)\""
   print "  nixos-generate-config --root /mnt"
   print "  test -f /mnt/etc/nixos/hardware-configuration.nix"
-  print $"  NIX_CONFIG_LOCAL_USER=\"(overlay-path $state.session)\" \\"
+  print $"  NIX_CONFIG_LOCAL_STATE=\"(platform-state-path $state.session)\" \\"
   print $"  NIX_CONFIG_LOCAL_HARDWARE=\"(hardware-config-path)\" \\"
   print $"  nixos-install --impure --flake \"($flake)\""
 }
@@ -823,9 +818,9 @@ def run-apply [state: record] {
   let persistent_user_dir = (target-local-dir)
   let persistent_users_dir = (join-path [ $persistent_user_dir "users" ])
   let persistent_user_secret_dir = (join-path [ $persistent_users_dir $state.user ])
-  let persistence_command = $"mkdir ($persistent_user_dir)\ncp .../default.nix ($persistent_user_dir)/\ncp .../state.json ($persistent_user_dir)/\ninstall -m 600 .../($state.user).passwd ($persistent_user_secret_dir)/"
+  let persistence_command = $"mkdir ($persistent_user_dir)\ncp .../state.json ($persistent_user_dir)/\ninstall -m 600 .../($state.user).passwd ($persistent_user_secret_dir)/"
 
-  let install_command = $"NIX_CONFIG_LOCAL_USER=\"($persistent_user_dir)/default.nix\" NIX_CONFIG_LOCAL_HARDWARE=\"(hardware-config-path)\" nixos-install --impure --flake \"($flake)\" --no-root-passwd"
+  let install_command = $"NIX_CONFIG_LOCAL_STATE=\"($persistent_user_dir)/state.json\" NIX_CONFIG_LOCAL_HARDWARE=\"(hardware-config-path)\" nixos-install --impure --flake \"($flake)\" --no-root-passwd"
 
   cleanup-volatile-session $state.session
   ensure-private-runtime-dir $state.session | ignore
@@ -880,7 +875,7 @@ def run-apply [state: record] {
     error make { msg: "hardware configuration was not generated" }
   }
 
-  confirm-command "Phase 3: Persistence" "Copies the local overlay shim, platform state, and password to the target." $persistence_command
+  confirm-command "Phase 3: Persistence" "Copies the local platform state and password to the target." $persistence_command
   print-step 4 6 "Persisting local platform state" "running"
   mkdir $persistent_user_dir
   mkdir $persistent_users_dir
@@ -888,7 +883,6 @@ def run-apply [state: record] {
   chmod 700 $persistent_user_dir
   chmod 700 $persistent_users_dir
   chmod 700 $persistent_user_secret_dir
-  cp (overlay-path $state.session) $"($persistent_user_dir)/default.nix"
   cp (platform-state-path $state.session) $"($persistent_user_dir)/state.json"
   let password_copy = (
     install -m 600 (password-hash-path $state.session) (mounted-target-password-path $state.user)
@@ -902,14 +896,19 @@ def run-apply [state: record] {
     cleanup-secrets-dir $state.session
     error make { msg: $"failed to persist password file to target system($detail)" }
   }
-  append-install-log $state.session $"PERSISTED local_overlay_shim=($persistent_user_dir)/default.nix platform_state=($persistent_user_dir)/state.json password_file=(mounted-target-password-path $state.user)"
+  if not ((mounted-target-password-path $state.user) | path exists) {
+    print-step 4 6 "Persisting local platform state" "failed"
+    cleanup-secrets-dir $state.session
+    error make { msg: $"persisted password file is missing from target system: (mounted-target-password-path $state.user)" }
+  }
+  append-install-log $state.session $"PERSISTED platform_state=($persistent_user_dir)/state.json password_file=(mounted-target-password-path $state.user)"
   cleanup-secrets-dir $state.session
   print-step 4 6 "Persisting local platform state" "ok"
 
   confirm-command "Phase 4: NixOS Install" "Builds and installs the NixOS system." $install_command
   print-step 5 6 "Installing NixOS" "running"
   with-env {
-    NIX_CONFIG_LOCAL_USER: $"($persistent_user_dir)/default.nix"
+    NIX_CONFIG_LOCAL_STATE: $"($persistent_user_dir)/state.json"
     NIX_CONFIG_LOCAL_HARDWARE: (hardware-config-path)
   } {
     let nixos_install_exit_code = (run-logged-stream $state.session "nixos-install" $install_command)

@@ -9,44 +9,12 @@ def default-target [] {
   "/etc/nixos/local"
 }
 
-def template-root [] {
-  join-path [ (repo-root) "templates" "local" ]
-}
-
 def state-path [target: string] {
   join-path [ $target "state.json" ]
 }
 
 def password-path [username: string] {
   $"/etc/nixos/local/users/($username)/($username).passwd"
-}
-
-def is-managed-template [path: string] {
-  let rel = relative-template-path $path
-  $rel == "default.nix" or ($rel | str starts-with "modules/")
-}
-
-def relative-template-path [path: string] {
-  $path | path relative-to (template-root) | split row '\' | str join '/'
-}
-
-def target-path [target: string, template: string] {
-  join-path [ $target (relative-template-path $template) ]
-}
-
-def managed-templates [] {
-  glob (join-path [ (template-root) "**" "*" ])
-  | where {|path| ($path | path type) == "file" }
-  | where {|path| is-managed-template $path }
-}
-
-def file-differs [source: string, target: string] {
-  if not ($target | path exists) {
-    true
-  } else {
-    let result = (cmp --silent $source $target | complete)
-    $result.exit_code != 0
-  }
 }
 
 def backup-path [target: string] {
@@ -232,37 +200,6 @@ def ensure-state [
   print $"  (paint success 'write') state.json"
 }
 
-def sync-template [source: string, target_root: string, apply: bool] {
-  let destination = (target-path $target_root $source)
-  let rel = (relative-template-path $source)
-  let action = if not ($destination | path exists) {
-    "create"
-  } else if (file-differs $source $destination) {
-    "update"
-  } else {
-    "ok"
-  }
-
-  let status = match $action {
-    "ok" => (status-text "ok")
-    "create" => (paint "warning" "create")
-    "update" => (paint "warning" "update")
-    _ => $action
-  }
-
-  print $"  ($status) ($rel)"
-
-  if $apply and $action != "ok" {
-    ensure-dir ($destination | path dirname)
-
-    if ($destination | path exists) {
-      cp $destination (backup-path $destination)
-    }
-
-    cp $source $destination
-  }
-}
-
 def main [
   --target: string = ""
   --apply
@@ -294,30 +231,23 @@ def main [
 
   clear-screen-once
   print-screen "Local Profile Sync" [
-    "Sync managed local templates."
+    "Create or validate local platform state."
     "Preserve state, users, passwords, and secrets."
   ]
   print-kv-section "Sync Context" [
-    { label: "Template source", value: (template-root) }
     { label: "Local target", value: $target_root }
     { label: "State file", value: $state_file }
     { label: "Mode", value: (if $apply { "apply" } else { "dry-run" }) }
   ]
 
-  print-step 1 3 "Sync templates" "running"
-  for template in (managed-templates) {
-    sync-template $template $target_root $apply
-  }
-  print-step 1 3 "Sync templates" "ok"
-
-  print-step 2 3 "Validate state" "running"
+  print-step 1 2 "Validate state" "running"
   ensure-state $target_root $apply $configure $next_state
-  print-step 2 3 "Validate state" "ok"
+  print-step 1 2 "Validate state" "ok"
 
-  print-step 3 3 "Complete" "ok"
+  print-step 2 2 "Complete" "ok"
 
   if not $apply {
     print ""
-    print (paint detail "Run with --apply to copy changed templates and create missing state.json.")
+    print (paint detail "Run with --apply to create missing state.json.")
   }
 }

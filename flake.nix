@@ -55,30 +55,39 @@
         path: required:
         if path == "" then
           null
+        else if required then
+          if nixpkgs.lib.hasPrefix "/" path then /. + path else ./. + "/${path}"
         else
           let
             resolved = if nixpkgs.lib.hasPrefix "/" path then /. + path else ./. + "/${path}";
             check = builtins.tryEval (builtins.pathExists resolved);
           in
-          if check.success && check.value then
-            resolved
-          else if required then
-            resolved
-          else
-            null;
+          if check.success && check.value then resolved else null;
       localOverlayArgs =
         let
-          envUserOverlay = builtins.getEnv "NIX_CONFIG_LOCAL_USER";
+          envLocalState = builtins.getEnv "NIX_CONFIG_LOCAL_STATE";
           envHardwareConfig = builtins.getEnv "NIX_CONFIG_LOCAL_HARDWARE";
-          defaultUserOverlay = "/etc/nixos/local/default.nix";
+          useDefaultLocalState = envLocalState == "" && builtins.getEnv "USER" == "root";
+          useDefaultHardwareConfig = envHardwareConfig == "" && builtins.getEnv "USER" == "root";
+          defaultLocalState = "/etc/nixos/local/state.json";
           defaultHardwareConfig = "/etc/nixos/hardware-configuration.nix";
         in
         {
-          localUserOverlay = localPathOrNull (
-            if envUserOverlay != "" then envUserOverlay else defaultUserOverlay
-          ) (envUserOverlay != "");
+          localStateFile = localPathOrNull (
+            if envLocalState != "" then
+              envLocalState
+            else if useDefaultLocalState then
+              defaultLocalState
+            else
+              ""
+          ) (envLocalState != "");
           localHardwareConfig = localPathOrNull (
-            if envHardwareConfig != "" then envHardwareConfig else defaultHardwareConfig
+            if envHardwareConfig != "" then
+              envHardwareConfig
+            else if useDefaultHardwareConfig then
+              defaultHardwareConfig
+            else
+              ""
           ) (envHardwareConfig != "");
         };
       moduleArgs = localOverlayArgs // {
