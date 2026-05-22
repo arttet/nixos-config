@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "host": {
+    "hostname": "workstation",
+    "timezone": "UTC"
+  },
+  "users": [
+    {
+      "name": "user",
+      "description": "User",
+      "hashedPasswordFile": "/etc/nixos/local/users/user/user.passwd",
+      "isAdmin": true,
+      "extraGroups": [],
+      "shell": "nushell",
+      "sources": null
+    }
+  ]
+}

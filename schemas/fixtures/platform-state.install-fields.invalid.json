@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "session": "system",
+  "profile": "desktop",
+  "host": {
+    "hostname": "workstation",
+    "timezone": "UTC"
+  },
+  "users": [
+    {
+      "name": "user",
+      "description": "User",
+      "hashedPasswordFile": "/etc/nixos/local/users/user/user.passwd",
+      "sources": null
+    }
+  ]
+}

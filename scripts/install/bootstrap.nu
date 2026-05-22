@@ -25,7 +25,7 @@ def overlay-path [session: string] {
   join-path [ (install-dir $session) "default.nix" ]
 }
 
-def install-state-path [session: string] {
+def platform-state-path [session: string] {
   join-path [ (install-dir $session) "state.json" ]
 }
 
@@ -581,10 +581,10 @@ def disko-state [
   }
 }
 
-def write-install-state [state: record] {
+def write-platform-state [state: record] {
   ensure-private-install-dir $state.session | ignore
   cp (local-template-path) (overlay-path $state.session)
-  write-json-contract (schema-path (platform-state-schema)) (install-state-path $state.session) (platform-state $state)
+  write-json-contract (schema-path (platform-state-schema)) (platform-state-path $state.session) (platform-state $state)
 }
 
 def write-disko-state [
@@ -674,7 +674,7 @@ export def print-summary [state: record] {
     { label: "Timezone", value: $state.timezone }
     { label: "Disk", value: $state.disk }
     { label: "Local template", value: (overlay-path $state.session) }
-    { label: "Install state", value: (install-state-path $state.session) }
+    { label: "Platform state", value: (platform-state-path $state.session) }
     { label: "Install env", value: (env-path $state.session) }
     { label: "Hardware config", value: (hardware-config-path) }
   ]
@@ -686,7 +686,7 @@ def print-next-commands [state: record] {
 
   print-section "Generated Files" [
     (overlay-path $state.session)
-    (install-state-path $state.session)
+    (platform-state-path $state.session)
     (env-path $state.session)
     (disko-state-path $state.session)
   ]
@@ -880,8 +880,8 @@ def run-apply [state: record] {
     error make { msg: "hardware configuration was not generated" }
   }
 
-  confirm-command "Phase 3: Persistence" "Copies the local user overlay and password to the target." $persistence_command
-  print-step 4 6 "Persisting local installer state" "running"
+  confirm-command "Phase 3: Persistence" "Copies the local overlay shim, platform state, and password to the target." $persistence_command
+  print-step 4 6 "Persisting local platform state" "running"
   mkdir $persistent_user_dir
   mkdir $persistent_users_dir
   mkdir $persistent_user_secret_dir
@@ -889,7 +889,7 @@ def run-apply [state: record] {
   chmod 700 $persistent_users_dir
   chmod 700 $persistent_user_secret_dir
   cp (overlay-path $state.session) $"($persistent_user_dir)/default.nix"
-  cp (install-state-path $state.session) $"($persistent_user_dir)/state.json"
+  cp (platform-state-path $state.session) $"($persistent_user_dir)/state.json"
   let password_copy = (
     install -m 600 (password-hash-path $state.session) (mounted-target-password-path $state.user)
     | complete
@@ -898,13 +898,13 @@ def run-apply [state: record] {
     let stderr = ($password_copy.stderr | str trim)
     let detail = if $stderr == "" { "" } else { $": ($stderr)" }
     append-install-log $state.session $"FAILED persist-password exit_code=($password_copy.exit_code)"
-    print-step 4 6 "Persisting local installer state" "failed"
+    print-step 4 6 "Persisting local platform state" "failed"
     cleanup-secrets-dir $state.session
     error make { msg: $"failed to persist password file to target system($detail)" }
   }
-  append-install-log $state.session $"PERSISTED local_overlay=($persistent_user_dir)/default.nix password_file=(mounted-target-password-path $state.user)"
+  append-install-log $state.session $"PERSISTED local_overlay_shim=($persistent_user_dir)/default.nix platform_state=($persistent_user_dir)/state.json password_file=(mounted-target-password-path $state.user)"
   cleanup-secrets-dir $state.session
-  print-step 4 6 "Persisting local installer state" "ok"
+  print-step 4 6 "Persisting local platform state" "ok"
 
   confirm-command "Phase 4: NixOS Install" "Builds and installs the NixOS system." $install_command
   print-step 5 6 "Installing NixOS" "running"
@@ -1148,7 +1148,7 @@ def main [
   }
   let final = (with-password-hash $selected)
 
-  write-install-state $final
+  write-platform-state $final
   write-env $final
 
   if $final.action == "dry-run" {

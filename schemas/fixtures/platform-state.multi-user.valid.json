@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "host": {
+    "hostname": "desktop",
+    "timezone": "Asia/Dubai"
+  },
+  "users": [
+    {
+      "name": "admin",
+      "description": "Admin User",
+      "hashedPasswordFile": "/etc/nixos/local/users/admin/admin.passwd",
+      "isAdmin": true,
+      "extraGroups": ["audio", "video"],
+      "shell": "nushell",
+      "sources": {
+        "dotfiles": "/home/admin/dotfiles",
+        "dotfilesModule": "/home/admin/dotfiles/nixos/home.nix",
+        "dotfilesRoot": "/home/admin/dotfiles/dotfiles",
+        "links": [".config/git", ".config/nushell", ".zshrc"]
+      }
+    },
+    {
+      "name": "guest",
+      "description": "Guest User",
+      "hashedPasswordFile": "/etc/nixos/local/users/guest/guest.passwd",
+      "isAdmin": false,
+      "extraGroups": [],
+      "shell": "bash",
+      "homeStateVersion": "25.11",
+      "sources": null
+    }
+  ]
+}
