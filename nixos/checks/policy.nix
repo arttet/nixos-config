@@ -658,7 +658,14 @@ in
             && builtins.elem "graphical-session.target" service.wantedBy;
         in
         isRestartableGraphicalService desktop.systemd.user.services.elephant
+        && contains "/bin/elephant" desktop.systemd.user.services.elephant.serviceConfig.ExecStart
+        && contains "--config /etc/xdg/elephant" desktop.systemd.user.services.elephant.serviceConfig.ExecStart
+        && contains "archlinuxpkgs" desktop.environment.etc."xdg/elephant/elephant.toml".text
+        && contains "launch_prefix" desktop.environment.etc."xdg/elephant/desktopapplications.toml".text
+        && contains "uwsm-app -- " desktop.environment.etc."xdg/elephant/desktopapplications.toml".text
         && isRestartableGraphicalService desktop.systemd.user.services.walker
+        && desktop.systemd.user.services.walker.serviceConfig.Type == "dbus"
+        && desktop.systemd.user.services.walker.serviceConfig.BusName == "dev.benz.walker"
         && isRestartableGraphicalService desktop.systemd.user.services.mako
         && isRestartableGraphicalService desktop.systemd.user.services."cliphist-text"
         && isRestartableGraphicalService desktop.systemd.user.services."cliphist-image"
