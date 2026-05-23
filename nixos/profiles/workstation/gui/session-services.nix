@@ -1,4 +1,5 @@
 {
+  config,
   pkgs,
   lib,
   walker,
@@ -10,17 +11,25 @@ let
       description,
       execStart,
       after ? [ "graphical-session.target" ],
+      busName ? null,
+      path ? [ ],
+      type ? "simple",
     }:
     {
-      inherit description after;
+      inherit description after path;
       wantedBy = [ "graphical-session.target" ];
       partOf = [ "graphical-session.target" ];
-      serviceConfig = {
-        Type = "simple";
-        ExecStart = execStart;
-        Restart = "on-failure";
-        RestartSec = 1;
-      };
+      serviceConfig = lib.mkMerge [
+        {
+          Type = type;
+          ExecStart = execStart;
+          Restart = "on-failure";
+          RestartSec = 1;
+        }
+        (lib.mkIf (busName != null) {
+          BusName = busName;
+        })
+      ];
     };
 in
 {
@@ -53,8 +62,21 @@ in
 
   systemd.user.services.elephant = graphicalSessionService {
     description = "Elephant data provider service for Walker";
-    execStart = lib.getExe pkgs.elephant;
+    execStart = "${lib.getExe pkgs.elephant} --config /etc/xdg/elephant";
+    path = [
+      pkgs.bash
+      "/run/current-system/sw/bin"
+    ];
   };
+
+  environment.etc."xdg/elephant/elephant.toml".text = ''
+    ignored_providers = ["archlinuxpkgs"]
+  '';
+
+  environment.etc."xdg/elephant/desktopapplications.toml".text = ''
+    auto_detect_launch_prefix = false
+    launch_prefix = "${lib.getExe' config.programs.uwsm.package "uwsm-app"} -- "
+  '';
 
   systemd.user.services.walker =
     (graphicalSessionService {
@@ -66,6 +88,9 @@ in
       execStart = "${
         lib.getExe walker.packages.${pkgs.stdenv.hostPlatform.system}.default
       } --gapplication-service";
+      busName = "dev.benz.walker";
+      path = [ pkgs.elephant ];
+      type = "dbus";
     })
     // {
       requires = [ "elephant.service" ];
