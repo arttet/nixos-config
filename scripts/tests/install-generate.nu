@@ -271,9 +271,9 @@ def assert-platform-state-hardening [root: string, hardware: string] {
     users: [
       ($base_user | upsert sources {
         dotfiles: $root
-        dotfilesModule: $"($root)/missing-home.nix"
+        dotfilesModule: null
         dotfilesRoot: $root
-        links: [ ".config/git" ".config/git" ]
+        links: [ "example/link" "example/link" ]
       })
     ]
   } "platform state users[].sources.links for user must be unique."
@@ -287,9 +287,9 @@ def assert-platform-state-hardening [root: string, hardware: string] {
     users: [
       ($base_user | upsert sources {
         dotfiles: $root
-        dotfilesModule: $"($root)/missing-home.nix"
+        dotfilesModule: null
         dotfilesRoot: $root
-        links: [ "../git" ]
+        links: [ "../example" ]
       })
     ]
   } "platform state users[].sources.links for user must contain relative dotfile paths without '..'."
@@ -303,8 +303,8 @@ def assert-platform-state-hardening [root: string, hardware: string] {
     users: [
       ($base_user | upsert sources {
         dotfiles: $root
-        dotfilesModule: $"($root)/missing-home.nix"
-        links: [ ".config/git" ]
+        dotfilesModule: null
+        links: [ "example/link" ]
       })
     ]
   } "platform state users[].sources.dotfilesRoot for user is required when links are configured."
@@ -314,9 +314,11 @@ def assert-home-state-version [root: string, hardware: string] {
   let local = $"($root)/home-state-version-local"
   let state = $"($local)/state.json"
   let home_module = $"($root)/home-state-version.nix"
+  let link_target = $"($root)/example-link"
 
   mkdir $local
   "{ ... }: { }" | save --force $home_module
+  "linked" | save --force $link_target
   {
     schemaVersion: 1
     host: {
@@ -336,6 +338,7 @@ def assert-home-state-version [root: string, hardware: string] {
           dotfiles: $root
           dotfilesModule: $home_module
           dotfilesRoot: $root
+          links: [ "example-link" ]
         }
       }
     ]
@@ -357,12 +360,12 @@ def assert-home-state-version [root: string, hardware: string] {
       NIX_CONFIG_LOCAL_STATE: $state
       NIX_CONFIG_LOCAL_HARDWARE: $hardware
     } {
-      nix eval --impure ".#nixosConfigurations.desktop.config.home-manager.users.user.home.file.\".config/nushell\".source" | complete
+      nix eval --impure ".#nixosConfigurations.desktop.config.home-manager.users.user.home.file.\"example-link\".source" | complete
     }
   )
-  assert-command-ok "generated out-of-store dotfile source" $source_check
-  assert not ($source_check.stdout | str contains "/nix/store") "dotfile symlink source must remain out of the Nix store"
-  assert ($source_check.stdout | str contains $root) "dotfile symlink source must point at the mutable dotfiles root"
+  assert-command-ok "generated dotfile link alongside module" $source_check
+  assert not ($source_check.stdout | str contains "/nix/store") "dotfile link source must remain out of the Nix store"
+  assert ($source_check.stdout | str contains $root) "dotfile link source must point at the mutable dotfiles root"
 }
 
 def main [] {

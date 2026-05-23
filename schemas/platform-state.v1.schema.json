@@ -74,15 +74,22 @@
               {
                 "type": "object",
                 "additionalProperties": false,
-                "required": ["dotfiles", "dotfilesModule", "dotfilesRoot"],
+                "required": ["dotfiles", "dotfilesRoot"],
                 "properties": {
                   "dotfiles": {
                     "type": "string",
                     "pattern": "^/[^\\u0000]*$"
                   },
                   "dotfilesModule": {
-                    "type": "string",
-                    "pattern": "^/[^\\u0000]*$"
+                    "oneOf": [
+                      {
+                        "type": "null"
+                      },
+                      {
+                        "type": "string",
+                        "pattern": "^/[^\\u0000]*$"
+                      }
+                    ]
                   },
                   "dotfilesRoot": {
                     "type": "string",
