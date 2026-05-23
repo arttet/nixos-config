@@ -105,18 +105,13 @@ in
     };
   };
 
-  systemd.user.targets.graphical-session.wants = [
-    "elephant.service"
-    "walker.service"
-  ];
-
   environment.etc."xdg/hypr/hyprland.conf".text = ''
     # Minimal platform fallback. Personal Hyprland config belongs to dotfiles.
     # This file provides operational defaults only.
     monitor=,preferred,auto,1
 
     exec-once=dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP
-    exec-once=systemctl --user import-environment WAYLAND_DISPLAY XDG_CURRENT_DESKTOP
+    exec-once=systemctl --user import-environment WAYLAND_DISPLAY XDG_CURRENT_DESKTOP && systemctl --user start walker.service
     exec-once=mako
     exec-once=wl-paste --type text --watch cliphist store
     exec-once=wl-paste --type image --watch cliphist store
