@@ -2,7 +2,6 @@
   config,
   pkgs,
   lib,
-  walker,
   ...
 }:
 let
@@ -52,144 +51,91 @@ in
     lib.mkForce "${lib.getExe tuigreet} --time --remember --cmd '${uwsm} start hyprland-uwsm.desktop'";
 
   environment.systemPackages = [
-    walker.packages.${pkgs.stdenv.hostPlatform.system}.default
-    pkgs.elephant
     pkgs.hyprpaper
-    pkgs.hypridle
     pkgs.hyprlock
     pkgs.hyprpicker
-    pkgs.hyprpolkitagent
-    pkgs.networkmanagerapplet
     sessionMenu
   ];
 
-  systemd.user.services.elephant = {
-    description = "Elephant data provider service for Walker";
-    partOf = [ "graphical-session.target" ];
-    environment = {
-      PATH = lib.mkForce (
-        lib.makeBinPath [ pkgs.bash ] + ":/run/current-system/sw/bin:/nix/var/nix/profiles/default/bin"
-      );
-    };
-    serviceConfig = {
-      Type = "simple";
-      ExecStart = lib.getExe pkgs.elephant;
-      Restart = "on-failure";
-      RestartSec = 1;
-      PassEnvironment = [
-        "WAYLAND_DISPLAY"
-        "XDG_CURRENT_DESKTOP"
-      ];
-    };
-  };
+  environment.etc."xdg/hypr/hyprland.lua".text = ''
+    -- Minimal platform fallback. Personal Hyprland config belongs to dotfiles.
+    -- This file provides operational defaults only.
 
-  systemd.user.services.walker = {
-    description = "Walker Launcher Service";
-    requires = [ "elephant.service" ];
-    after = [ "elephant.service" ];
-    partOf = [ "graphical-session.target" ];
-    environment = {
-      PATH = lib.mkForce "/run/current-system/sw/bin:/nix/var/nix/profiles/default/bin";
-    };
-    serviceConfig = {
-      Type = "simple";
-      ExecStart = "${
-        lib.getExe walker.packages.${pkgs.stdenv.hostPlatform.system}.default
-      } --gapplication-service";
-      Restart = "on-failure";
-      RestartSec = 1;
-      PassEnvironment = [
-        "WAYLAND_DISPLAY"
-        "XDG_CURRENT_DESKTOP"
-      ];
-    };
-  };
+    local mod = "SUPER"
 
-  environment.etc."xdg/hypr/hyprland.conf".text = ''
-    # Minimal platform fallback. Personal Hyprland config belongs to dotfiles.
-    # This file provides operational defaults only.
-    monitor=,preferred,auto,1
+    local function app(cmd)
+        return "${uwsm} app -- " .. cmd
+    end
 
-    exec-once=dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP
-    exec-once=systemctl --user import-environment WAYLAND_DISPLAY XDG_CURRENT_DESKTOP && systemctl --user start walker.service
-    exec-once=mako
-    exec-once=wl-paste --type text --watch cliphist store
-    exec-once=wl-paste --type image --watch cliphist store
-    exec-once=hyprpolkitagent
-    exec-once=hypridle
-    exec-once=udiskie --tray
-    exec-once=nm-applet --indicator
-    exec-once=wlsunset -t 5000 -T 6500
+    hl.monitor({
+        output = "",
+        mode = "preferred",
+        position = "auto",
+        scale = 1,
+    })
 
-    env = XDG_CURRENT_DESKTOP,Hyprland
-    env = XDG_SESSION_DESKTOP,Hyprland
-    env = XDG_SESSION_TYPE,wayland
+    hl.env("XDG_CURRENT_DESKTOP", "Hyprland")
+    hl.env("XDG_SESSION_DESKTOP", "Hyprland")
+    hl.env("XDG_SESSION_TYPE", "wayland")
 
-    input {
-      kb_layout = us,ru
-      kb_options = grp:alt_shift_toggle
-      follow_mouse = 1
-      touchpad {
-        natural_scroll = yes
-      }
-    }
+    hl.on("hyprland.start", function()
+        hl.exec_cmd("uwsm finalize")
+    end)
 
-    gesture = 3, horizontal, workspace
+    hl.config({
+        input = {
+            kb_layout = "us,ru",
+            kb_options = "grp:alt_shift_toggle",
+            follow_mouse = 1,
+            touchpad = {
+                natural_scroll = true,
+            },
+        },
+        general = {
+            gaps_in = 4,
+            gaps_out = 8,
+            border_size = 2,
+        },
+        decoration = {
+            rounding = 6,
+        },
+    })
 
-    general {
-      gaps_in = 4
-      gaps_out = 8
-      border_size = 2
-    }
+    hl.gesture({
+        fingers = 3,
+        direction = "horizontal",
+        action = "workspace",
+    })
 
-    decoration {
-      rounding = 6
-    }
+    hl.bind(mod .. " + Return", hl.dsp.exec_cmd(app("ghostty")))
+    hl.bind(mod .. " + R", hl.dsp.exec_cmd(app("walker")))
+    hl.bind(mod .. " + B", hl.dsp.exec_cmd(app("zen")))
+    hl.bind(mod .. " + E", hl.dsp.exec_cmd(app("thunar")))
+    hl.bind(mod .. " + A", hl.dsp.exec_cmd(app("pavucontrol")))
+    hl.bind(mod .. " + SHIFT + E", hl.dsp.exec_cmd(app("ghostty -e yazi")))
+    hl.bind(mod .. " + Q", hl.dsp.window.close())
+    hl.bind(mod .. " + SHIFT + R", hl.dsp.exec_cmd("hyprctl reload"))
+    hl.bind(mod .. " + L", hl.dsp.exec_cmd(app("hyprlock")))
+    hl.bind(mod .. " + Backspace", hl.dsp.exec_cmd(app("wlogout")))
+    hl.bind(mod .. " + SHIFT + P", hl.dsp.exec_cmd(app("workstation-session-menu")))
 
-    bind = SUPER, Return, exec, ghostty
-    bind = SUPER, R, exec, walker
-    bind = SUPER, B, exec, zen
-    bind = SUPER, E, exec, thunar
-    bind = SUPER, A, exec, pavucontrol
-    bind = SUPER SHIFT, E, exec, ghostty -e yazi
-    bind = SUPER, Q, killactive
-    bind = SUPER SHIFT, R, exec, hyprctl reload
-    bind = SUPER, L, exec, hyprlock
-    bind = SUPER, Backspace, exec, wlogout
-    bind = SUPER SHIFT, P, exec, workstation-session-menu
+    for i = 1, 10 do
+        local key = i % 10
+        hl.bind(mod .. " + " .. key, hl.dsp.focus({ workspace = i }))
+        hl.bind(mod .. " + SHIFT + " .. key, hl.dsp.window.move({ workspace = i }))
+    end
 
-    bind = SUPER, 1, workspace, 1
-    bind = SUPER, 2, workspace, 2
-    bind = SUPER, 3, workspace, 3
-    bind = SUPER, 4, workspace, 4
-    bind = SUPER, 5, workspace, 5
-    bind = SUPER, 6, workspace, 6
-    bind = SUPER, 7, workspace, 7
-    bind = SUPER, 8, workspace, 8
-    bind = SUPER, 9, workspace, 9
-    bind = SUPER, 0, workspace, 10
-    bind = SUPER SHIFT, 1, movetoworkspace, 1
-    bind = SUPER SHIFT, 2, movetoworkspace, 2
-    bind = SUPER SHIFT, 3, movetoworkspace, 3
-    bind = SUPER SHIFT, 4, movetoworkspace, 4
-    bind = SUPER SHIFT, 5, movetoworkspace, 5
-    bind = SUPER SHIFT, 6, movetoworkspace, 6
-    bind = SUPER SHIFT, 7, movetoworkspace, 7
-    bind = SUPER SHIFT, 8, movetoworkspace, 8
-    bind = SUPER SHIFT, 9, movetoworkspace, 9
-    bind = SUPER SHIFT, 0, movetoworkspace, 10
+    hl.bind("XF86AudioRaiseVolume", hl.dsp.exec_cmd("pamixer -i 5"), { locked = true, repeating = true })
+    hl.bind("XF86AudioLowerVolume", hl.dsp.exec_cmd("pamixer -d 5"), { locked = true, repeating = true })
+    hl.bind("XF86AudioMute", hl.dsp.exec_cmd("pamixer -t"), { locked = true, repeating = true })
+    hl.bind("XF86MonBrightnessUp", hl.dsp.exec_cmd("brightnessctl set 5%+"), { locked = true, repeating = true })
+    hl.bind("XF86MonBrightnessDown", hl.dsp.exec_cmd("brightnessctl set 5%-"), { locked = true, repeating = true })
+    hl.bind("XF86AudioPlay", hl.dsp.exec_cmd("playerctl play-pause"), { locked = true })
+    hl.bind("XF86AudioNext", hl.dsp.exec_cmd("playerctl next"), { locked = true })
+    hl.bind("XF86AudioPrev", hl.dsp.exec_cmd("playerctl previous"), { locked = true })
 
-    bindel = , XF86AudioRaiseVolume, exec, pamixer -i 5
-    bindel = , XF86AudioLowerVolume, exec, pamixer -d 5
-    bindel = , XF86AudioMute, exec, pamixer -t
-    bindel = , XF86MonBrightnessUp, exec, brightnessctl set 5%+
-    bindel = , XF86MonBrightnessDown, exec, brightnessctl set 5%-
-    bindl = , XF86AudioPlay, exec, playerctl play-pause
-    bindl = , XF86AudioNext, exec, playerctl next
-    bindl = , XF86AudioPrev, exec, playerctl previous
-
-    bind = SUPER SHIFT, S, exec, hyprshot -m region --clipboard
-    bind = , Print, exec, hyprshot -m output --clipboard
+    hl.bind(mod .. " + SHIFT + S", hl.dsp.exec_cmd(app("hyprshot -m region --clipboard")))
+    hl.bind("Print", hl.dsp.exec_cmd(app("hyprshot -m output --clipboard")))
   '';
 
   environment.etc."xdg/hypr/hypridle.conf".text = ''
@@ -252,6 +198,7 @@ in
   '';
 
   environment.etc."walker/config.json".text = builtins.toJSON {
+    app_launch_prefix = "${uwsm} app -- ";
     app = {
       show_icon_when_single = true;
       show_sub_when_single = true;

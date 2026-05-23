@@ -633,21 +633,41 @@ in
     {
       assertion =
         let
-          text = desktop.environment.etc."xdg/hypr/hyprland.conf".text;
+          text = desktop.environment.etc."xdg/hypr/hyprland.lua".text;
         in
-        contains "SUPER, Return, exec" text
-        && contains "mako" text
-        && contains "cliphist" text
-        && contains "gesture = 3, horizontal, workspace" text
-        && contains "kb_options = grp:alt_shift_toggle" text
+        contains "\\+ Return" text
+        && contains "uwsm finalize" text
+        && contains "uwsm app -- " text
+        && contains "app_launch_prefix" desktop.environment.etc."walker/config.json".text
+        && contains "hl.gesture" text
+        && contains "kb_options = \"grp:alt_shift_toggle\"" text
         && contains "pamixer" text
         && contains "brightnessctl" text
         && contains "hyprlock" text
         && contains "wlogout" text
-        && contains "wlsunset" text
         && contains "hyprshot" text
         && contains "workstation-session-menu" text;
-      message = "desktop Hyprland config must cover terminal, notifications, clipboard, touchpad gestures, keyboard layout switching, audio, brightness, lock, wlogout, wlsunset, hyprshot, and session menu";
+      message = "desktop Hyprland config must cover terminal, touchpad gestures, keyboard layout switching, audio, brightness, lock, wlogout, hyprshot, and session menu";
+    }
+    {
+      assertion =
+        let
+          isRestartableGraphicalService =
+            service:
+            service.serviceConfig.Restart == "on-failure"
+            && builtins.elem "graphical-session.target" service.wantedBy;
+        in
+        isRestartableGraphicalService desktop.systemd.user.services.elephant
+        && isRestartableGraphicalService desktop.systemd.user.services.walker
+        && isRestartableGraphicalService desktop.systemd.user.services.mako
+        && isRestartableGraphicalService desktop.systemd.user.services."cliphist-text"
+        && isRestartableGraphicalService desktop.systemd.user.services."cliphist-image"
+        && isRestartableGraphicalService desktop.systemd.user.services.hyprpolkitagent
+        && isRestartableGraphicalService desktop.systemd.user.services.udiskie
+        && isRestartableGraphicalService desktop.systemd.user.services.wlsunset
+        && isRestartableGraphicalService desktop.systemd.user.services.hypridle
+        && isRestartableGraphicalService desktop.systemd.user.services.nm-applet;
+      message = "desktop session daemons must be restartable graphical-session user services";
     }
     {
       assertion =
