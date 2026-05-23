@@ -86,11 +86,37 @@ def main [] {
     assert equal $generated_user.extraGroups []
     assert equal $generated_user.shell "nushell"
     assert equal $generated_user.sources.dotfiles "/home/user/.dotfiles"
-    assert equal $generated_user.sources.dotfilesModule "/home/user/.dotfiles/nixos/home.nix"
-    assert equal $generated_user.sources.dotfilesRoot "/home/user/.dotfiles/dotfiles"
-    assert ($generated_user.sources.links | any {|link| $link == ".config/git" })
-    assert ($generated_user.sources.links | any {|link| $link == ".config/lazygit" })
-    assert ($generated_user.sources.links | any {|link| $link == ".config/nushell" })
+    assert equal $generated_user.sources.dotfilesModule null
+    assert equal $generated_user.sources.dotfilesRoot "/home/user/.dotfiles"
+    assert equal $generated_user.sources.links []
+
+    let dotfiles_repo = ([$root dotfiles] | path join)
+    let dotfiles_module = ([$root custom home.nix] | path join)
+    mkdir ($dotfiles_module | path dirname)
+    "{ ... }: { }" | save --force $dotfiles_module
+    rm --force $state
+    run-ok "create local state with explicit dotfiles module" [
+      "nu"
+      "scripts/local/sync.nu"
+      "--target"
+      $target
+      "--apply"
+      "--hostname"
+      "vm"
+      "--timezone"
+      "UTC"
+      "--user"
+      "user"
+      "--user-description"
+      "User"
+      "--dotfiles"
+      $dotfiles_repo
+      "--dotfiles-module"
+      $dotfiles_module
+    ] | ignore
+
+    let module_user = ((open $state | from json).users | get 0)
+    assert equal $module_user.sources.dotfilesModule $dotfiles_module
 
     rm --force $state
     run-ok "create non-admin local state" [

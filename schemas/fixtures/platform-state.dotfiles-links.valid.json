@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "host": {
+    "hostname": "desktop",
+    "timezone": "UTC"
+  },
+  "users": [
+    {
+      "name": "user",
+      "description": "User",
+      "hashedPasswordFile": "/etc/nixos/local/users/user/user.passwd",
+      "isAdmin": true,
+      "extraGroups": [],
+      "shell": "nushell",
+      "sources": {
+        "dotfiles": "/home/user/dotfiles",
+        "dotfilesModule": null,
+        "dotfilesRoot": "/home/user/dotfiles",
+        "links": ["example/config", "example/shellrc"]
+      }
+    }
+  ]
+}

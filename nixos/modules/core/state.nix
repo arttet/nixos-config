@@ -30,22 +30,6 @@
         inherit (pkgs) nushell zsh;
       };
       userShellNames = map (user: user.shell or "nushell") stateUsers;
-      defaultDotfileLinks = [
-        ".config/alacritty"
-        ".config/bash"
-        ".config/fastfetch"
-        ".config/git"
-        ".config/lazygit"
-        ".config/nushell"
-        ".config/nvim"
-        ".config/shell"
-        ".config/starship"
-        ".config/tmux"
-        ".config/wezterm"
-        ".config/yazi"
-        ".config/zsh"
-        ".zshrc"
-      ];
       userSourcesFor = user: user.sources or null;
       isValidDotfileLink =
         link:
@@ -56,7 +40,7 @@
           let
             userName = user.name or "<unknown>";
             sources = userSourcesFor user;
-            links = if sources == null then [ ] else sources.links or defaultDotfileLinks;
+            links = if sources == null then [ ] else sources.links or [ ];
           in
           lib.optional (sources != null) {
             assertion = builtins.all isValidDotfileLink links;
@@ -100,7 +84,7 @@
           userSources = userSourcesFor user;
           dotfilesModule = userSources.dotfilesModule or null;
           dotfilesRoot = userSources.dotfilesRoot or null;
-          dotfileLinks = userSources.links or defaultDotfileLinks;
+          dotfileLinks = userSources.links or [ ];
           hasDotfilesModule = dotfilesModule != null && builtins.pathExists dotfilesModule;
           hasDotfilesRoot = dotfilesRoot != null && builtins.pathExists dotfilesRoot;
           dotfilesModulePath = if hasDotfilesModule then /. + dotfilesModule else null;
@@ -111,14 +95,9 @@
             { config, ... }:
             let
               link = config.lib.file.mkOutOfStoreSymlink;
-              linkFile =
-                target:
-                {
-                  source = link (dotfilesRoot + "/${target}");
-                }
-                // lib.optionalAttrs (target == ".config/nushell") {
-                  force = true;
-                };
+              linkFile = target: {
+                source = link (dotfilesRoot + "/${target}");
+              };
             in
             {
               imports = lib.optional hasDotfilesModule dotfilesModulePath;

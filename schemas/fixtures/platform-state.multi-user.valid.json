@@ -14,9 +14,9 @@
       "shell": "nushell",
       "sources": {
         "dotfiles": "/home/admin/dotfiles",
-        "dotfilesModule": "/home/admin/dotfiles/nixos/home.nix",
-        "dotfilesRoot": "/home/admin/dotfiles/dotfiles",
-        "links": [".config/git", ".config/nushell", ".zshrc"]
+        "dotfilesModule": "/home/admin/dotfiles/home-module.nix",
+        "dotfilesRoot": "/home/admin/dotfiles",
+        "links": ["example/config", "example/shellrc"]
       }
     },
     {

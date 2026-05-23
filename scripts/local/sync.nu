@@ -38,25 +38,6 @@ def normalize-optional-path [value: string] {
   }
 }
 
-def default-dotfile-links [] {
-  [
-    ".config/alacritty"
-    ".config/bash"
-    ".config/fastfetch"
-    ".config/git"
-    ".config/lazygit"
-    ".config/nushell"
-    ".config/nvim"
-    ".config/shell"
-    ".config/starship"
-    ".config/tmux"
-    ".config/wezterm"
-    ".config/yazi"
-    ".config/zsh"
-    ".zshrc"
-  ]
-}
-
 def build-sources [
   dotfiles: string
   dotfiles_module: string
@@ -68,12 +49,12 @@ def build-sources [
     null
   } else {
     let module_path = if ($dotfiles_module | str trim) == "" {
-      join-path [ $dotfiles_path "nixos" "home.nix" ]
+      null
     } else {
       normalize-optional-path $dotfiles_module
     }
     let root_path = if ($dotfiles_root | str trim) == "" {
-      join-path [ $dotfiles_path "dotfiles" ]
+      $dotfiles_path
     } else {
       normalize-optional-path $dotfiles_root
     }
@@ -82,7 +63,7 @@ def build-sources [
       dotfiles: $dotfiles_path
       dotfilesModule: $module_path
       dotfilesRoot: $root_path
-      links: (default-dotfile-links)
+      links: []
     }
   }
 }
@@ -161,12 +142,12 @@ def prompt-state [] {
   let dotfiles_module = if $dotfiles == "" {
     ""
   } else {
-    prompt-optional "Dotfiles Home Manager module path, empty for <repo>/nixos/home.nix"
+    prompt-optional "Dotfiles Home Manager module path, empty to use links fallback"
   }
   let dotfiles_root = if $dotfiles == "" {
     ""
   } else {
-    prompt-optional "Dotfiles root path, empty for <repo>/dotfiles"
+    prompt-optional "Dotfiles root path, empty for repository root"
   }
 
   build-state $hostname $timezone $user $user_description $user_shell $is_admin $extra_groups $dotfiles $dotfiles_module $dotfiles_root
