@@ -14,6 +14,8 @@
     walker.url = "github:abenz1267/walker";
     walker.inputs.nixpkgs.follows = "nixpkgs";
     walker.inputs.systems.follows = "systems";
+    yazi.url = "github:sxyazi/yazi";
+    yazi.inputs.nixpkgs.follows = "nixpkgs";
     systems.url = "github:nix-systems/default-linux";
   };
 
@@ -26,6 +28,7 @@
       treefmt-nix,
       zen-browser,
       walker,
+      yazi,
       ...
     }:
     let
@@ -101,6 +104,7 @@
           home-manager
           zen-browser
           walker
+          yazi
           ;
       };
       workstationStorageExample = nixpkgs.lib.nixosSystem {

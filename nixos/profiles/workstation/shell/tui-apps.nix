@@ -1,10 +1,10 @@
-{ pkgs, ... }:
+{ pkgs, yazi, ... }:
 {
-  environment.systemPackages = with pkgs; [
-    yazi
-    lazygit
-    lazydocker
-    zellij
-    btop
+  environment.systemPackages = [
+    yazi.packages.${pkgs.stdenv.hostPlatform.system}.default
+    pkgs.lazygit
+    pkgs.lazydocker
+    pkgs.zellij
+    pkgs.btop
   ];
 }
