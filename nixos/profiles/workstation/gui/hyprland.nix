@@ -80,6 +80,8 @@ in
 
     hl.on("hyprland.start", function()
         hl.exec_cmd("uwsm finalize")
+        hl.exec_cmd("systemctl --user import-environment WAYLAND_DISPLAY XDG_CURRENT_DESKTOP")
+        hl.exec_cmd("systemctl --user restart elephant.service walker.service")
     end)
 
     hl.config({

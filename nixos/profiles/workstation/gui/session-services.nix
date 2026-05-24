@@ -14,6 +14,7 @@ let
       busName ? null,
       path ? [ ],
       type ? "simple",
+      environment ? { },
     }:
     {
       inherit description after path;
@@ -28,6 +29,9 @@ let
         }
         (lib.mkIf (busName != null) {
           BusName = busName;
+        })
+        (lib.mkIf (environment != { }) {
+          Environment = lib.mapAttrsToList (name: value: "${name}=${value}") environment;
         })
       ];
     };
@@ -63,10 +67,11 @@ in
   systemd.user.services.elephant = graphicalSessionService {
     description = "Elephant data provider service for Walker";
     execStart = "${lib.getExe pkgs.elephant} --config /etc/xdg/elephant";
-    path = [
-      pkgs.bash
-      "/run/current-system/sw/bin"
-    ];
+    # Elephant providers execute arbitrary desktop files via shell;
+    # they need bash in PATH and access to system-wide applications.
+    environment = {
+      PATH = "${pkgs.bash}/bin:/run/current-system/sw/bin";
+    };
   };
 
   environment.etc."xdg/elephant/elephant.toml".text = ''
