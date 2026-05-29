@@ -1,0 +1,16 @@
+{
+  "incremental": false,
+  "lineWidth": 80,
+  "indentWidth": 2,
+  "newLineKind": "lf",
+  "useTabs": false,
+  "includes": ["**/*.{json,jsonc,toml,yml,yaml}"],
+  "json": {},
+  "yaml": {},
+  "excludes": ["**/node_modules", ".cache", ".git", "LICENSE", "target"],
+  "plugins": [
+    "https://plugins.dprint.dev/toml-0.7.0.wasm",
+    "https://plugins.dprint.dev/json-0.21.3.wasm",
+    "https://plugins.dprint.dev/g-plane/pretty_yaml-v0.6.0.wasm"
+  ]
+}

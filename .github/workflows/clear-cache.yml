@@ -2,7 +2,7 @@ name: Clear Cache Weekly
 
 on:
   schedule:
-    - cron: '0 0 * * 0' # Midnight every Sunday
+    - cron: "0 0 * * 0" # Midnight every Sunday
   workflow_dispatch:
 
 jobs:

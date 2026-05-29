@@ -73,6 +73,9 @@ jobs:
       - name: Check formatting
         run: nix build .#checks.x86_64-linux.formatting
 
+      - name: Check source formatting
+        run: nix develop --command dprint check
+
       - name: Check flake
         run: nix flake check
 

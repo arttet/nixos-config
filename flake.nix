@@ -136,6 +136,15 @@
 
       formatter.${system} = treefmtEval.config.build.wrapper;
       packages.${system}.default = self.nixosConfigurations.default.config.system.build.toplevel;
+      devShells.${system}.default = pkgs.mkShell {
+        packages = with pkgs; [
+          check-jsonschema
+          dprint
+          just
+          nushell
+          openssl
+        ];
+      };
 
       apps.${system} = {
         version = {
