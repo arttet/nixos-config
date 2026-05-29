@@ -20,6 +20,7 @@ help:
 [group('Development')]
 fmt:
     @echo "✨ Formatting code..."
+    dprint fmt
     just --fmt
     nix fmt
     @echo "✅ Code formatted!"
