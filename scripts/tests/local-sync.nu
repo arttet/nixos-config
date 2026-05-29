@@ -52,9 +52,9 @@ def main [] {
     ] | ignore
 
     assert not ($"($target)/default.nix" | path exists) "local sync must not create a local default.nix shim"
-    assert equal (open $state | from json | get host.hostname) "existing"
-    assert not ((open $state | from json | columns) | any {|column| $column == "session" })
-    assert not ((open $state | from json | columns) | any {|column| $column == "profile" })
+    assert equal (open $state | get host.hostname) "existing"
+    assert not ((open $state | columns) | any {|column| $column == "session" })
+    assert not ((open $state | columns) | any {|column| $column == "profile" })
     assert equal (open $user_secret | str trim) "keep-secret"
     assert not ($"($target)/users/user.nix" | path exists) "local sync must not copy template users subtree"
 
@@ -77,7 +77,7 @@ def main [] {
       "/home/user/.dotfiles"
     ] | ignore
 
-    let generated_state = (open $state | from json)
+    let generated_state = (open $state)
     assert equal $generated_state.schemaVersion 1
     assert not ($generated_state | columns | any {|column| $column == "session" })
     assert not ($generated_state | columns | any {|column| $column == "profile" })
@@ -115,7 +115,7 @@ def main [] {
       $dotfiles_module
     ] | ignore
 
-    let module_user = ((open $state | from json).users | get 0)
+    let module_user = ((open $state).users | get 0)
     assert equal $module_user.sources.dotfilesModule $dotfiles_module
 
     rm --force $state
@@ -140,7 +140,7 @@ def main [] {
       "audio,video"
     ] | ignore
 
-    let guest = ((open $state | from json).users | get 0)
+    let guest = ((open $state).users | get 0)
     assert equal $guest.name "guest"
     assert equal $guest.isAdmin false
     assert equal $guest.shell "bash"

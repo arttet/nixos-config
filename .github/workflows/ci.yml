@@ -65,6 +65,10 @@ jobs:
         with:
           extra_nix_config: |
             experimental-features = nix-command flakes
+            substituters = https://cache.nixos.org/
+            trusted-public-keys = cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=
+            fallback = true
+            http-connections = 1
 
       - name: Check formatting
         run: nix build .#checks.x86_64-linux.formatting
@@ -127,6 +131,10 @@ jobs:
         with:
           extra_nix_config: |
             experimental-features = nix-command flakes
+            substituters = https://cache.nixos.org/
+            trusted-public-keys = cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=
+            fallback = true
+            http-connections = 1
 
       - name: Validate scripts
         run: nix shell nixpkgs#nushell nixpkgs#openssl nixpkgs#check-jsonschema -c nu scripts/tests/run.nu
@@ -144,6 +152,10 @@ jobs:
         with:
           extra_nix_config: |
             experimental-features = nix-command flakes
+            substituters = https://cache.nixos.org/
+            trusted-public-keys = cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=
+            fallback = true
+            http-connections = 1
 
       - name: Install loopback disk test dependencies
         run: sudo apt-get update && sudo apt-get install --yes cryptsetup-bin
@@ -171,6 +183,10 @@ jobs:
         with:
           extra_nix_config: |
             experimental-features = nix-command flakes
+            substituters = https://cache.nixos.org/
+            trusted-public-keys = cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=
+            fallback = true
+            http-connections = 1
 
       - name: Setup Just
         uses: extractions/setup-just@v4
@@ -194,6 +210,10 @@ jobs:
         with:
           extra_nix_config: |
             experimental-features = nix-command flakes
+            substituters = https://cache.nixos.org/
+            trusted-public-keys = cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=
+            fallback = true
+            http-connections = 1
 
       - name: Setup Just
         uses: extractions/setup-just@v4
@@ -222,6 +242,10 @@ jobs:
         with:
           extra_nix_config: |
             experimental-features = nix-command flakes
+            substituters = https://cache.nixos.org/
+            trusted-public-keys = cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=
+            fallback = true
+            http-connections = 1
 
       - name: Setup Just
         uses: extractions/setup-just@v4

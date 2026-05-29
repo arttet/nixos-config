@@ -404,7 +404,7 @@ def main [] {
     assert not ($paths.password | path exists) "dry-run must not persist generated password hash in platform state or volatile secrets"
     assert not ($"($paths.state_dir)/default.nix" | path exists) "installer must not generate a local default.nix shim"
 
-    let platform_state = (open $paths.platform_state | from json)
+    let platform_state = (open $paths.platform_state)
     assert equal $platform_state.schemaVersion 1
     assert not ($platform_state | columns | any {|column| $column == "session" })
     assert not ($platform_state | columns | any {|column| $column == "profile" })
@@ -424,7 +424,7 @@ def main [] {
     assert ($env_file | str contains 'export NIX_CONFIG_LOCAL_STATE=')
     assert ($env_file | str contains 'export NIX_CONFIG_LOCAL_HARDWARE="/mnt/etc/nixos/hardware-configuration.nix"')
 
-    let disko_state = (open $paths.disko | from json)
+    let disko_state = (open $paths.disko)
     assert equal $disko_state.schemaVersion 1
     assert equal $disko_state.disk.device (test-disk-path)
     assert not ($disko_state | columns | any {|column| $column == "luks" })

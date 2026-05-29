@@ -32,11 +32,12 @@ export def disko-state-schema [] {
 export def ui-width [] {
   let size = (try { term size } catch { { columns: 80 } })
   let columns = ($size.columns? | default 80)
+  let safe_columns = if $columns < 40 { 80 } else { $columns }
 
-  if $columns < 72 {
-    $columns
+  if $safe_columns < 72 {
+    $safe_columns
   } else {
-    $columns - 2
+    $safe_columns - 2
   }
 }
 
