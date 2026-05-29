@@ -144,11 +144,8 @@ def test-disko-config-disk-validation [] {
     let matching = ([$root matching.json] | path join)
     let mismatched = ([$root mismatched.json] | path join)
     let invalid = ([$root invalid.json] | path join)
-    let disk = ([$root disk.img] | path join)
-    let other_disk = ([$root other-disk.img] | path join)
-
-    touch $disk
-    touch $other_disk
+    let disk = "/dev/null"
+    let other_disk = "/dev/zero"
 
     write-test-json $matching {
       schemaVersion: 1
