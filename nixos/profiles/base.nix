@@ -35,6 +35,9 @@
         inherit (prev) lndir;
       };
     })
+    (final: _prev: {
+      graphite-grub-theme = final.callPackage ../../pkgs/graphite-grub-theme { };
+    })
   ];
 
   users.users.root.hashedPassword = "!";

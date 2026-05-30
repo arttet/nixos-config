@@ -37,6 +37,7 @@
         inherit system;
       };
       inherit (nixpkgs) lib;
+
       version = "0.1.0";
       revision = if self ? rev then self.shortRev else "dev";
       fullVersion = "${version}-${revision}";

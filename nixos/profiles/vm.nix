@@ -9,6 +9,7 @@
   platform.security.enable = lib.mkForce false;
   platform.secureBoot.enable = lib.mkForce false;
   platform.tuning.enable = lib.mkForce false;
+  platform.grubTheme.enable = lib.mkForce false;
 
   services.qemuGuest.enable = true;
 

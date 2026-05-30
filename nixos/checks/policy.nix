@@ -167,6 +167,10 @@ in
       assertion = !vm.virtualisation.vmVariant.virtualisation.graphics;
       message = "vm must be headless";
     }
+    {
+      assertion = !vm.platform.grubTheme.enable;
+      message = "vm must not enable GRUB theme";
+    }
   ];
 
   workstation-policy = mkPolicy "workstation-policy" [
@@ -597,6 +601,10 @@ in
     {
       assertion = !desktop.services.xserver.enable;
       message = "desktop must not enable an X11 desktop/session";
+    }
+    {
+      assertion = desktop.platform.grubTheme.enable;
+      message = "desktop must enable GRUB theme";
     }
     {
       assertion = desktop.services.greetd.enable;

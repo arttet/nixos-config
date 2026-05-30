@@ -8,6 +8,7 @@
     ../../modules/core/tuning.nix
     ../../modules/core/power.nix
     ../../modules/core/boot-ux.nix
+    ../../modules/core/grub-theme.nix
     ../../modules/storage/disko.nix
     ../../modules/storage/swap.nix
   ];
@@ -17,6 +18,7 @@
   platform.security.enable = true;
   platform.secureBoot.enable = true;
   platform.tuning.enable = true;
+  platform.grubTheme.enable = true;
 
   boot.kernelPackages = pkgs.linuxPackages_latest;
   boot.initrd.systemd.enable = true;
