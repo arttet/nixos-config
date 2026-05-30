@@ -12,7 +12,7 @@ To view SSH login attempts:
 journalctl -u sshd
 ```
 
-*(Note: SSH is disabled by default in the `workstation-gui` profile. If you have explicitly enabled it, you should monitor these logs).*
+_(Note: SSH is disabled by default in the `workstation-gui` profile. If you have explicitly enabled it, you should monitor these logs)._
 
 To view local TTY or graphical login events:
 

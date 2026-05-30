@@ -10,8 +10,8 @@ Start with the total boot summary:
 systemd-analyze
 ```
 
-**Expected result:** systemd prints firmware, bootloader, kernel, initrd, and userspace timing. 
-*(Note: Manual LUKS passphrase entry pauses the boot process and will inflate the total time. This is not an OS tuning problem and should be judged separately).*
+**Expected result:** systemd prints firmware, bootloader, kernel, initrd, and userspace timing.
+_(Note: Manual LUKS passphrase entry pauses the boot process and will inflate the total time. This is not an OS tuning problem and should be judged separately)._
 
 ## 🐢 Finding Slow Services
 
@@ -45,11 +45,11 @@ journalctl -b -p warning
 
 ## 🩺 Common Quick Checks
 
-| Symptom | Command | What to look for |
-| --- | --- | --- |
-| Network delays | `systemctl status NetworkManager` | NetworkManager should be active; boot should not wait for online networking. |
-| Slow graphical login | `systemctl status greetd` | `greetd` should be active and not repeatedly restarting. |
-| DNS issues after boot | `resolvectl status` | DNS servers and DNS-over-TLS state should be visible. |
-| Time sync issues | `timedatectl status` | System clock and NTP state should be sane. |
+| Symptom               | Command                           | What to look for                                                             |
+| --------------------- | --------------------------------- | ---------------------------------------------------------------------------- |
+| Network delays        | `systemctl status NetworkManager` | NetworkManager should be active; boot should not wait for online networking. |
+| Slow graphical login  | `systemctl status greetd`         | `greetd` should be active and not repeatedly restarting.                     |
+| DNS issues after boot | `resolvectl status`               | DNS servers and DNS-over-TLS state should be visible.                        |
+| Time sync issues      | `timedatectl status`              | System clock and NTP state should be sane.                                   |
 
 Do not tune the system blindly based on these commands. Collect the output first, then change the smallest specific setting that explains the measured problem in your NixOS configuration.

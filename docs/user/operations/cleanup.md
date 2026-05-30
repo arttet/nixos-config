@@ -22,7 +22,7 @@ nix profile history --profile /nix/var/nix/profiles/system
 
 ## 🗑️ Manual Cleanup
 
-If you are running low on disk space, you can manually trigger the garbage collector. 
+If you are running low on disk space, you can manually trigger the garbage collector.
 
 **Best Practice:** Always keep recent generations around just in case you need to roll back. The following command safely deletes data older than 14 days:
 
@@ -30,4 +30,4 @@ If you are running low on disk space, you can manually trigger the garbage colle
 doas nix-collect-garbage --delete-older-than 14d
 ```
 
-*(Note: Avoid deleting generations too aggressively! If you just made major changes to graphics or networking, keep at least one known-good generation until you are sure the new one is completely stable).*
+_(Note: Avoid deleting generations too aggressively! If you just made major changes to graphics or networking, keep at least one known-good generation until you are sure the new one is completely stable)._

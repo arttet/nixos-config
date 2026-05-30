@@ -23,12 +23,12 @@ The disk device is always a parameter. The repository must not hardcode a real d
 
 Storage options live under `platform.storage`:
 
-| Option | Purpose | Default |
-| --- | --- | --- |
-| `platform.storage.enable` | Enables the workstation storage layout for an install path. | `false` |
-| `platform.storage.diskDevice` | Disk device to partition. Required when storage is enabled. | `null` |
-| `platform.storage.swapFilePath` | Swapfile path. | `/swap/swapfile` |
-| `platform.storage.swapSizeMiB` | Swapfile size in MiB. | `8192` |
+| Option                          | Purpose                                                     | Default          |
+| ------------------------------- | ----------------------------------------------------------- | ---------------- |
+| `platform.storage.enable`       | Enables the workstation storage layout for an install path. | `false`          |
+| `platform.storage.diskDevice`   | Disk device to partition. Required when storage is enabled. | `null`           |
+| `platform.storage.swapFilePath` | Swapfile path.                                              | `/swap/swapfile` |
+| `platform.storage.swapSizeMiB`  | Swapfile size in MiB.                                       | `8192`           |
 
 The generated layout is exposed as `platform.storage.diskoLayout` and wired into `disko.devices` when `platform.storage.enable = true`. The repository uses the locked `nix-community/disko` flake input as the install implementation.
 
@@ -45,12 +45,12 @@ discard=async
 The subvolume model is:
 
 | Subvolume | Mountpoint |
-| --- | --- |
-| `@root` | `/` |
-| `@nix` | `/nix` |
-| `@home` | `/home` |
-| `@log` | `/var/log` |
-| `@swap` | `/swap` |
+| --------- | ---------- |
+| `@root`   | `/`        |
+| `@nix`    | `/nix`     |
+| `@home`   | `/home`    |
+| `@log`    | `/var/log` |
+| `@swap`   | `/swap`    |
 
 The `@swap` subvolume hosts `/swap/swapfile`. The NixOS swap module owns the Btrfs NOCOW preparation through the `prepare-btrfs-swap` systemd service before the swap unit starts. The install plan does not ask the user to run `chattr` manually.
 

@@ -10,11 +10,11 @@ belong in `docs/` and should be linked from here instead of duplicated.
 For users, the product is the desktop installed on real hardware.
 In Nix terms, that is the `desktop` flake target.
 
-| Target | Role |
-| --- | --- |
-| `desktop` | Default real-hardware workstation install |
-| `workstation` | Non-graphical base used by checks and development workflows |
-| `vm` | Disposable local QEMU system for testing without real hardware |
+| Target        | Role                                                           |
+| ------------- | -------------------------------------------------------------- |
+| `desktop`     | Default real-hardware workstation install                      |
+| `workstation` | Non-graphical base used by checks and development workflows    |
+| `vm`          | Disposable local QEMU system for testing without real hardware |
 
 For the user guide entry point, see `docs/user/index.md`.
 For the clean-hardware install runbook, see `docs/user/installation/workstation.md`.

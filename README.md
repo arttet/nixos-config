@@ -8,8 +8,8 @@ Personal reproducible NixOS infrastructure for machines that can be destroyed an
 
 Useful project resources:
 
-| Resource | URL |
-| --- | --- |
+| Resource      | URL                      |
+| ------------- | ------------------------ |
 | Documentation | <https://nix.arttet.dev> |
 
 ## 🛠 Management & Development

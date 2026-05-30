@@ -85,7 +85,10 @@ const evolutionSidebar = [
     text: "Roadmap",
     items: [
       { text: "Overview", link: "/evolution/roadmap/" },
-      { text: "Deferred Features", link: "/evolution/roadmap/deferred-features" },
+      {
+        text: "Deferred Features",
+        link: "/evolution/roadmap/deferred-features",
+      },
     ],
   },
   {

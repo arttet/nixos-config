@@ -33,7 +33,7 @@ Your system will boot exactly as it was when that generation was created.
 
 ### 💾 Making the Boot Rollback Permanent
 
-Booting an older generation from GRUB is a temporary state. If you reboot again, it will try to boot the broken (newest) generation. 
+Booting an older generation from GRUB is a temporary state. If you reboot again, it will try to boot the broken (newest) generation.
 
 To permanently set the currently running (good) generation as the default, simply rebuild the system from it:
 
@@ -41,11 +41,12 @@ To permanently set the currently running (good) generation as the default, simpl
 just switch
 ```
 
-*(Assuming you have reverted the breaking changes in your local Git repository).*
+_(Assuming you have reverted the breaking changes in your local Git repository)._
 
 ## ⚠️ What Rollbacks Do Not Cover
 
 NixOS generations only snapshot the **system configuration** (`/nix/store` and `/etc`). They **do not** roll back:
+
 - **User Data:** Your documents and files in `/home` are untouched.
 - **Disk Layouts:** Destructive changes like formatting a partition or resizing LUKS cannot be rolled back.
 

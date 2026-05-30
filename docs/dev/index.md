@@ -6,22 +6,22 @@ Welcome to the engineering documentation for the NixOS Configuration. This secti
 
 Regardless of your host operating system, you will need the following tools installed to interact with this repository:
 
-| Tool | Purpose |
-| --- | --- |
-| **Nix** | The engine used to evaluate and build the configuration (with Flakes enabled). |
-| **Git** | Required for version control and cloning the repository. |
-| **Just** | Command runner used for all common development workflows. |
-| **QEMU** | Required to boot the virtual machine for local testing and validation. |
-| **sshpass** | (Optional) Used for automated VM testing. |
+| Tool        | Purpose                                                                        |
+| ----------- | ------------------------------------------------------------------------------ |
+| **Nix**     | The engine used to evaluate and build the configuration (with Flakes enabled). |
+| **Git**     | Required for version control and cloning the repository.                       |
+| **Just**    | Command runner used for all common development workflows.                      |
+| **QEMU**    | Required to boot the virtual machine for local testing and validation.         |
+| **sshpass** | (Optional) Used for automated VM testing.                                      |
 
 ## 💻 Cross-Platform Development
 
 You do not need to be running NixOS to develop for this platform. Whether you are on Windows (WSL) or a standard mutable Linux distribution, you can iterate on the code and test it safely.
 
-| Operating System | Recommended Environment | Setup Guide |
-| :--- | :--- | :--- |
+| Operating System  | Recommended Environment                     | Setup Guide                         |
+| :---------------- | :------------------------------------------ | :---------------------------------- |
 | **Mutable Linux** | Native Nix package + QEMU (e.g. Arch Linux) | [View Guide](./setup/mutable_linux) |
-| **WSL2** | openSUSE Tumbleweed + Nix + QEMU | [View Guide](./setup/wsl) |
+| **WSL2**          | openSUSE Tumbleweed + Nix + QEMU            | [View Guide](./setup/wsl)           |
 
 ## 🧪 Testing & Safety
 

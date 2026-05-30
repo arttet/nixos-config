@@ -45,11 +45,11 @@ RUN_DISKO_LOOP_TEST=1 just test
 
 Three flake targets exposed by `flake.nix`. The user-facing product is `desktop`; the others exist for validation:
 
-| Target | Purpose |
-| --- | --- |
-| `desktop` | Default real-hardware install (Hyprland, PipeWire, browsers) |
-| `workstation` | Headless baseline used by checks and dev workflows |
-| `vm` | Disposable QEMU profile for runtime smoke tests |
+| Target        | Purpose                                                      |
+| ------------- | ------------------------------------------------------------ |
+| `desktop`     | Default real-hardware install (Hyprland, PipeWire, browsers) |
+| `workstation` | Headless baseline used by checks and dev workflows           |
+| `vm`          | Disposable QEMU profile for runtime smoke tests              |
 
 Layering (strict, enforced by `docs/dev/architecture/composition.md`):
 

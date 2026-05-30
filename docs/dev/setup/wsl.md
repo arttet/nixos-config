@@ -85,6 +85,7 @@ Restart your shell to pick up the changes.
 Use these PowerShell commands to manage or remove the development distribution.
 
 ### Stop the Distribution
+
 If WSL hangs or you want to free up memory:
 
 ```powershell
@@ -92,6 +93,7 @@ wsl --terminate openSUSE-Tumbleweed
 ```
 
 ### Completely Remove openSUSE
+
 To delete the distribution and all files inside it (this is destructive!):
 
 ```powershell

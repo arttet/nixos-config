@@ -42,4 +42,4 @@ Once the tests pass, apply the new configuration to your system. This makes the 
 just switch
 ```
 
-*(Note: If you encounter issues after switching, you can easily roll back to the previous generation via GRUB or the rollback command).*
+_(Note: If you encounter issues after switching, you can easily roll back to the previous generation via GRUB or the rollback command)._

@@ -4,9 +4,10 @@ Developing the NixOS Configuration on a traditional, mutable Linux distribution 
 
 ## Install Nix
 
-Install the Nix package using your distribution's package manager. 
+Install the Nix package using your distribution's package manager.
 
 Example for Arch Linux:
+
 ```sh
 sudo pacman -S nix
 ```
@@ -23,7 +24,7 @@ Add your user to the `nix-users` group to allow running Nix commands without `su
 sudo usermod -aG nix-users $USER
 ```
 
-*Note: You may need to log out and back in for the group change to take effect.*
+_Note: You may need to log out and back in for the group change to take effect._
 
 ## Enable Flakes
 
@@ -47,4 +48,4 @@ Install the core tools required by this repository:
 sudo pacman -S just qemu-full qemu-img libvirt virt-manager
 ```
 
-*Note: `qemu-full` is recommended to ensure all virtualization features are available.*
+_Note: `qemu-full` is recommended to ensure all virtualization features are available._
