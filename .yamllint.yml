@@ -1,0 +1,17 @@
+---
+extends: default
+
+ignore: |
+  docs/node_modules/
+  docs/.vitepress/cache/
+  docs/.vitepress/dist/
+  target/
+
+rules:
+  comments:
+    min-spaces-from-content: 1
+  document-start: disable
+  line-length:
+    max: 140
+    level: warning
+  truthy: disable
