@@ -46,6 +46,6 @@ This will drop you into a root shell before most services start.
 
 ## 💾 Persistent Changes
 
-Changes made in the GRUB editor (`e`) are **temporary** and apply only to that specific boot. 
+Changes made in the GRUB editor (`e`) are **temporary** and apply only to that specific boot.
 
 To permanently change kernel parameters, you must edit your local NixOS configuration or overlay and rebuild the system. For example, to permanently disable the graphical boot splash, set `platform.bootUx.enable = false;` in your overlay and run `nixos-rebuild switch`.

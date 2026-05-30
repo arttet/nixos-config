@@ -1,6 +1,6 @@
 # 🖥️ VM
 
-The `vm` profile gives you a safe, disposable sandbox. It is a local QEMU virtual machine that mirrors your workstation's underlying configuration. 
+The `vm` profile gives you a safe, disposable sandbox. It is a local QEMU virtual machine that mirrors your workstation's underlying configuration.
 
 Before applying a risky configuration change to your actual physical computer, you can build and boot it here to ensure it works. **If you break the VM, you can just delete it and start over.**
 
@@ -31,7 +31,7 @@ just vm run
 - **Username:** `user`
 - **Password:** `user`
 
-To gracefully shut down from inside the VM, type `sudo poweroff`. 
+To gracefully shut down from inside the VM, type `sudo poweroff`.
 If the VM hangs and you need to force-quit from your terminal, press `Ctrl+A`, let go, and then press `x`.
 
 #### Option B: Background Daemon (Headless)
@@ -53,7 +53,8 @@ To easily open an SSH session into the running daemon:
 ```sh
 just vm ssh
 ```
-*(When prompted for a password, type `user`)*
+
+_(When prompted for a password, type `user`)_
 
 ## 🧪 3. Running Automated Tests
 
@@ -62,7 +63,8 @@ To ensure the VM boots, SSH is accessible, and the VM can reach the internet, yo
 ```sh
 just vm test
 ```
-*(Note: This uses `sshpass` under the hood. If your host machine doesn't have it installed, the test might fail).*
+
+_(Note: This uses `sshpass` under the hood. If your host machine doesn't have it installed, the test might fail)._
 
 ## 🧹 4. Cleaning Up
 

@@ -29,26 +29,26 @@ rollback model, core security policy, DNS policy, or upgrade policy.
 
 Each workstation layer owns one responsibility:
 
-| Layer | Responsibility |
-| --- | --- |
-| `base.nix` | Headless workstation core and platform policy |
-| `shell/` | CLI and TUI tools only |
-| `gui/core.nix` | Login/session foundation, DBus, polkit, PipeWire, portals, Thunar, Rofi, MIME |
-| `gui/hyprland.nix` | Hyprland compositor ecosystem and minimal runtime defaults |
-| `gui/wayland-tools.nix` | Wayland-native clipboard, screenshots, notifications, network applet, media controls |
-| `gui/power.nix` | Desktop-facing power information service |
-| `gui/desktop-shell.nix` | AGS/Astal runtime support only |
-| `gui/fonts.nix` | Font packages and fontconfig defaults |
-| `apps/terminals.nix` | Terminal runtime packages |
-| `apps/editors.nix` | Editor runtime packages |
-| `apps/browsers.nix` | Browser packages and browser MIME defaults |
-| `development/` | Language tooling, split by language |
-| `apps/containers.nix` | Docker workstation runtime |
-| `apps/communication.nix` | Communication applications |
-| `apps/productivity.nix` | Documents, notes, office, and PDF workflow |
-| `apps/security.nix` | Workstation security and password applications |
-| `apps/internet.nix` | Internet/network clients |
-| `apps/media.nix` | Minimal media applications |
+| Layer                    | Responsibility                                                                       |
+| ------------------------ | ------------------------------------------------------------------------------------ |
+| `base.nix`               | Headless workstation core and platform policy                                        |
+| `shell/`                 | CLI and TUI tools only                                                               |
+| `gui/core.nix`           | Login/session foundation, DBus, polkit, PipeWire, portals, Thunar, Rofi, MIME        |
+| `gui/hyprland.nix`       | Hyprland compositor ecosystem and minimal runtime defaults                           |
+| `gui/wayland-tools.nix`  | Wayland-native clipboard, screenshots, notifications, network applet, media controls |
+| `gui/power.nix`          | Desktop-facing power information service                                             |
+| `gui/desktop-shell.nix`  | AGS/Astal runtime support only                                                       |
+| `gui/fonts.nix`          | Font packages and fontconfig defaults                                                |
+| `apps/terminals.nix`     | Terminal runtime packages                                                            |
+| `apps/editors.nix`       | Editor runtime packages                                                              |
+| `apps/browsers.nix`      | Browser packages and browser MIME defaults                                           |
+| `development/`           | Language tooling, split by language                                                  |
+| `apps/containers.nix`    | Docker workstation runtime                                                           |
+| `apps/communication.nix` | Communication applications                                                           |
+| `apps/productivity.nix`  | Documents, notes, office, and PDF workflow                                           |
+| `apps/security.nix`      | Workstation security and password applications                                       |
+| `apps/internet.nix`      | Internet/network clients                                                             |
+| `apps/media.nix`         | Minimal media applications                                                           |
 
 Package ownership should stay in the layer that describes the package's primary
 purpose. Cross-layer duplication is avoided unless the headless base needs a

@@ -9,13 +9,13 @@ targets are personal data, local machine identity, and secrets.
 
 Back up these categories:
 
-| Category | Why it matters | Example paths |
-| --- | --- | --- |
-| Documents | Personal files | `~/Documents`, `~/Desktop`, selected media folders |
+| Category       | Why it matters                                                       | Example paths                                                             |
+| -------------- | -------------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| Documents      | Personal files                                                       | `~/Documents`, `~/Desktop`, selected media folders                        |
 | Local identity | Hostname, timezone, local user, password hash, private host settings | `/root/.nix-config-local/user.nix`, `/root/.nix-config-local/user.passwd` |
-| Secrets | Private credentials and key material | selected SSH, GPG, password manager, or token files |
-| App state | Only when intentionally needed | selected browser, editor, or profile data |
-| LUKS2 Header | Vital if the primary header is corrupted | Explicitly collected file (see below) |
+| Secrets        | Private credentials and key material                                 | selected SSH, GPG, password manager, or token files                       |
+| App state      | Only when intentionally needed                                       | selected browser, editor, or profile data                                 |
+| LUKS2 Header   | Vital if the primary header is corrupted                             | Explicitly collected file (see below)                                     |
 
 Do not upload local identity files, secrets, or LUKS headers to remote storage
 unless the backup is encrypted.

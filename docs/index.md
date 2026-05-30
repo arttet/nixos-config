@@ -32,5 +32,4 @@ features:
   - icon: 🧭
     title: Disposable VM
     details: Use the disposable VM for local checks without making it the main operating workflow.
-
 ---

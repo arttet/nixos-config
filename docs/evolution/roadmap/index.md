@@ -25,4 +25,5 @@ The NixOS Configuration grows incrementally. Each phase ensures the repository r
 ## 📍 In-Depth Strategy
 
 ### ⏳ [Deferred Features](./deferred-features)
+
 Functionality that is planned but intentionally delayed to maintain focus on the core product stability.

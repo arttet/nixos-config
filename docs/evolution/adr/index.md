@@ -4,4 +4,4 @@ This section documents the history of key architectural decisions made for the N
 
 ## List of ADRs
 
-*No ADRs recorded yet. Future decisions on GUI stack, VPN, and Secure Boot will be documented here.*
+_No ADRs recorded yet. Future decisions on GUI stack, VPN, and Secure Boot will be documented here._

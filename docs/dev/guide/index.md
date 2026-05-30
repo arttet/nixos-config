@@ -15,13 +15,17 @@ The standard development cycle follows these three steps:
 Because applying changes directly to your physical hardware is risky, we use a disposable VM for testing.
 
 ### 1. Build and Run the VM
+
 This will compile your current Git state and launch a QEMU window:
+
 ```sh
 just vm run
 ```
 
 ### 2. Automated Tests
+
 Run the automated test suite to verify network, SSH, and core services:
+
 ```sh
 just vm test
 ```

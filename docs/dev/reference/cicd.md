@@ -6,15 +6,15 @@ Every contribution to this repository is automatically validated through a GitHu
 
 The CI pipeline runs the following checks on every Pull Request:
 
-| Check | Tool | Description |
-| :--- | :--- | :--- |
-| **Repository Check** | `just check` | Runs the production validation gate used by local development and CI. |
-| **Formatting** | `checks.formatting` | Verifies that all `.nix` files follow the repository style through `treefmt-nix`. |
-| **Flake Check** | `nix flake check` | Validates flake syntax, static policy checks, `statix`, and `deadnix`. |
-| **Nix Lint** | `statix` | Rejects common Nix anti-patterns and suspicious expressions. |
-| **Dead Code** | `deadnix` | Rejects unused Nix bindings and arguments. |
-| **Documentation** | `just docs build` | Ensures the VitePress documentation builds without broken links. |
-| **VM Validation** | `just vm test` | Boots the configuration in a headless QEMU VM to verify core services. |
+| Check                | Tool                | Description                                                                       |
+| :------------------- | :------------------ | :-------------------------------------------------------------------------------- |
+| **Repository Check** | `just check`        | Runs the production validation gate used by local development and CI.             |
+| **Formatting**       | `checks.formatting` | Verifies that all `.nix` files follow the repository style through `treefmt-nix`. |
+| **Flake Check**      | `nix flake check`   | Validates flake syntax, static policy checks, `statix`, and `deadnix`.            |
+| **Nix Lint**         | `statix`            | Rejects common Nix anti-patterns and suspicious expressions.                      |
+| **Dead Code**        | `deadnix`           | Rejects unused Nix bindings and arguments.                                        |
+| **Documentation**    | `just docs build`   | Ensures the VitePress documentation builds without broken links.                  |
+| **VM Validation**    | `just vm test`      | Boots the configuration in a headless QEMU VM to verify core services.            |
 
 ## 🚀 Job Strategy
 
@@ -38,15 +38,17 @@ Once a Pull Request is merged into `main`:
 GitHub Actions uses repository or environment configuration for sensitive values or project-specific flags.
 
 ### Variables
-| Name | Purpose |
-| :--- | :--- |
+
+| Name                    | Purpose                                                     |
+| :---------------------- | :---------------------------------------------------------- |
 | `CF_DOCS_PAGES_PROJECT` | Cloudflare Pages project name for documentation deployment. |
 
 ### Secrets
-| Name | Purpose |
-| :--- | :--- |
-| `CLOUDFLARE_ACCOUNT_ID` | Account identifier used by Wrangler. |
-| `CLOUDFLARE_API_TOKEN` | API token used to deploy to Cloudflare Pages. |
+
+| Name                    | Purpose                                       |
+| :---------------------- | :-------------------------------------------- |
+| `CLOUDFLARE_ACCOUNT_ID` | Account identifier used by Wrangler.          |
+| `CLOUDFLARE_API_TOKEN`  | API token used to deploy to Cloudflare Pages. |
 
 ## 🧪 Running Validation Locally
 

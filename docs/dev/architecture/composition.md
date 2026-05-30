@@ -19,11 +19,13 @@ To keep the codebase maintainable, modules are organized by their technical doma
 - `nixos/profiles/`: Large-scale system shapes.
 
 ### Best Practice: Explicit Imports
+
 We avoid "Nix magic" like global auto-discovery of modules. Every module used by a profile must be explicitly imported in its `default.nix`. This makes the system structure searchable and easy to audit.
 
 ## 📦 Package Selection Policy
 
 We prioritize software that aligns with the following criteria:
+
 - **Wayland Native**: Preferred over X11 whenever possible.
 - **Minimal State**: Favor tools that keep configuration in the user's home (managed by dotfiles) rather than system-wide global state.
 - **Explicit Unfree**: Unfree packages (like Chrome or Zoom) are permitted in `workstation-gui` but must be declared explicitly to maintain awareness of the system's licensing posture.
