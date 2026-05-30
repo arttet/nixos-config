@@ -176,8 +176,7 @@ def test-disko-config-password-file [] {
   try {
     let state = ([$root disko-state.json] | path join)
     let key = ([$root luks.key] | path join)
-    let disk = ([$root disk.img] | path join)
-    touch $disk
+    let disk = "/dev/null"
 
     write-test-json $state {
       schemaVersion: 1

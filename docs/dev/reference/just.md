@@ -16,7 +16,6 @@ Available recipes:
     check         # Run repository checks
     build profile # Build a NixOS profile closure
     test profile  # Run script tests and selected profile checks
-    setup         # Prepare this checkout for privileged local rebuilds
     switch profile # Switch the installed NixOS system to a profile
 
     [VM Runtime]
@@ -40,10 +39,11 @@ Available recipes:
         network-report # Print real-hardware workstation network validation commands
         logs-report    # Print real-hardware workstation log validation commands
 
-    [Workstation GUI]
-    workstation-gui:
-        build # Build the graphical workstation system closure
-        test  # Validate the graphical workstation profile
+    [Desktop]
+    desktop:
+        build        # Build the desktop system closure
+        test         # Validate the desktop profile
+        power-checks # Print real-hardware desktop power validation commands
 
     [Local Overlay]
     overlay:
@@ -74,14 +74,15 @@ The root profile commands default to the flake `default` target:
 ```sh
 just build
 just test
-just setup
 just switch
 ```
 
 Pass a profile when you want a specific target:
 
 ```sh
-just build workstation-gui
-just test workstation-gui
-just switch workstation-gui
+just build desktop
+just test desktop
+just switch desktop
 ```
+
+`just fmt` runs `dprint fmt`, `just --fmt`, and `nix fmt`.

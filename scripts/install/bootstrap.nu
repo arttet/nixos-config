@@ -316,6 +316,55 @@ def with-password-hash [state: record] {
   }
 }
 
+def normalize-optional-path [value: string] {
+  if ($value | str trim) == "" {
+    ""
+  } else {
+    $value | path expand
+  }
+}
+
+def parse-dotfiles-links [value: string] {
+  if ($value | str trim) == "" {
+    []
+  } else {
+    $value
+    | split row ","
+    | each {|link| $link | str trim }
+    | where {|link| $link != "" }
+    | uniq
+  }
+}
+
+def validate-dotfiles-link [link: string] {
+  if ($link | str starts-with "/") or ($link | str contains "..") {
+    error make { msg: $"dotfiles link must be a relative path without '..': ($link)" }
+  }
+}
+
+def build-sources [state: record] {
+  let dotfiles = normalize-optional-path ($state.dotfiles? | default "")
+
+  if $dotfiles == "" {
+    null
+  } else {
+    let module = normalize-optional-path ($state.dotfiles_module? | default "")
+    let root = normalize-optional-path ($state.dotfiles_root? | default "")
+    let links = parse-dotfiles-links ($state.dotfiles_links? | default "")
+
+    for link in $links {
+      validate-dotfiles-link $link
+    }
+
+    {
+      dotfiles: $dotfiles
+      dotfilesModule: (if $module == "" { null } else { $module })
+      dotfilesRoot: (if $root == "" { $dotfiles } else { $root })
+      links: $links
+    }
+  }
+}
+
 def require-root [] {
   if (which id | length) == 0 {
     error make { msg: "id command is required to verify root privileges before apply" }
@@ -547,7 +596,7 @@ def platform-state [state: record] {
         isAdmin: true
         extraGroups: []
         shell: "nushell"
-        sources: null
+        sources: (build-sources $state)
       }
     ]
   }
@@ -1075,6 +1124,10 @@ def main [
   --hostname: string = ""
   --timezone: string = ""
   --disk: string = ""
+  --dotfiles: string = ""
+  --dotfiles-module: string = ""
+  --dotfiles-root: string = ""
+  --dotfiles-links: string = ""
   --no-ui
 ] {
   apply-ui-mode $no_ui
@@ -1128,6 +1181,26 @@ def main [
   if $disk != "" {
     validate-disk $disk
     $initial = ($initial | upsert disk $disk)
+  }
+
+  if $dotfiles != "" {
+    $initial = ($initial | upsert dotfiles $dotfiles)
+  }
+
+  if $dotfiles_module != "" {
+    $initial = ($initial | upsert dotfiles_module $dotfiles_module)
+  }
+
+  if $dotfiles_root != "" {
+    $initial = ($initial | upsert dotfiles_root $dotfiles_root)
+  }
+
+  if $dotfiles_links != "" {
+    let links = parse-dotfiles-links $dotfiles_links
+    for link in $links {
+      validate-dotfiles-link $link
+    }
+    $initial = ($initial | upsert dotfiles_links $dotfiles_links)
   }
 
   if $apply {
