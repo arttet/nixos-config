@@ -33,15 +33,31 @@ Once a Pull Request is merged into `main`:
 2. **Cloudflare Pages**: Production docs are published. For non-fork PRs, a preview environment is created and a link is posted in the PR comments.
 3. **Lockfile Persistence**: The `flake.lock` is tracked to ensure reproducible builds for all users.
 
+## 🌙 Nightly Workflow
+
+The `Nightly` workflow runs daily after scheduled CI has warmed the Nix cache.
+It updates `flake.lock`, checks out configured dotfiles, runs the installer in
+dry-run mode to generate a fake `platform.state` user, and validates the
+`desktop` target against that generated state.
+
+Scheduled runs never push changes. Manual runs open a `flake.lock` update Pull
+Request only when the `deploy` input is `true`, the desktop validation passes,
+and `flake.lock` changed.
+
 ## ⚙️ CI Configuration
 
 GitHub Actions uses repository or environment configuration for sensitive values or project-specific flags.
 
 ### Variables
 
-| Name                    | Purpose                                                     |
-| :---------------------- | :---------------------------------------------------------- |
-| `CF_DOCS_PAGES_PROJECT` | Cloudflare Pages project name for documentation deployment. |
+| Name                      | Purpose                                                                  |
+| :------------------------ | :----------------------------------------------------------------------- |
+| `CF_DOCS_PAGES_PROJECT`   | Cloudflare Pages project name for documentation deployment.              |
+| `NIGHTLY_DOTFILES_REPO`   | Required `owner/repo` repository used as nightly fake-user dotfiles.     |
+| `NIGHTLY_DOTFILES_REF`    | Optional dotfiles ref; defaults to `main`.                               |
+| `NIGHTLY_DOTFILES_MODULE` | Optional relative Home Manager module path inside the dotfiles checkout. |
+| `NIGHTLY_DOTFILES_ROOT`   | Optional relative dotfiles root path inside the checkout.                |
+| `NIGHTLY_DOTFILES_LINKS`  | Optional comma-separated relative dotfile link paths.                    |
 
 ### Secrets
 
