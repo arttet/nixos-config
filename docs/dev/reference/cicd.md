@@ -1,52 +1,63 @@
-# 🛠️ CI/CD Pipeline
+# CI/CD Pipeline
 
-Every contribution to this repository is automatically validated through a GitHub Actions pipeline. This ensures that the configuration remains buildable, correctly formatted, and technically sound.
+Every contribution is validated through GitHub Actions. CI is split into small
+quality gates first, then heavier Nix profile builds, then documentation
+deployment.
 
-## 🧱 Automated Checks
+## Automated Checks
 
-The CI pipeline runs the following checks on every Pull Request:
+| Check          | Tool                     | Description                                                            |
+| :------------- | :----------------------- | :--------------------------------------------------------------------- |
+| Format         | `dprint`, `just`         | Verifies source formatting and Justfile formatting.                    |
+| Lint           | `yamllint`, `actionlint` | Verifies YAML and GitHub Actions syntax.                               |
+| Nix check      | `nix flake check`        | Runs Nix formatting, schema checks, `statix`, `deadnix`, and policies. |
+| Security       | TruffleHog, Trivy        | Scans for verified or unknown secrets and common security issues.      |
+| Antivirus      | ClamAV                   | Scans the repository for malware signatures.                           |
+| Documentation  | Bun, VitePress, Lychee   | Audits docs dependencies, builds docs, and checks generated links.     |
+| Installer      | Nushell tests            | Validates installer and generated local-state contracts.               |
+| Profile builds | Nix                      | Builds VM, workstation, and desktop closures.                          |
 
-| Check                | Tool                | Description                                                                       |
-| :------------------- | :------------------ | :-------------------------------------------------------------------------------- |
-| **Repository Check** | `just check`        | Runs the production validation gate used by local development and CI.             |
-| **Formatting**       | `checks.formatting` | Verifies that all `.nix` files follow the repository style through `treefmt-nix`. |
-| **Flake Check**      | `nix flake check`   | Validates flake syntax, static policy checks, `statix`, and `deadnix`.            |
-| **Nix Lint**         | `statix`            | Rejects common Nix anti-patterns and suspicious expressions.                      |
-| **Dead Code**        | `deadnix`           | Rejects unused Nix bindings and arguments.                                        |
-| **Documentation**    | `just docs build`   | Ensures the VitePress documentation builds without broken links.                  |
-| **VM Validation**    | `just vm test`      | Boots the configuration in a headless QEMU VM to verify core services.            |
+## Job Strategy
 
-## 🚀 Job Strategy
+- **Single policy gate**: `nix flake check` runs policy checks once. Profile
+  jobs build closures only and do not repeat `vm-policy`, `workstation-policy`,
+  or `desktop-policy`.
+- **Dedicated closures**: VM, headless workstation, and desktop closures are
+  built in separate jobs so the heavy GUI closure is not built twice on the
+  same runner.
+- **Resource management**: the desktop job frees preinstalled runner toolchains
+  before installing Nix.
+- **Caching**: documentation builds use the Bun package cache. Nix jobs rely on
+  `cache.nixos.org`; add an authenticated binary cache such as Cachix or Attic
+  before enabling repository-level Nix write-back caching.
+- **Scheduled refresh**: `Daily Cache Cleanup` clears GitHub Actions caches at
+  01:50 UTC. CI runs at 02:00 UTC to rebuild fresh caches.
 
-The CI workflow is optimized for efficiency and runner disk space:
+## Deployment Workflow
 
-- **Dedicated Closures**: VM, headless workstation, and graphical workstation closures are built in dedicated jobs. This prevents the heavy GUI closure from being built twice on the same runner.
-- **Resource Management**: The graphical workstation job frees preinstalled runner toolchains (Android, .NET, etc.) before installing Nix to ensure enough disk space for large browser and media packages.
-- **Caching**: Nix jobs use **Magic Nix Cache** to reduce repeated downloads and store pressure.
-- **Headless Testing**: `workstation-gui test` is CI-safe. It validates the desktop profile without launching Hyprland or requiring GPU acceleration.
+Once a pull request is merged into `main`:
 
-## 📦 Deployment Workflow
+1. GitHub Pages documentation is deployed from the CI docs artifact.
+2. Cloudflare Pages production docs are deployed when Cloudflare configuration
+   is available.
+3. Non-fork pull requests receive a Cloudflare preview comment when Cloudflare
+   configuration is available.
 
-Once a Pull Request is merged into `main`:
+## Nightly Workflow
 
-1. **GitHub Pages**: The documentation is automatically built and deployed.
-2. **Cloudflare Pages**: Production docs are published. For non-fork PRs, a preview environment is created and a link is posted in the PR comments.
-3. **Lockfile Persistence**: The `flake.lock` is tracked to ensure reproducible builds for all users.
+The `Nightly` workflow runs daily after scheduled CI. It updates `flake.lock`,
+checks out configured dotfiles, runs the installer in dry-run mode to generate a
+fake `platform.state` user, and validates the `desktop` target against that
+generated state.
 
-## 🌙 Nightly Workflow
+Scheduled runs never push changes. Manual runs open a `flake.lock` update pull
+request only when the `deploy` input is `true`, desktop validation passes, and
+`flake.lock` changed.
 
-The `Nightly` workflow runs daily after scheduled CI has warmed the Nix cache.
-It updates `flake.lock`, checks out configured dotfiles, runs the installer in
-dry-run mode to generate a fake `platform.state` user, and validates the
-`desktop` target against that generated state.
+## CI Configuration
 
-Scheduled runs never push changes. Manual runs open a `flake.lock` update Pull
-Request only when the `deploy` input is `true`, the desktop validation passes,
-and `flake.lock` changed.
-
-## ⚙️ CI Configuration
-
-GitHub Actions uses repository or environment configuration for sensitive values or project-specific flags.
+GitHub Actions uses repository variables and secrets for project-specific
+deployment and nightly inputs.
 
 ### Variables
 
@@ -66,14 +77,13 @@ GitHub Actions uses repository or environment configuration for sensitive values
 | `CLOUDFLARE_ACCOUNT_ID` | Account identifier used by Wrangler.          |
 | `CLOUDFLARE_API_TOKEN`  | API token used to deploy to Cloudflare Pages. |
 
-## 🧪 Running Validation Locally
+## Running Validation Locally
 
-You should always run the core validation suite before pushing your changes:
+Run the core validation suite before pushing:
 
 ```sh
 just check
 ```
 
-This meta-recipe runs the same Nix validation gate as CI: `nix flake check`.
-The flake check includes formatting, `statix`, `deadnix`, and repository policy
-assertions.
+This runs `nix flake check`, including formatting, `statix`, `deadnix`, schema
+checks, and repository policy assertions.

@@ -10,3 +10,4 @@
 target/
 result
 .wrangler/
+.lycheecache
