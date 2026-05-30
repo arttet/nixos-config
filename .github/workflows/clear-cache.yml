@@ -1,8 +1,8 @@
-name: Clear Cache Weekly
+name: Clear Cache
 
 on:
   schedule:
-    - cron: "0 0 * * 0" # Midnight every Sunday
+    - cron: "50 1 * * *" # Daily before scheduled CI cache warmup
   workflow_dispatch:
 
 jobs:
