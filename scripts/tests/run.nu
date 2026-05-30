@@ -9,6 +9,10 @@ def run-test [name: string, command: list<string>] {
 }
 
 def main [] {
+  $env.NIX_CONFIG_NO_UI = "1"
+  $env.NIX_CONFIG_INSTALL_PLAIN_UI = "1"
+  $env.NO_COLOR = "1"
+
   run-test "install unit tests" [ "nu" "scripts/tests/install.nu" ]
   run-test "generated installer config tests" [ "nu" "scripts/tests/install-generate.nu" ]
   run-test "local template sync tests" [ "nu" "scripts/tests/local-sync.nu" ]

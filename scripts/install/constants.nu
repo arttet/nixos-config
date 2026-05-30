@@ -9,6 +9,10 @@ export def default-state [] {
     hostname: "pc"
     timezone: "UTC"
     disk: ""
+    dotfiles: ""
+    dotfiles_module: ""
+    dotfiles_root: ""
+    dotfiles_links: ""
     action: "dry-run"
   }
 }

@@ -368,6 +368,51 @@ def assert-home-state-version [root: string, hardware: string] {
   assert ($source_check.stdout | str contains $root) "dotfile link source must point at the mutable dotfiles root"
 }
 
+def assert-generated-dotfiles-state [root: string, hardware: string] {
+  let dotfiles = $"($root)/dotfiles"
+  let module = $"($dotfiles)/home.nix"
+
+  mkdir $dotfiles
+  "{ ... }: { home.file.\"nightly-check\".text = \"ok\"; }" | save --force $module
+
+  let result = (
+    with-env {
+      HOME: $root
+      NIX_CONFIG_INSTALL_STATE_DIR: $"($root)/dotfiles-state"
+      NIX_CONFIG_INSTALL_VOLATILE_DIR: $"($root)/dotfiles-run"
+      NIX_CONFIG_INSTALL_PLAIN_UI: "1"
+      NO_COLOR: "1"
+    } {
+      nu scripts/install/bootstrap.nu --dry-run --session nightly --profile desktop --user-description User --user user --password ci-password --hostname nightly --timezone UTC --disk (test-disk-path) --dotfiles $dotfiles --dotfiles-module $module --dotfiles-links "config/nushell,config/git" | complete
+    }
+  )
+
+  assert equal $result.exit_code 0 $"installer dry-run with dotfiles failed; stderr: ($result.stderr)"
+
+  let state = $"($root)/dotfiles-state/nightly/state.json"
+  let platform_state = (open $state | from json)
+  let user = ($platform_state.users | get 0)
+
+  assert equal $platform_state.host.hostname "nightly"
+  assert equal $user.sources.dotfiles $dotfiles
+  assert equal $user.sources.dotfilesModule $module
+  assert equal $user.sources.dotfilesRoot $dotfiles
+  assert equal $user.sources.links [ "config/nushell" "config/git" ]
+
+  let schema_check = (check-jsonschema --schemafile schemas/platform-state.v1.schema.json $state | complete)
+  assert-command-ok "validate generated dotfiles platform state" $schema_check
+
+  let hm_check = (
+    with-env {
+      NIX_CONFIG_LOCAL_STATE: $state
+      NIX_CONFIG_LOCAL_HARDWARE: $hardware
+    } {
+      nix eval --impure ".#nixosConfigurations.desktop.config.home-manager.users.user.home.username" --apply 'name: if name == "user" then "ok" else throw "home-manager user was not generated from dotfiles state"' | complete
+    }
+  )
+  assert-command-ok "generated dotfiles home-manager user" $hm_check
+}
+
 def main [] {
   for command in [ "mktemp" "nu" "install" "chmod" "shred" ] {
     require-command $command
@@ -443,6 +488,7 @@ def main [] {
       assert-missing-state-error $root $paths.hardware
       assert-platform-state-hardening $root $paths.hardware
       assert-home-state-version $root $paths.hardware
+      assert-generated-dotfiles-state $root $paths.hardware
     } else {
       print "skipping Nix-dependent generated config checks; nix or nix-instantiate is missing"
     }

@@ -21,8 +21,12 @@ export def use-gum [] {
   not (plain-ui) and ((which gum | length) > 0)
 }
 
+export def ui-too-narrow [] {
+  (ui-width) < 72
+}
+
 export def require-ui-tools [] {
-  if not (plain-ui) and ((which gum | length) == 0) {
+  if not (plain-ui) and not (ui-too-narrow) and ((which gum | length) == 0) {
     error make { msg: "gum is required for the interactive installer UI; set NIX_CONFIG_INSTALL_PLAIN_UI=1 for plain test output" }
   }
 }
@@ -87,7 +91,7 @@ export def render-screen [
   rows: list<string>
   --danger
 ] {
-  if (no-ui) {
+  if (no-ui) or (ui-too-narrow) {
     return ([ $title ] | append $rows | str join "\n")
   }
 
