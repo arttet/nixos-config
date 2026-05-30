@@ -1,0 +1,194 @@
+name: Nightly
+
+on:
+  schedule:
+    - cron: "0 3 * * *" # After scheduled CI warms the Nix cache
+  workflow_dispatch:
+    inputs:
+      deploy:
+        description: Open flake.lock update PR after successful nightly validation
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: nightly-${{ github.ref }}
+  cancel-in-progress: false
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  preflight:
+    name: Preflight
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      id-token: write
+    outputs:
+      deploy: ${{ steps.preflight.outputs.deploy }}
+      dotfiles_repo: ${{ steps.preflight.outputs.dotfiles_repo }}
+      dotfiles_ref: ${{ steps.preflight.outputs.dotfiles_ref }}
+      dotfiles_module: ${{ steps.preflight.outputs.dotfiles_module }}
+      dotfiles_root: ${{ steps.preflight.outputs.dotfiles_root }}
+      dotfiles_links: ${{ steps.preflight.outputs.dotfiles_links }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Install Nix
+        uses: cachix/install-nix-action@v31
+        with:
+          extra_nix_config: |
+            experimental-features = nix-command flakes
+
+      - name: Setup Nix cache
+        uses: DeterminateSystems/magic-nix-cache-action@main
+
+      - name: Validate nightly inputs
+        id: preflight
+        env:
+          GITHUB_EVENT_NAME: ${{ github.event_name }}
+          NIGHTLY_DEPLOY: ${{ github.event_name == 'workflow_dispatch' && inputs.deploy }}
+          NIGHTLY_DOTFILES_REPO: ${{ vars.NIGHTLY_DOTFILES_REPO }}
+          NIGHTLY_DOTFILES_REF: ${{ vars.NIGHTLY_DOTFILES_REF || 'main' }}
+          NIGHTLY_DOTFILES_MODULE: ${{ vars.NIGHTLY_DOTFILES_MODULE }}
+          NIGHTLY_DOTFILES_ROOT: ${{ vars.NIGHTLY_DOTFILES_ROOT }}
+          NIGHTLY_DOTFILES_LINKS: ${{ vars.NIGHTLY_DOTFILES_LINKS }}
+        run: nix shell nixpkgs#nushell -c nu scripts/ci/nightly-preflight.nu
+
+  nightly:
+    name: Desktop Nightly
+    runs-on: ubuntu-latest
+    needs: preflight
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      id-token: write
+    outputs:
+      lock_changed: ${{ steps.lock.outputs.changed }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Free Disk Space for Desktop
+        uses: endersonmenezes/free-disk-space@v3
+        with:
+          remove_android: true
+          remove_dotnet: true
+          remove_haskell: true
+          rm_cmd: "rmz"
+
+      - name: Install Nix
+        uses: cachix/install-nix-action@v31
+        with:
+          extra_nix_config: |
+            experimental-features = nix-command flakes
+
+      - name: Setup Nix cache
+        uses: DeterminateSystems/magic-nix-cache-action@main
+
+      - name: Setup Just
+        uses: extractions/setup-just@v4
+
+      - name: Update flake lock
+        run: nix flake update
+
+      - name: Checkout nightly dotfiles
+        uses: actions/checkout@v6
+        with:
+          repository: ${{ needs.preflight.outputs.dotfiles_repo }}
+          ref: ${{ needs.preflight.outputs.dotfiles_ref }}
+          path: target/ci/dotfiles
+          persist-credentials: false
+
+      - name: Prepare nightly platform state
+        id: prepare
+        env:
+          NIGHTLY_DOTFILES_MODULE: ${{ needs.preflight.outputs.dotfiles_module }}
+          NIGHTLY_DOTFILES_ROOT: ${{ needs.preflight.outputs.dotfiles_root }}
+          NIGHTLY_DOTFILES_LINKS: ${{ needs.preflight.outputs.dotfiles_links }}
+        run: nix shell nixpkgs#nushell nixpkgs#whois nixpkgs#check-jsonschema -c nu scripts/ci/nightly-prepare.nu
+
+      - name: Validate nightly platform state
+        run: nix shell nixpkgs#check-jsonschema -c check-jsonschema --schemafile schemas/platform-state.v1.schema.json "${{ steps.prepare.outputs.state }}"
+
+      - name: Validate desktop
+        env:
+          NIX_CONFIG_LOCAL_STATE: ${{ steps.prepare.outputs.state }}
+        run: just desktop test
+
+      - name: Capture lockfile diff
+        id: lock
+        if: ${{ always() }}
+        run: |
+          mkdir -p target/ci/update
+          if git diff --quiet -- flake.lock; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            {
+              echo "## Flake lock"
+              echo "No flake.lock changes."
+            } >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            cp flake.lock target/ci/update/flake.lock
+            git diff -- flake.lock > target/ci/update/flake-lock.diff
+            {
+              echo "## Flake lock"
+              echo "flake.lock changed after nix flake update."
+              echo ""
+              echo '```diff'
+              sed -n '1,240p' target/ci/update/flake-lock.diff
+              echo '```'
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Upload lockfile update
+        uses: actions/upload-artifact@v7
+        if: ${{ steps.lock.outputs.changed == 'true' }}
+        with:
+          name: nightly-flake-update
+          path: target/ci/update/
+
+  deploy:
+    name: Open Update PR
+    runs-on: ubuntu-latest
+    needs: [preflight, nightly]
+    timeout-minutes: 30
+    if: ${{ needs.preflight.outputs.deploy == 'true' && needs.nightly.outputs.lock_changed == 'true' }}
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Download lockfile update
+        uses: actions/download-artifact@v8
+        with:
+          name: nightly-flake-update
+          path: target/ci/update
+
+      - name: Apply lockfile update
+        run: cp target/ci/update/flake.lock flake.lock
+
+      - name: Create flake update PR
+        uses: peter-evans/create-pull-request@v7
+        with:
+          branch: automation/nightly-flake-update-${{ github.run_id }}
+          commit-message: "chore: update flake lock"
+          title: "chore: update flake lock"
+          body: |
+            Nightly desktop validation passed with the updated flake lock.
+
+            This PR was created from a manual Nightly run with `deploy=true`.
+          delete-branch: true
