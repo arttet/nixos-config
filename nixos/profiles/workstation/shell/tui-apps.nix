@@ -1,7 +1,7 @@
-{ pkgs, yazi, ... }:
+{ pkgs, ... }:
 {
   environment.systemPackages = [
-    yazi.packages.${pkgs.stdenv.hostPlatform.system}.default
+    pkgs.yazi
     pkgs.lazygit
     pkgs.lazydocker
     pkgs.zellij
