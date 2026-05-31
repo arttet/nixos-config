@@ -2,10 +2,10 @@
   description = "NixOS Configuration: personal reproducible infrastructure";
 
   inputs = {
-    nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
+    nixpkgs.url = "github:nixos/nixpkgs/nixos-26.05";
     disko.url = "github:nix-community/disko/latest";
     disko.inputs.nixpkgs.follows = "nixpkgs";
-    home-manager.url = "github:nix-community/home-manager/master";
+    home-manager.url = "github:nix-community/home-manager/release-26.05";
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
     treefmt-nix.url = "github:numtide/treefmt-nix";
     treefmt-nix.inputs.nixpkgs.follows = "nixpkgs";
@@ -14,8 +14,6 @@
     walker.url = "github:abenz1267/walker";
     walker.inputs.nixpkgs.follows = "nixpkgs";
     walker.inputs.systems.follows = "systems";
-    yazi.url = "github:sxyazi/yazi";
-    yazi.inputs.nixpkgs.follows = "nixpkgs";
     systems.url = "github:nix-systems/default-linux";
   };
 
@@ -28,7 +26,6 @@
       treefmt-nix,
       zen-browser,
       walker,
-      yazi,
       ...
     }:
     let
@@ -105,7 +102,6 @@
           home-manager
           zen-browser
           walker
-          yazi
           ;
       };
       workstationStorageExample = nixpkgs.lib.nixosSystem {
