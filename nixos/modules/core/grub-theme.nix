@@ -14,7 +14,7 @@ let
   };
 
   themePackage = pkgs.graphite-grub-theme.overrideAttrs (_oldAttrs: {
-    inherit (cfg) variant resolution;
+    inherit (cfg) variant resolution fontSize;
   });
 in
 {
@@ -45,6 +45,17 @@ in
       default = "1080p";
       description = "Screen resolution variant.";
     };
+
+    fontSize = lib.mkOption {
+      type = lib.types.enum [
+        "16"
+        "24"
+        "32"
+        "48"
+      ];
+      default = "16";
+      description = "GRUB menu font size. Available sizes depend on the theme package.";
+    };
   };
 
   config = lib.mkIf cfg.enable {
@@ -56,11 +67,15 @@ in
     ];
 
     boot.loader.grub = {
-      theme = lib.mkForce "${themePackage}/share/grub/themes/graphite/theme.txt";
+      theme = lib.mkForce "${themePackage}/share/grub/themes/graphite";
       splashImage = lib.mkForce "${themePackage}/share/grub/themes/graphite/background.png";
-      font = lib.mkForce "${themePackage}/share/grub/themes/graphite/dejavu_sans_16.pf2";
+      font = lib.mkForce "${themePackage}/share/grub/themes/graphite/dejavu_sans_${cfg.fontSize}.pf2";
       gfxmodeEfi = lib.mkDefault resolutionToGfxmode.${cfg.resolution};
       gfxmodeBios = lib.mkDefault resolutionToGfxmode.${cfg.resolution};
+      extraConfig = ''
+        # Load Terminus font for terminal mode (classic monospace look)
+        loadfont ''${prefix}/theme/terminus-14.pf2
+      '';
     };
   };
 }

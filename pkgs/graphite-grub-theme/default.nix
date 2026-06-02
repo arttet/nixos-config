@@ -17,6 +17,7 @@ stdenvNoCC.mkDerivation (finalAttrs: {
 
   variant = "default";
   resolution = "1080p";
+  fontSize = "16";
 
   installPhase =
     let
@@ -43,6 +44,12 @@ stdenvNoCC.mkDerivation (finalAttrs: {
 
       # Assets (select_*.png, viewbox.png, info.png)
       cp $src/other/grub2/assets/${assetsDir}/${finalAttrs.resolution}/*.png $out/share/grub/themes/graphite/
+
+      # Make theme.txt writable before modifying it
+      chmod +w $out/share/grub/themes/graphite/theme.txt
+      # Patch theme.txt to use available DejaVu Sans fonts instead of missing Unifont
+      substituteInPlace $out/share/grub/themes/graphite/theme.txt \
+        --replace-fail "Unifont Regular 16" "DejaVu Sans Regular ${finalAttrs.fontSize}"
 
       runHook postInstall
     '';
