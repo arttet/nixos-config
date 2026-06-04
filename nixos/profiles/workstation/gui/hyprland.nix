@@ -24,7 +24,6 @@ let
     '';
   };
   uwsm = lib.getExe config.programs.uwsm.package;
-  tuigreet = if builtins.hasAttr "tuigreet" pkgs then pkgs.tuigreet else pkgs.greetd.tuigreet;
 in
 {
   programs.hyprland = {
@@ -46,9 +45,6 @@ in
     configPackages = [ pkgs.hyprland ];
     extraPortals = [ pkgs.xdg-desktop-portal-hyprland ];
   };
-
-  services.greetd.settings.default_session.command =
-    lib.mkForce "${lib.getExe tuigreet} --time --remember --cmd '${uwsm} start hyprland-uwsm.desktop'";
 
   environment.systemPackages = [
     pkgs.hyprpaper
@@ -81,7 +77,6 @@ in
     hl.on("hyprland.start", function()
         hl.exec_cmd("uwsm finalize")
         hl.exec_cmd("systemctl --user import-environment WAYLAND_DISPLAY XDG_CURRENT_DESKTOP")
-        hl.exec_cmd("systemctl --user restart elephant.service walker.service")
     end)
 
     hl.config({

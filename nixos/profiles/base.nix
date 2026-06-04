@@ -35,8 +35,17 @@
         inherit (prev) lndir;
       };
     })
-    (final: _prev: {
-      graphite-grub-theme = final.callPackage ../../pkgs/graphite-grub-theme { };
+    (final: prev: {
+      graphite-gtk-theme = prev.graphite-gtk-theme.override {
+        themeVariants = [ "default" ];
+        colorVariants = [
+          "light"
+          "dark"
+        ];
+        tweaks = [ "nord" ];
+        wallpapers = true;
+      };
+      graphite-grub-theme = final.callPackage ../pkgs/graphite-grub-theme { };
     })
   ];
 

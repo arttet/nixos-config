@@ -35,6 +35,8 @@
       };
       inherit (nixpkgs) lib;
 
+      configsDir = ./nixos/configs;
+
       version = "0.1.0";
       revision = if self ? rev then self.shortRev else "dev";
       fullVersion = "${version}-${revision}";
@@ -99,6 +101,7 @@
       moduleArgs = localOverlayArgs // {
         inherit
           build
+          configsDir
           home-manager
           zen-browser
           walker
@@ -132,7 +135,9 @@
       lib.build = build;
 
       formatter.${system} = treefmtEval.config.build.wrapper;
-      packages.${system}.default = self.nixosConfigurations.default.config.system.build.toplevel;
+      packages.${system} = {
+        default = self.nixosConfigurations.default.config.system.build.toplevel;
+      };
       devShells.${system}.default = pkgs.mkShell {
         packages = with pkgs; [
           check-jsonschema
