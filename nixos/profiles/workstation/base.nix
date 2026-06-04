@@ -26,6 +26,7 @@
   boot.loader = {
     grub = {
       enable = true;
+      configurationLimit = 10;
       device = "nodev";
       efiSupport = true;
       useOSProber = false;
@@ -46,7 +47,11 @@
 
   services.timesyncd.enable = lib.mkDefault true;
   system.autoUpgrade.enable = lib.mkDefault false;
-  console.keyMap = lib.mkDefault "us";
+  console = {
+    font = lib.mkDefault "ter-v18n";
+    keyMap = lib.mkDefault "us";
+    packages = [ pkgs.terminus_font ];
+  };
   services.xserver.xkb = {
     layout = lib.mkDefault "us,ru";
     options = lib.mkDefault "grp:alt_shift_toggle";

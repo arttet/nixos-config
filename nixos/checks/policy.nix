@@ -199,6 +199,10 @@ in
       message = "workstation must disable OS prober";
     }
     {
+      assertion = workstation.boot.loader.grub.configurationLimit == 10;
+      message = "workstation GRUB must keep 10 boot generations";
+    }
+    {
       assertion = workstation.boot.initrd.systemd.enable;
       message = "workstation must enable systemd initrd";
     }
@@ -298,6 +302,10 @@ in
     {
       assertion = workstation.console.keyMap == "us";
       message = "workstation console keymap must be us";
+    }
+    {
+      assertion = workstation.console.font == "ter-v18n";
+      message = "workstation console font must use Terminus 18";
     }
     {
       assertion = workstation.platform.network.enable;
@@ -611,10 +619,17 @@ in
       message = "desktop must enable greetd";
     }
     {
+      assertion = desktop.platform.greetd.greeter == "regreet";
+      message = "desktop must use ReGreet as the default greeter";
+    }
+    {
       assertion =
-        builtins.match ".*tuigreet.*--cmd .*uwsm start hyprland-uwsm.desktop.*" desktop.services.greetd.settings.default_session.command
-        != null;
-      message = "desktop greetd must launch Hyprland through UWSM";
+        builtins.match ".*hyprland-greeter\\.lua" desktop.services.greetd.settings.default_session.command
+        != null
+        ||
+          builtins.match ".*tuigreet.*--cmd .*uwsm start hyprland-uwsm.desktop.*" desktop.services.greetd.settings.default_session.command
+          != null;
+      message = "desktop greetd must launch Hyprland greeter (regreet via hyprland-greeter.lua) or tuigreet via UWSM";
     }
     {
       assertion = desktop.boot.kernel.sysctl."user.max_user_namespaces" > 0;

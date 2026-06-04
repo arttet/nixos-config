@@ -3,10 +3,12 @@
   lib,
   ...
 }:
-let
-  tuigreet = if builtins.hasAttr "tuigreet" pkgs then pkgs.tuigreet else pkgs.greetd.tuigreet;
-in
 {
+  imports = [
+    ../../../modules/core/greetd.nix
+    ../../../modules/themes/default.nix
+  ];
+
   hardware.graphics.enable = lib.mkDefault true;
   hardware.bluetooth.enable = lib.mkDefault true;
 
@@ -23,13 +25,11 @@ in
 
   services.blueman.enable = lib.mkDefault false;
 
-  services.greetd = {
+  platform.greetd = {
     enable = lib.mkDefault true;
-    settings.default_session = {
-      command = lib.mkDefault "${lib.getExe tuigreet} --time --remember";
-      user = "greeter";
-    };
+    greeter = lib.mkDefault "regreet";
   };
+  platform.theme.enable = lib.mkDefault true;
 
   services.pipewire = {
     enable = lib.mkDefault true;
@@ -87,7 +87,6 @@ in
   };
 
   environment.systemPackages = [
-    tuigreet
     pkgs.adwaita-icon-theme
     pkgs.cifs-utils
     pkgs.libsForQt5.qtwayland
