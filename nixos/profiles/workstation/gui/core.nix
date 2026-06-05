@@ -6,6 +6,7 @@
 {
   imports = [
     ../../../modules/core/greetd.nix
+    ../../../modules/core/sddm.nix
     ../../../modules/themes/default.nix
   ];
 
@@ -25,10 +26,9 @@
 
   services.blueman.enable = lib.mkDefault false;
 
-  platform.greetd = {
-    enable = lib.mkDefault true;
-    greeter = lib.mkDefault "regreet";
-  };
+  platform.greetd.enable = lib.mkDefault false;
+  platform.sddm.enable = lib.mkDefault true;
+  platform.bootUx.quiet = lib.mkDefault true;
   platform.theme.enable = lib.mkDefault true;
 
   services.pipewire = {
@@ -81,8 +81,6 @@
     NIXOS_OZONE_WL = "1";
     MOZ_ENABLE_WAYLAND = "1";
     MOZ_DBUS_REMOTE = "1";
-    XCURSOR_THEME = "Adwaita";
-    XCURSOR_SIZE = "24";
     GTK_USE_PORTAL = "1";
   };
 

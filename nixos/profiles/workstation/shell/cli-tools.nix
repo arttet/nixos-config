@@ -9,6 +9,7 @@
     bat
     chafa
     delta
+    dprint
     dust
     duf
     eza

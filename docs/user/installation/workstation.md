@@ -186,7 +186,7 @@ Nushell, so the shell-specific checks below use Nushell syntax.
 | Mounted filesystems  | `findmnt`                                             | Installed filesystems are visible       |
 | Swap                 | `swapon --show`                                       | Swap is available                       |
 | Network              | `systemctl status NetworkManager`                     | NetworkManager is active                |
-| Login manager        | `systemctl status greetd`                             | `greetd` is active                      |
+| Login manager        | `systemctl status display-manager`                    | SDDM is active                          |
 | Session type         | See the Nushell command below                         | Output is `wayland`                     |
 | Hyprland version     | `hyprctl version`                                     | Hyprland responds                       |
 | Displays             | `hyprctl monitors`                                    | Connected monitors are listed           |
