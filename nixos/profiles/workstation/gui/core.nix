@@ -59,8 +59,8 @@
     defaultApplications."inode/directory" = lib.mkDefault "thunar.desktop";
   };
 
-  # Libvirt is installed but not auto-started. Start the daemon manually
-  # when you want to use QEMU/KVM virtual machines.
+  # Libvirt is installed for manual QEMU/KVM use, but its services should not
+  # participate in the normal boot path.
   #   doas systemctl start libvirtd
   virtualisation.libvirtd = {
     enable = lib.mkDefault true;
@@ -70,6 +70,7 @@
     };
   };
   systemd.services.libvirtd.wantedBy = lib.mkForce [ ];
+  systemd.services.libvirt-guests.wantedBy = lib.mkForce [ ];
 
   programs.virt-manager.enable = lib.mkDefault true;
 
