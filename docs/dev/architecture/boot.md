@@ -4,7 +4,7 @@ The workstation uses Plymouth for a graphical early boot experience and a
 cleaner LUKS passphrase prompt.
 
 This is an early boot feature. It runs before the root filesystem is unlocked
-and before Hyprland, greetd, AGS, portals, fonts, or user dotfiles are
+and before SDDM, Hyprland, AGS, portals, fonts, or user dotfiles are
 available.
 
 ## Scope
@@ -36,6 +36,8 @@ underlying model simple:
 - systemd initrd remains the initrd model;
 - recovery through the official NixOS ISO remains unchanged.
 
+GRUB keeps ten boot generations for rollback room.
+
 ## Diagnostics
 
 The NixOS Plymouth module adds `splash`. The platform does not force `quiet`.
@@ -43,6 +45,19 @@ The NixOS Plymouth module adds `splash`. The platform does not force `quiet`.
 This keeps boot diagnostics easier to access during the first real hardware
 install. If a host-specific overlay later wants a quieter boot, it can add
 `quiet` deliberately after hardware validation.
+
+The graphical `desktop` target enables the quiet path by default after the
+baseline workstation layer is composed. It hides the normal boot stream behind
+Plymouth while preserving diagnostics in the persistent systemd journal. The
+headless `workstation` target remains verbose enough for install and recovery
+diagnostics.
+
+`platform.bootUx.earlyGraphicsDrivers` defaults to `[ "amdgpu" ]` so Plymouth
+can render in DRM mode immediately after the boot loader on AMD machines. Hosts
+with Intel iGPU or Nouveau can override the list in their local overlay:
+`platform.bootUx.earlyGraphicsDrivers = [ "i915" ];`. The platform avoids
+loading multiple DRM drivers at once because that can make the initrd too large
+for the fixed `/boot` partition.
 
 If Plymouth causes trouble during boot:
 
@@ -71,6 +86,27 @@ CI cannot validate that:
 - no black screen appears before decrypt.
 
 Those checks require real hardware.
+
+## Handoff to the display manager
+
+The graphical target uses the NixOS SDDM integration instead of a custom
+compositor-based greeter:
+
+1. Plymouth owns the early boot display and encrypted-root prompt.
+2. The standard NixOS display-manager ordering stops Plymouth before SDDM takes
+   over the display. There are no custom `plymouth quit` calls in the greeter.
+3. SDDM starts its Qt6 greeter on the KWin Wayland compositor and loads
+   `sddm-astronaut-theme`.
+4. SDDM preselects `hyprland-uwsm`. A successful login starts the existing UWSM
+   session, whose desktop entry executes `/run/current-system/sw/bin/start-hyprland`.
+
+The platform keeps `services.xserver.enable = false`. This makes the SDDM
+greeter Wayland-only while retaining XWayland inside the user Hyprland session
+for application compatibility.
+
+The `platform.greetd` module remains available only as a disabled,
+mutually-exclusive `tuigreet` fallback. It is not part of the normal desktop
+boot path.
 
 ## Real Hardware Validation
 

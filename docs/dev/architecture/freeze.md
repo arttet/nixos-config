@@ -81,7 +81,8 @@ need it. It is not an X11 desktop/session.
 
 The graphical runtime is intentionally minimal:
 
-- `greetd` and `tuigreet` provide the login flow.
+- SDDM provides the normal Qt6/Wayland login flow.
+- `greetd` with `tuigreet` remains an optional disabled fallback.
 - Hyprland is the Wayland compositor.
 - Hardware graphics support is enabled only in the GUI target.
 - PipeWire and WirePlumber provide audio runtime.
@@ -189,7 +190,7 @@ Useful runtime inspection after installation:
 
 ```sh
 nix path-info -Sh .#nixosConfigurations.workstation-gui.config.system.build.toplevel
-systemctl status greetd
+systemctl status display-manager
 systemctl --user status pipewire
 journalctl -b
 hyprctl version

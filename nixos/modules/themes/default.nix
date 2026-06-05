@@ -6,6 +6,9 @@
 }:
 let
   cfg = config.platform.theme;
+  cursorPackage = pkgs.catppuccin-cursors.mochaBlue;
+  cursorName = "catppuccin-mocha-blue-cursors";
+  cursorSize = 24;
   darkThemeVariants = [
     "nord"
     "dark"
@@ -59,13 +62,23 @@ in
       Settings = {
         gtk-theme-name = gtkThemeName;
         gtk-icon-theme-name = "Adwaita";
-        gtk-cursor-theme-name = "Adwaita";
+        gtk-cursor-theme-name = cursorName;
+        gtk-cursor-theme-size = cursorSize;
         gtk-font-name = "DejaVu Sans 11";
       };
     };
 
+    environment.sessionVariables = {
+      XCURSOR_PATH = lib.mkAfter [ "${cursorPackage}/share/icons" ];
+      XCURSOR_SIZE = toString cursorSize;
+      XCURSOR_THEME = cursorName;
+    };
+
     # Packages
-    environment.systemPackages = lib.optionals (cfg.name == "graphite") [
+    environment.systemPackages = [
+      cursorPackage
+    ]
+    ++ lib.optionals (cfg.name == "graphite") [
       pkgs.graphite-gtk-theme
     ];
   };

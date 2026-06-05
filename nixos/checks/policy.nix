@@ -615,21 +615,65 @@ in
       message = "desktop must enable GRUB theme";
     }
     {
-      assertion = desktop.services.greetd.enable;
-      message = "desktop must enable greetd";
-    }
-    {
-      assertion = desktop.platform.greetd.greeter == "regreet";
-      message = "desktop must use ReGreet as the default greeter";
+      assertion =
+        desktop.platform.sddm.enable
+        && desktop.services.displayManager.sddm.enable
+        && !desktop.platform.greetd.enable
+        && !desktop.services.greetd.enable;
+      message = "desktop must use SDDM and keep the greetd fallback disabled";
     }
     {
       assertion =
-        builtins.match ".*hyprland-greeter\\.lua" desktop.services.greetd.settings.default_session.command
-        != null
-        ||
-          builtins.match ".*tuigreet.*--cmd .*uwsm start hyprland-uwsm.desktop.*" desktop.services.greetd.settings.default_session.command
-          != null;
-      message = "desktop greetd must launch Hyprland greeter (regreet via hyprland-greeter.lua) or tuigreet via UWSM";
+        packageName desktop.services.displayManager.sddm.package == "sddm"
+        && desktop.services.displayManager.sddm.wayland.enable
+        && desktop.services.displayManager.sddm.wayland.compositor == "kwin"
+        && desktop.services.displayManager.sddm.theme == "sddm-astronaut-theme"
+        &&
+          desktop.services.displayManager.sddm.settings.Theme.CursorTheme == "catppuccin-mocha-blue-cursors"
+        && desktop.services.displayManager.sddm.settings.Theme.CursorSize == 24
+        && contains "XCURSOR_THEME=catppuccin-mocha-blue-cursors" desktop.services.displayManager.sddm.settings.General.GreeterEnvironment
+        && contains "XCURSOR_SIZE=24" desktop.services.displayManager.sddm.settings.General.GreeterEnvironment
+        && contains "XCURSOR_PATH=" desktop.services.displayManager.sddm.settings.General.GreeterEnvironment
+        && contains "QT_WAYLAND_SHELL_INTEGRATION=layer-shell" desktop.services.displayManager.sddm.settings.General.GreeterEnvironment
+        &&
+          desktop.systemd.services.display-manager.environment.XCURSOR_THEME
+          == "catppuccin-mocha-blue-cursors"
+        && desktop.systemd.services.display-manager.environment.XCURSOR_SIZE == "24"
+        && contains "/share/icons" desktop.systemd.services.display-manager.environment.XCURSOR_PATH
+        && desktop.environment.sessionVariables.XCURSOR_THEME == "catppuccin-mocha-blue-cursors"
+        && desktop.environment.sessionVariables.XCURSOR_SIZE == "24"
+        && contains "/share/icons" desktop.environment.sessionVariables.XCURSOR_PATH
+        && hasPackage "sddm-astronaut" desktop.services.displayManager.sddm.extraPackages
+        && hasPackage "sddm-astronaut" desktop.environment.systemPackages;
+      message = "desktop must use SDDM Qt6 on KWin Wayland with the Catppuccin Mocha Blue cursor";
+    }
+    {
+      assertion = desktop.services.displayManager.defaultSession == "hyprland-uwsm";
+      message = "desktop SDDM must preselect the Hyprland UWSM session";
+    }
+    {
+      assertion =
+        builtins.elem "quiet" desktop.boot.kernelParams
+        && builtins.elem "fbcon=nodefer" desktop.boot.kernelParams
+        && builtins.elem "plymouth.ignore-serial-consoles" desktop.boot.kernelParams
+        && builtins.elem "loglevel=3" desktop.boot.kernelParams
+        && builtins.elem "udev.log_level=3" desktop.boot.kernelParams
+        && builtins.elem "vt.global_cursor_default=0" desktop.boot.kernelParams
+        && !(builtins.elem "systemd.show_status=false" desktop.boot.kernelParams)
+        && !(builtins.elem "rd.systemd.show_status=false" desktop.boot.kernelParams);
+      message = "desktop must use quiet graphical boot parameters";
+    }
+    {
+      assertion =
+        desktop.platform.bootUx.earlyGraphicsDrivers == [ "amdgpu" ]
+        && builtins.elem "amdgpu" desktop.boot.initrd.kernelModules
+        && !(builtins.elem "i915" desktop.boot.initrd.kernelModules)
+        && !(builtins.elem "nouveau" desktop.boot.initrd.kernelModules);
+      message = "desktop must load amdgpu in initrd for early Plymouth DRM (override in host overlay for Intel/Nvidia)";
+    }
+    {
+      assertion = desktop.boot.plymouth.theme == "splash";
+      message = "desktop must preserve the configured Plymouth splash theme";
     }
     {
       assertion = desktop.boot.kernel.sysctl."user.max_user_namespaces" > 0;
