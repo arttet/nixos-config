@@ -669,6 +669,7 @@ in
         && desktop.programs.ssh.enableAskPassword
         && packageName desktop.programs.ssh.package == "openssh"
         && contains "/bin/ksshaskpass" desktop.programs.ssh.askPassword
+        && desktop.environment.sessionVariables.SSH_AUTH_SOCK == "$XDG_RUNTIME_DIR/ssh-agent"
         && !workstation.programs.ssh.startAgent;
       message = "desktop must provide the OpenSSH agent with a graphical PIN prompt";
     }
