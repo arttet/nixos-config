@@ -344,20 +344,28 @@ in
       message = "workstation resolved dnssec must be true";
     }
     {
-      assertion = workstation.services.resolved.settings.Resolve.DNSOverTLS == "true";
-      message = "workstation resolved dnsovertls must be true";
+      assertion = workstation.services.resolved.settings.Resolve.DNSOverTLS == "false";
+      message = "workstation resolved dnsovertls must be false (DoH via dnsproxy)";
     }
     {
       assertion = workstation.services.resolved.settings.Resolve.Domains == [ "~." ];
       message = "workstation resolved domains must route through explicit DNS policy";
     }
     {
+      assertion = workstation.services.resolved.settings.Resolve.DNS == [ "127.0.0.1" ];
+      message = "workstation resolved DNS must point to local dnsproxy";
+    }
+    {
       assertion =
         workstation.services.resolved.settings.Resolve.FallbackDNS == [
-          "1.1.1.1#cloudflare-dns.com"
-          "1.0.0.1#cloudflare-dns.com"
+          "8.8.8.8"
+          "8.8.4.4"
         ];
-      message = "workstation fallback DNS must use Cloudflare DoT endpoints";
+      message = "workstation fallback DNS must use Google DNS";
+    }
+    {
+      assertion = workstation.services.dnsproxy.enable;
+      message = "workstation must enable dnsproxy for DoH";
     }
     {
       assertion = workstation.services.timesyncd.enable;

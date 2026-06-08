@@ -80,6 +80,10 @@ in
           "net.core.default_qdisc" = lib.mkDefault "fq";
           "net.ipv4.tcp_congestion_control" = lib.mkDefault "bbr";
           "net.ipv4.tcp_fastopen" = lib.mkDefault 3;
+          # QUIC / HTTP/3 tuning
+          "net.core.rmem_max" = lib.mkDefault 2500000;
+          "net.core.wmem_max" = lib.mkDefault 2500000;
+          "net.udp.gso" = lib.mkDefault 1;
         };
       })
 
