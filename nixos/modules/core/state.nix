@@ -56,6 +56,28 @@
           }
         ) stateUsers
       );
+      loadGitSigningKey = pkgs.writeTextFile {
+        name = "load-git-signing-key";
+        executable = true;
+        text = ''
+          #!${pkgs.nushell}/bin/nu
+
+          let configured_key = (^${pkgs.git}/bin/git config --global --path user.signingKey | complete)
+          if $configured_key.exit_code != 0 {
+            exit 0
+          }
+
+          let public_key = ($configured_key.stdout | str trim)
+          if ($public_key | is-empty) {
+            exit 0
+          }
+
+          let private_key = ($public_key | str replace --regex '\.pub$' "")
+          if ($private_key | path exists) {
+            ^${pkgs.openssh}/bin/ssh-add $private_key
+          }
+        '';
+      };
       mkUser =
         user:
         let
@@ -137,6 +159,27 @@
                   }) dotfileLinks
                 )
               );
+
+              systemd.user.services.ssh-add-git-signing-key = {
+                Unit = {
+                  Description = "Load the Git SSH signing key";
+                  After = [
+                    "graphical-session.target"
+                    "ssh-agent.service"
+                  ];
+                  Requires = [ "ssh-agent.service" ];
+                  PartOf = [ "graphical-session.target" ];
+                };
+
+                Service = {
+                  Type = "oneshot";
+                  RemainAfterExit = true;
+                  Environment = "SSH_AUTH_SOCK=%t/ssh-agent";
+                  ExecStart = "${loadGitSigningKey}";
+                };
+
+                Install.WantedBy = [ "graphical-session.target" ];
+              };
             };
         };
     in

@@ -51,3 +51,22 @@ To see a list of all users who are currently logged into the system:
 ```sh
 who
 ```
+
+## YubiKey Git Signing
+
+The desktop starts the OpenSSH agent and uses `ksshaskpass` for FIDO2 PIN
+fallback. Home Manager reads `user.signingKey` from the global Git
+configuration, removes a trailing `.pub`, and loads the matching FIDO key handle
+into the agent. Keep `user.signingKey` pointed at the public key file.
+
+After rebuilding and logging in again, verify the agent and signing path:
+
+```sh
+systemctl --user status ssh-agent ssh-add-git-signing-key
+ssh-add -L
+git commit --allow-empty -S -m "test: YubiKey signing"
+git verify-commit HEAD
+```
+
+After failed fingerprint verification, the expected fallback is a graphical
+FIDO2 PIN prompt from `ksshaskpass`.

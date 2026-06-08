@@ -2,6 +2,7 @@
   imports = [
     ./core.nix
     ./hyprland.nix
+    ./ssh-agent.nix
     ./session-services.nix
     ./wayland-tools.nix
     ./desktop-shell.nix

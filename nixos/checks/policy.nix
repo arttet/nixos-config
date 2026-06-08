@@ -665,6 +665,15 @@ in
     }
     {
       assertion =
+        desktop.programs.ssh.startAgent
+        && desktop.programs.ssh.enableAskPassword
+        && packageName desktop.programs.ssh.package == "openssh"
+        && contains "/bin/ksshaskpass" desktop.programs.ssh.askPassword
+        && !workstation.programs.ssh.startAgent;
+      message = "desktop must provide the OpenSSH agent with a graphical PIN prompt";
+    }
+    {
+      assertion =
         builtins.elem "quiet" desktop.boot.kernelParams
         && builtins.elem "fbcon=nodefer" desktop.boot.kernelParams
         && builtins.elem "plymouth.ignore-serial-consoles" desktop.boot.kernelParams
