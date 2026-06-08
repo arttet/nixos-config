@@ -12,6 +12,14 @@ First, update the lockfile to fetch the latest revisions of your inputs (like `n
 nix flake update
 ```
 
+The AI command-line tools Gemini, Codex, Claude, and OpenCode use the separately
+pinned `nixpkgs-unstable` input. Update only those tools without changing the
+main system package set:
+
+```sh
+nix flake update nixpkgs-unstable
+```
+
 Finally, apply the update to your live system:
 
 ```sh

@@ -3,6 +3,7 @@
 
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-26.05";
+    nixpkgs-unstable.url = "github:nixos/nixpkgs/nixpkgs-unstable";
     disko.url = "github:nix-community/disko/latest";
     disko.inputs.nixpkgs.follows = "nixpkgs";
     home-manager.url = "github:nix-community/home-manager/release-26.05";
@@ -23,6 +24,7 @@
       disko,
       home-manager,
       nixpkgs,
+      nixpkgs-unstable,
       treefmt-nix,
       zen-browser,
       walker,
@@ -32,6 +34,10 @@
       system = "x86_64-linux";
       pkgs = import nixpkgs {
         inherit system;
+      };
+      unstablePkgs = import nixpkgs-unstable {
+        inherit system;
+        config.allowUnfreePredicate = pkg: nixpkgs.lib.getName pkg == "claude-code";
       };
       inherit (nixpkgs) lib;
 
@@ -103,6 +109,7 @@
           build
           configsDir
           home-manager
+          unstablePkgs
           zen-browser
           walker
           ;
