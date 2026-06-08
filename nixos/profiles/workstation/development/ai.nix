@@ -1,10 +1,14 @@
-{ pkgs, ... }:
+{
+  pkgs,
+  unstablePkgs,
+  ...
+}:
 {
   environment.systemPackages = [
-    pkgs.codex
-    pkgs.claude-code
-    pkgs.opencode
-    pkgs.gemini-cli
+    unstablePkgs.claude-code
+    unstablePkgs.codex
+    unstablePkgs.gemini-cli
+    unstablePkgs.opencode
   ];
 
   systemd.user.services.kimi-cli-install = {
