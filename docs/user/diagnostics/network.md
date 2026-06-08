@@ -44,11 +44,61 @@ To manually query a domain and see which server responded:
 resolvectl query example.com
 ```
 
+The workstation also includes traditional and modern DNS clients:
+
+```sh
+nslookup example.com
+dig example.com
+q example.com
+```
+
 If `systemd-resolved` is failing, check its logs:
 
 ```sh
 journalctl -u systemd-resolved -e
 ```
+
+## Route, HTTP, and TLS Diagnostics
+
+Trace the network route to a host:
+
+```sh
+traceroute example.com
+```
+
+Inspect an HTTP response without downloading its body:
+
+```sh
+curl --head https://example.com
+```
+
+Inspect the remote TLS certificate and handshake:
+
+```sh
+openssl s_client -connect example.com:443 -servername example.com
+```
+
+Use `jq` when an HTTP endpoint returns JSON:
+
+```sh
+curl --silent https://api.github.com | jq .
+```
+
+## VPN and Tor Clients
+
+The workstation includes OpenVPN, WireGuard, and Tor command-line clients:
+
+```sh
+openvpn --version
+wg --version
+wg-quick --help
+tor --version
+```
+
+No VPN or Tor profile, interface, system service, firewall exception, or secret
+is configured by the repository. Keep configuration and credentials outside
+the repository and start a client explicitly when needed. The WireGuard kernel
+module is provided by the kernel and loads on demand.
 
 ## 🧱 Firewall Rules
 

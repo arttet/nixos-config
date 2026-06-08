@@ -1,4 +1,9 @@
-{ config, lib, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 let
   cfg = config.platform.network;
 in
@@ -14,6 +19,17 @@ in
   };
 
   config = lib.mkIf cfg.enable {
+    environment.systemPackages = with pkgs; [
+      dnsutils
+      iputils
+      openvpn
+      openssl
+      q
+      tor
+      traceroute
+      wireguard-tools
+    ];
+
     networking.networkmanager = {
       enable = lib.mkDefault true;
       dns = lib.mkDefault "systemd-resolved";
