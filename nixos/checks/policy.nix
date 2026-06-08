@@ -33,6 +33,17 @@ let
   packageName = pkg: pkg.pname or (pkg.name or "");
   packageNames = packages: map packageName packages;
   hasAllPackages = packages: required: builtins.all (name: hasPackage name packages) required;
+  findPackage =
+    name: packages:
+    builtins.foldl' (
+      found: pkg:
+      if found != null then
+        found
+      else if hasPackage name [ pkg ] then
+        pkg
+      else
+        null
+    ) null packages;
   contains = needle: text: builtins.length (builtins.split needle text) > 1;
 
   requiredGuiRuntimePackages = [
@@ -152,6 +163,7 @@ let
     "noto-fonts-cjk-sans"
     "noto-fonts-color-emoji"
   ];
+
 in
 {
   vm-policy = mkPolicy "vm-policy" [
@@ -715,6 +727,22 @@ in
         && contains "hyprshot" text
         && contains "workstation-session-menu" text;
       message = "desktop Hyprland config must cover terminal, touchpad gestures, keyboard layout switching, audio, brightness, lock, wlogout, hyprshot, and session menu";
+    }
+    {
+      assertion =
+        let
+          zen = findPackage "zen-browser" desktop.environment.systemPackages;
+        in
+        zen != null
+        &&
+          zen.zenTouchpadPreferences == {
+            "apz.gtk.pangesture.enabled" = true;
+            "browser.gesture.swipe.left" = "Browser:BackOrBackDuplicate";
+            "browser.gesture.swipe.right" = "Browser:ForwardOrForwardDuplicate";
+            "browser.history_swipe_animation.disabled" = false;
+            "widget.disable-swipe-tracker" = false;
+          };
+      message = "desktop Zen package must enable native touchpad history gestures";
     }
     {
       assertion =
