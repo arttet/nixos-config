@@ -3,6 +3,7 @@
   lib,
   pkgs,
   self,
+  unstablePkgs,
   workstationStorageLayout,
 }:
 
@@ -172,6 +173,7 @@ let
 
   requiredGuiFontPackages = [
     "inter"
+    "nerd-fonts-caskaydia-cove"
     "noto-fonts"
     "noto-fonts-cjk-sans"
     "noto-fonts-color-emoji"
@@ -922,6 +924,14 @@ in
     {
       assertion = hasAllPackages desktop.environment.systemPackages requiredGuiApplicationPackages;
       message = "desktop application and development baseline is incomplete";
+    }
+    {
+      assertion =
+        findPackage "neovim" desktop.environment.systemPackages == unstablePkgs.neovim
+        && findPackage "helix" desktop.environment.systemPackages == unstablePkgs.helix
+        && findPackage "vscode" desktop.environment.systemPackages == unstablePkgs.vscode
+        && findPackage "zed-editor" desktop.environment.systemPackages == unstablePkgs.zed-editor;
+      message = "desktop must use editors from nixpkgs-unstable";
     }
     {
       assertion = hasAllPackages desktop.fonts.packages requiredGuiFontPackages;
