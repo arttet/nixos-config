@@ -26,6 +26,17 @@
 
   services.blueman.enable = lib.mkDefault false;
 
+  services.udev.packages = [ pkgs.swayosd ];
+
+  home-manager.sharedModules = [
+    {
+      services.swayosd = {
+        enable = true;
+        topMargin = 0.9;
+      };
+    }
+  ];
+
   platform.greetd.enable = lib.mkDefault false;
   platform.sddm.enable = lib.mkDefault true;
   platform.bootUx.quiet = lib.mkDefault true;

@@ -131,6 +131,7 @@
       workstationStorageLayout = workstationStorageExample.config.platform.storage.diskoLayout;
       policyChecks = import ./nixos/checks/policy.nix {
         inherit
+          home-manager
           lib
           pkgs
           self
