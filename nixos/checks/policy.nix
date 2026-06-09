@@ -1,4 +1,5 @@
 {
+  home-manager,
   lib,
   pkgs,
   self,
@@ -9,6 +10,18 @@ let
   vm = self.nixosConfigurations.vm.config;
   workstation = self.nixosConfigurations.workstation.config;
   desktop = self.nixosConfigurations.desktop.config;
+  desktopHome = home-manager.lib.homeManagerConfiguration {
+    inherit pkgs;
+    modules = desktop.home-manager.sharedModules ++ [
+      {
+        home = {
+          username = "policy";
+          homeDirectory = "/home/policy";
+          stateVersion = "25.11";
+        };
+      }
+    ];
+  };
 
   mkPolicy =
     name: checks:
@@ -802,6 +815,16 @@ in
     {
       assertion = desktop.services.dbus.enable;
       message = "desktop must enable dbus";
+    }
+    {
+      assertion = hasPackage "swayosd" desktop.services.udev.packages;
+      message = "desktop must install SwayOSD udev rules";
+    }
+    {
+      assertion =
+        desktopHome.config.services.swayosd.enable
+        && builtins.any (contains "--top-margin 0.900000") desktopHome.config.systemd.user.services.swayosd.Service.ExecStart;
+      message = "desktop Home Manager users must run SwayOSD with top margin 0.9";
     }
     {
       assertion = desktop.security.polkit.enable;
