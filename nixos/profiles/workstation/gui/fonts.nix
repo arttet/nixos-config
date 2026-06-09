@@ -14,6 +14,7 @@
       noto-fonts-color-emoji
 
       # Terminal and code fonts.
+      nerd-fonts.caskaydia-cove
       nerd-fonts.iosevka-term
     ];
 
