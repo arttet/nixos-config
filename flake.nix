@@ -37,7 +37,12 @@
       };
       unstablePkgs = import nixpkgs-unstable {
         inherit system;
-        config.allowUnfreePredicate = pkg: nixpkgs.lib.getName pkg == "claude-code";
+        config.allowUnfreePredicate =
+          pkg:
+          builtins.elem (nixpkgs.lib.getName pkg) [
+            "claude-code"
+            "vscode"
+          ];
       };
       inherit (nixpkgs) lib;
 
@@ -135,6 +140,7 @@
           lib
           pkgs
           self
+          unstablePkgs
           workstationStorageLayout
           ;
       };

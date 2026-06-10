@@ -1,9 +1,9 @@
-{ pkgs, ... }:
+{ unstablePkgs, ... }:
 {
   environment.systemPackages = [
-    pkgs.neovim
-    pkgs.helix
-    pkgs.vscode
-    pkgs.zed-editor
+    unstablePkgs.neovim
+    unstablePkgs.helix
+    unstablePkgs.vscode
+    unstablePkgs.zed-editor
   ];
 }
