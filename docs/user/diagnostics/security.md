@@ -70,3 +70,36 @@ git verify-commit HEAD
 
 After failed fingerprint verification, the expected fallback is a graphical
 FIDO2 PIN prompt from `ksshaskpass`.
+
+## Malware Analysis
+
+The desktop includes ClamAV and YARA for manual file analysis. ClamAV signatures
+are refreshed automatically without running the persistent `clamd` daemon or
+on-access scanning.
+
+Inspect the updater and scan a path:
+
+```sh
+systemctl status clamav-freshclam.timer
+journalctl -u clamav-freshclam.service
+clamscan --recursive ~/Downloads
+```
+
+Run a YARA rule against a file or directory:
+
+```sh
+yara rules.yar suspicious-file
+yara --recursive rules.yar suspicious-directory
+```
+
+## Resource Monitoring
+
+Monitor per-process network usage and GPU activity:
+
+```sh
+doas nethogs
+nvtop
+```
+
+`nvtop` is built with support for AMD, Intel, and NVIDIA GPUs. Actual device
+visibility depends on the installed hardware and graphics driver.

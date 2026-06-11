@@ -102,11 +102,22 @@ module is provided by the kernel and loads on demand.
 
 ## 🧱 Firewall Rules
 
-The system uses `nftables` under the hood for the firewall. To view the active ruleset (requires `doas`):
+The desktop keeps the NixOS firewall enabled and adds OpenSnitch for per-process
+outbound connection rules. OpenSnitch uses its native `nftables` backend and
+starts its UI service in the background with the graphical session. The main
+window stays hidden until opened manually, while permission dialogs appear for
+unknown connections. Existing rules continue to work without the UI; if the UI
+is unavailable, unknown connections use the permissive `allow` fallback.
 
 ```sh
+systemctl status opensnitchd
+journalctl -u opensnitchd
 doas nft list ruleset
+opensnitch-ui
 ```
+
+Rules created through the GUI are local runtime state under
+`/var/lib/opensnitch/rules`.
 
 ## ⚙️ Runtime Network Tuning Checks
 

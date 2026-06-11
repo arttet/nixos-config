@@ -6,5 +6,6 @@
     pkgs.lazydocker
     pkgs.zellij
     pkgs.btop
+    pkgs.nvtopPackages.full
   ];
 }

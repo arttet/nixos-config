@@ -157,6 +157,11 @@ let
     "zathura"
     "gnupg"
     "keepassxc"
+    "clamav"
+    "yara"
+    "opensnitch-ui"
+    "nethogs"
+    "nvtop"
     "sudo"
     "veracrypt"
     "yubikey-manager"
@@ -902,6 +907,50 @@ in
       message = "desktop must enable zsh availability";
     }
     {
+      assertion =
+        desktop.programs.nix-ld.enable && !workstation.programs.nix-ld.enable && !vm.programs.nix-ld.enable;
+      message = "desktop alone must enable nix-ld compatibility";
+    }
+    {
+      assertion =
+        desktop.services.opensnitch.enable
+        && desktop.services.opensnitch.settings.DefaultAction == "allow"
+        && desktop.services.opensnitch.settings.InterceptUnknown
+        && desktop.services.opensnitch.settings.Firewall == "nftables"
+        && builtins.hasAttr "opensnitch-ui" desktop.systemd.user.services
+        && desktop.systemd.user.services.opensnitch-ui.wantedBy == [ "graphical-session.target" ]
+        && desktop.systemd.user.services.opensnitch-ui.partOf == [ "graphical-session.target" ]
+        && lib.hasSuffix "opensnitch-ui --background" desktop.systemd.user.services.opensnitch-ui.serviceConfig.ExecStart
+        && !workstation.services.opensnitch.enable
+        && !vm.services.opensnitch.enable;
+      message = "desktop alone must enable interactive OpenSnitch and start its UI service in the background";
+    }
+    {
+      assertion =
+        desktop.services.clamav.updater.enable
+        && !desktop.services.clamav.daemon.enable
+        && !desktop.services.clamav.scanner.enable
+        && !desktop.services.clamav.clamonacc.enable
+        && !workstation.services.clamav.updater.enable
+        && !vm.services.clamav.updater.enable;
+      message = "desktop alone must enable ClamAV signature updates without persistent scanning services";
+    }
+    {
+      assertion =
+        let
+          tools = [
+            "clamav"
+            "yara"
+            "opensnitch-ui"
+            "nethogs"
+            "nvtop"
+          ];
+          absentFrom = packages: builtins.all (name: !(hasPackage name packages)) tools;
+        in
+        absentFrom workstation.environment.systemPackages && absentFrom vm.environment.systemPackages;
+      message = "desktop security and monitoring tools must not leak into workstation or vm";
+    }
+    {
       assertion = desktop.virtualisation.docker.enable;
       message = "desktop must enable Docker";
     }
@@ -924,6 +973,12 @@ in
     {
       assertion = hasAllPackages desktop.environment.systemPackages requiredGuiApplicationPackages;
       message = "desktop application and development baseline is incomplete";
+    }
+    {
+      assertion =
+        findPackage "nvtop" desktop.environment.systemPackages
+        == self.nixosConfigurations.desktop.pkgs.nvtopPackages.full;
+      message = "desktop must use full multi-vendor nvtop";
     }
     {
       assertion =

@@ -10,7 +10,15 @@
 
   nixpkgs.config.allowUnfreePredicate =
     pkg:
-    builtins.elem (lib.getName pkg) [
+    let
+      name = lib.getName pkg;
+      licenses = lib.toList (pkg.meta.license or [ ]);
+      hasCudaLicense = builtins.any (
+        license: license == lib.licenses.nvidiaCuda || license == lib.licenses.nvidiaCudaRedist
+      ) licenses;
+    in
+    hasCudaLicense
+    || builtins.elem name [
       "brave"
       "claude-code"
       "cloudflare-warp"
