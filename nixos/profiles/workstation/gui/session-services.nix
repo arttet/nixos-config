@@ -106,6 +106,11 @@ in
     execStart = lib.getExe pkgs.mako;
   };
 
+  systemd.user.services.opensnitch-ui = graphicalSessionService {
+    description = "OpenSnitch application firewall UI";
+    execStart = "${lib.getExe pkgs.opensnitch-ui} --background";
+  };
+
   systemd.user.services.cliphist-text = graphicalSessionService {
     description = "Store text clipboard history";
     execStart = "${lib.getExe' pkgs.wl-clipboard "wl-paste"} --type text --watch ${lib.getExe pkgs.cliphist} store";

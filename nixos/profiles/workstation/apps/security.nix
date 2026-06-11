@@ -28,6 +28,17 @@ let
   };
 in
 {
+  services.opensnitch = {
+    enable = true;
+    settings = {
+      DefaultAction = "allow";
+      Firewall = "nftables";
+      InterceptUnknown = true;
+    };
+  };
+
+  services.clamav.updater.enable = true;
+
   # VeraCrypt's Linux elevation flow is tightly coupled to sudo-specific
   # behavior, including `sudo -S` and dummy password probes. doas cannot emulate
   # that protocol correctly, so the GUI workstation keeps real sudo available.
@@ -52,7 +63,10 @@ in
   environment.systemPackages = [
     pkgs.gnupg
     pkgs.keepassxc
+    pkgs.nethogs
+    pkgs.opensnitch-ui
     pkgs.proton-pass
+    pkgs.yara
     pkgs.yubikey-manager
     veracrypt
   ];
