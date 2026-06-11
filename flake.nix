@@ -134,7 +134,7 @@
         ];
       };
       workstationStorageLayout = workstationStorageExample.config.platform.storage.diskoLayout;
-      policyChecks = import ./nixos/checks/policy.nix {
+      policyChecks = import ./nixos/checks/policy {
         inherit
           home-manager
           lib
