@@ -39,6 +39,39 @@ in
 
   services.clamav.updater.enable = true;
 
+  # Block newly-plugged USB devices by default; devices present at boot keep
+  # working. One-time manual step after first switch (run from a physical
+  # console, not SSH): `usbguard generate-policy > /var/lib/usbguard/rules.conf`
+  # to allow-list currently-trusted devices, then restart usbguard.
+  services.usbguard = {
+    enable = true;
+    presentDevicePolicy = "allow";
+    presentControllerPolicy = "allow";
+    implicitPolicyTarget = "block";
+    ruleFile = "/var/lib/usbguard/rules.conf";
+  };
+
+  # Lynis has no NixOS module; run it as a weekly oneshot audit. Reports land
+  # in /var/log/lynis.log and /var/log/lynis-report.dat.
+  systemd.services.lynis-audit = {
+    description = "Lynis security audit (periodic, on-demand)";
+    # Lynis shells out to hundreds of system tools (systemctl, ip, ps, ...);
+    # the default restricted unit PATH would make it skip most checks.
+    path = [ config.system.path ];
+    serviceConfig = {
+      Type = "oneshot";
+      ExecStart = "${pkgs.lynis}/bin/lynis audit system --cronjob";
+    };
+  };
+  systemd.timers.lynis-audit = {
+    description = "Weekly Lynis security audit";
+    wantedBy = [ "timers.target" ];
+    timerConfig = {
+      OnCalendar = "weekly";
+      Persistent = true;
+    };
+  };
+
   # VeraCrypt's Linux elevation flow is tightly coupled to sudo-specific
   # behavior, including `sudo -S` and dummy password probes. doas cannot emulate
   # that protocol correctly, so the GUI workstation keeps real sudo available.
@@ -63,6 +96,8 @@ in
   environment.systemPackages = [
     pkgs.gnupg
     pkgs.keepassxc
+    pkgs.lynis
+    pkgs.mat2
     pkgs.nethogs
     pkgs.opensnitch-ui
     pkgs.proton-pass

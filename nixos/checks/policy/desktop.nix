@@ -312,10 +312,27 @@
   }
   {
     assertion =
+      desktop.services.usbguard.enable
+      && desktop.services.usbguard.implicitPolicyTarget == "block"
+      && desktop.services.usbguard.presentDevicePolicy == "allow"
+      && !workstation.services.usbguard.enable
+      && !vm.services.usbguard.enable;
+    message = "desktop alone must enable USBGuard with a default-block policy for newly plugged devices";
+  }
+  {
+    assertion =
+      desktop.systemd.timers.lynis-audit.wantedBy == [ "timers.target" ]
+      && desktop.systemd.services.lynis-audit.serviceConfig.Type == "oneshot";
+    message = "desktop must run Lynis as a periodic on-demand audit, not a persistent daemon";
+  }
+  {
+    assertion =
       let
         tools = [
           "clamav"
           "yara"
+          "lynis"
+          "mat2"
           "opensnitch-ui"
           "nethogs"
           "nvtop"
