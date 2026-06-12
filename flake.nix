@@ -37,12 +37,7 @@
       };
       unstablePkgs = import nixpkgs-unstable {
         inherit system;
-        config.allowUnfreePredicate =
-          pkg:
-          builtins.elem (nixpkgs.lib.getName pkg) [
-            "claude-code"
-            "vscode"
-          ];
+        config.allowUnfreePredicate = pkg: builtins.elem (nixpkgs.lib.getName pkg) [ "vscode" ];
       };
       inherit (nixpkgs) lib;
 
