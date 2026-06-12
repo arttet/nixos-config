@@ -98,6 +98,8 @@
     "keepassxc"
     "clamav"
     "yara"
+    "lynis"
+    "mat2"
     "opensnitch-ui"
     "nethogs"
     "nvtop"
