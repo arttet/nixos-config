@@ -1,5 +1,12 @@
 version: 2
 updates:
+  - package-ecosystem: nix
+    directory: /
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 7
+
   - package-ecosystem: bun
     directory: "/docs"
     schedule:
