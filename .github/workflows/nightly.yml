@@ -110,7 +110,7 @@ jobs:
           NIGHTLY_DOTFILES_MODULE: ${{ needs.preflight.outputs.dotfiles_module }}
           NIGHTLY_DOTFILES_ROOT: ${{ needs.preflight.outputs.dotfiles_root }}
           NIGHTLY_DOTFILES_LINKS: ${{ needs.preflight.outputs.dotfiles_links }}
-        run: nix shell nixpkgs#nushell nixpkgs#whois nixpkgs#check-jsonschema -c nu scripts/ci/nightly-prepare.nu
+        run: nix shell nixpkgs#nushell nixpkgs#mkpasswd nixpkgs#check-jsonschema -c nu scripts/ci/nightly-prepare.nu
 
       - name: Validate nightly platform state
         run: |
@@ -155,13 +155,72 @@ jobs:
           name: nightly-flake-update
           path: target/ci/update/
 
+  nightly-workstation:
+    name: Workstation Nightly
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    needs: preflight
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          persist-credentials: false
+
+      - name: Install Nix
+        uses: cachix/install-nix-action@8aa03977d8d733052d78f4e008a241fd1dbf36b3 # v31
+        with:
+          extra_nix_config: |
+            experimental-features = nix-command flakes
+
+      - name: Setup Just
+        uses: extractions/setup-just@53165ef7e734c5c07cb06b3c8e7b647c5aa16db3 # v4
+
+      - name: Update flake lock
+        run: nix flake update
+
+      - name: Validate workstation
+        run: just workstation test
+
+  nightly-vm:
+    name: VM Nightly
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    needs: preflight
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          persist-credentials: false
+
+      - name: Install Nix
+        uses: cachix/install-nix-action@8aa03977d8d733052d78f4e008a241fd1dbf36b3 # v31
+        with:
+          extra_nix_config: |
+            experimental-features = nix-command flakes
+
+      - name: Setup Just
+        uses: extractions/setup-just@53165ef7e734c5c07cb06b3c8e7b647c5aa16db3 # v4
+
+      - name: Install sshpass
+        run: sudo apt-get update && sudo apt-get install --yes sshpass
+
+      - name: Update flake lock
+        run: nix flake update
+
+      - name: Test VM
+        run: just vm test
+
   deploy:
     name: Open Update PR
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
     if: ${{ needs.preflight.outputs.deploy == 'true' && needs.nightly.outputs.lock_changed == 'true' }}
-    needs: [preflight, nightly]
+    needs: [preflight, nightly, nightly-workstation, nightly-vm]
 
     permissions:
       contents: write # Required to push the flake.lock update branch.
