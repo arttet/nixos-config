@@ -102,6 +102,8 @@ const evolutionSidebar = [
 export default defineConfig({
   title: "NixOS Configuration",
   description: "Personal NixOS Infrastructure",
+
+  srcDir: "src",
   cleanUrls: true,
   lastUpdated: true,
 
@@ -111,6 +113,24 @@ export default defineConfig({
     theme: {
       light: "github-light",
       dark: "github-dark",
+    },
+  },
+
+  vite: {
+    build: {
+      chunkSizeWarningLimit: 400,
+      rolldownOptions: {
+        onLog(level, log, defaultHandler) {
+          if (
+            log.code === "INVALID_ANNOTATION"
+            && typeof log.message === "string"
+            && log.message.includes("@vueuse/core")
+          ) {
+            return;
+          }
+          defaultHandler(level, log);
+        },
+      },
     },
   },
 
