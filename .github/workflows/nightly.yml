@@ -60,7 +60,7 @@ jobs:
           NIGHTLY_DOTFILES_LINKS: ${{ vars.NIGHTLY_DOTFILES_LINKS }}
         run: nix shell nixpkgs#nushell -c nu scripts/ci/nightly-preflight.nu
 
-  nightly:
+  nightly-desktop:
     name: Desktop Nightly
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -219,8 +219,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
-    if: ${{ needs.preflight.outputs.deploy == 'true' && needs.nightly.outputs.lock_changed == 'true' }}
-    needs: [preflight, nightly, nightly-workstation, nightly-vm]
+    if: ${{ needs.preflight.outputs.deploy == 'true' && needs.nightly-desktop.outputs.lock_changed == 'true' }}
+    needs: [preflight, nightly-desktop, nightly-workstation, nightly-vm]
 
     permissions:
       contents: write # Required to push the flake.lock update branch.
