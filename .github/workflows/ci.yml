@@ -94,8 +94,10 @@ jobs:
             experimental-features = nix-command flakes
             substituters = https://cache.nixos.org/
             trusted-public-keys = cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=
-            fallback = true
-            http-connections = 1
+            download-attempts = 5
+            connect-timeout = 60
+            stalled-download-timeout = 300
+            allow-dirty = false
 
       - name: Check flake
         run: nix flake check
@@ -278,8 +280,10 @@ jobs:
             experimental-features = nix-command flakes
             substituters = https://cache.nixos.org/
             trusted-public-keys = cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=
-            fallback = true
-            http-connections = 1
+            download-attempts = 5
+            connect-timeout = 60
+            stalled-download-timeout = 300
+            allow-dirty = false
 
       - name: Validate scripts
         run: nix shell nixpkgs#nushell nixpkgs#openssl nixpkgs#check-jsonschema -c nu scripts/tests/run.nu
@@ -307,8 +311,10 @@ jobs:
             experimental-features = nix-command flakes
             substituters = https://cache.nixos.org/
             trusted-public-keys = cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=
-            fallback = true
-            http-connections = 1
+            download-attempts = 5
+            connect-timeout = 60
+            stalled-download-timeout = 300
+            allow-dirty = false
 
       - name: Install loopback disk test dependencies
         run: sudo apt-get update && sudo apt-get install --yes cryptsetup-bin
@@ -346,8 +352,10 @@ jobs:
             experimental-features = nix-command flakes
             substituters = https://cache.nixos.org/
             trusted-public-keys = cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=
-            fallback = true
-            http-connections = 1
+            download-attempts = 5
+            connect-timeout = 60
+            stalled-download-timeout = 300
+            allow-dirty = false
 
       - name: Build VM
         run: nix build .#nixosConfigurations.vm.config.system.build.vm --no-link
@@ -375,8 +383,10 @@ jobs:
             experimental-features = nix-command flakes
             substituters = https://cache.nixos.org/
             trusted-public-keys = cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=
-            fallback = true
-            http-connections = 1
+            download-attempts = 5
+            connect-timeout = 60
+            stalled-download-timeout = 300
+            allow-dirty = false
 
       - name: Build workstation
         run: nix build .#nixosConfigurations.workstation.config.system.build.toplevel --no-link
@@ -412,8 +422,17 @@ jobs:
             experimental-features = nix-command flakes
             substituters = https://cache.nixos.org/
             trusted-public-keys = cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=
-            fallback = true
-            http-connections = 1
+            download-attempts = 5
+            connect-timeout = 60
+            stalled-download-timeout = 300
+            allow-dirty = false
+
+      - name: Restore Nix сache
+        uses: nix-community/cache-nix-action@7df957e333c1e5da7721f60227dbba6d06080569 # v7
+        with:
+          primary-key: nix-desktop-${{ runner.os }}-${{ hashFiles('**/*.nix', '**/flake.lock') }}
+          restore-prefixes-first-match: nix-desktop-${{ runner.os }}-
+          gc-max-store-size-linux: 3G
 
       - name: Build desktop
         run: nix build .#nixosConfigurations.desktop.config.system.build.toplevel --no-link
