@@ -1,4 +1,5 @@
 import { defineConfig } from "vitepress";
+import llmstxt, { copyOrDownloadAsMarkdownButtons } from "vitepress-plugin-llms";
 
 const userSidebar = [
   {
@@ -99,7 +100,21 @@ const evolutionSidebar = [
   },
 ];
 
+const nav = [
+  { text: "Home", link: "/" },
+  { text: "User Guide", link: "/user/", activeMatch: "/user/" },
+  { text: "Engineering", link: "/dev/", activeMatch: "/dev/" },
+  { text: "Evolution", link: "/evolution/", activeMatch: "/evolution/" },
+];
+
+const sidebar = {
+  "/user/": userSidebar,
+  "/dev/": devSidebar,
+  "/evolution/": evolutionSidebar,
+};
+
 export default defineConfig({
+  base: process.env.CI_BASE_URL || "/",
   title: "NixOS Configuration",
   description: "Personal NixOS Infrastructure",
 
@@ -111,13 +126,19 @@ export default defineConfig({
 
   markdown: {
     theme: {
-      light: "github-light",
-      dark: "github-dark",
+      light: "catppuccin-latte",
+      dark: "catppuccin-mocha",
+    },
+    config(md) {
+      md.use(copyOrDownloadAsMarkdownButtons);
     },
   },
 
   vite: {
+    plugins: [llmstxt()],
     build: {
+      minify: "oxc",
+      target: "es2022",
       chunkSizeWarningLimit: 400,
       rolldownOptions: {
         onLog(level, log, defaultHandler) {
@@ -138,18 +159,8 @@ export default defineConfig({
     logo: "/logo.svg",
     siteTitle: "NixOS Configuration",
 
-    nav: [
-      { text: "Home", link: "/" },
-      { text: "User Guide", link: "/user/", activeMatch: "/user/" },
-      { text: "Engineering", link: "/dev/", activeMatch: "/dev/" },
-      { text: "Evolution", link: "/evolution/", activeMatch: "/evolution/" },
-    ],
-
-    sidebar: {
-      "/user/": userSidebar,
-      "/dev/": devSidebar,
-      "/evolution/": evolutionSidebar,
-    },
+    nav,
+    sidebar,
 
     search: {
       provider: "local",
