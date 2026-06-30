@@ -72,12 +72,12 @@ disable it with:
 NIX_CONFIG_INSTALL_PLAIN_UI=1 NO_COLOR=1 nu scripts/install/bootstrap.nu --dry-run
 ```
 
-The installer defaults to the `main` branch. To test a development branch from
-the live ISO, download the entrypoint from that branch and set `BRANCH` to the
-same branch:
+The installer defaults to the `main` branch. The command below pins that branch
+explicitly. To test a development branch from the live ISO, replace both
+occurrences of `main` with the branch name:
 
 ```sh
-curl -sL https://github.com/arttet/nixos-config/raw/dev/install.sh | sudo BRANCH=dev bash
+curl -sL https://github.com/arttet/nixos-config/raw/main/install.sh | sudo BRANCH=main bash
 ```
 
 `NIX_CONFIG_INSTALL_REPO_BRANCH` is also supported as a longer compatibility

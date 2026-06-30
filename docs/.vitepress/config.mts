@@ -1,4 +1,7 @@
 import { defineConfig } from "vitepress";
+import llmstxt, {
+  copyOrDownloadAsMarkdownButtons,
+} from "vitepress-plugin-llms";
 
 const userSidebar = [
   {
@@ -99,10 +102,24 @@ const evolutionSidebar = [
   },
 ];
 
+const nav = [
+  { text: "Home", link: "/" },
+  { text: "User Guide", link: "/user/", activeMatch: "/user/" },
+  { text: "Engineering", link: "/dev/", activeMatch: "/dev/" },
+  { text: "Evolution", link: "/evolution/", activeMatch: "/evolution/" },
+];
+
+const sidebar = {
+  "/user/": userSidebar,
+  "/dev/": devSidebar,
+  "/evolution/": evolutionSidebar,
+};
+
 export default defineConfig({
   title: "NixOS Configuration",
   description: "Personal NixOS Infrastructure",
 
+  base: process.env.CI_BASE_URL || "/",
   srcDir: "src",
   cleanUrls: true,
   lastUpdated: true,
@@ -111,20 +128,24 @@ export default defineConfig({
 
   markdown: {
     theme: {
-      light: "github-light",
-      dark: "github-dark",
+      light: "catppuccin-latte",
+      dark: "catppuccin-mocha",
+    },
+    config(md) {
+      md.use(copyOrDownloadAsMarkdownButtons);
     },
   },
 
   vite: {
+    plugins: [llmstxt()],
     build: {
-      chunkSizeWarningLimit: 400,
+      minify: "oxc",
+      target: "es2022",
       rolldownOptions: {
         onLog(level, log, defaultHandler) {
           if (
             log.code === "INVALID_ANNOTATION"
-            && typeof log.message === "string"
-            && log.message.includes("@vueuse/core")
+            && log.id?.includes("node_modules/@vueuse/core/")
           ) {
             return;
           }
@@ -138,18 +159,8 @@ export default defineConfig({
     logo: "/logo.svg",
     siteTitle: "NixOS Configuration",
 
-    nav: [
-      { text: "Home", link: "/" },
-      { text: "User Guide", link: "/user/", activeMatch: "/user/" },
-      { text: "Engineering", link: "/dev/", activeMatch: "/dev/" },
-      { text: "Evolution", link: "/evolution/", activeMatch: "/evolution/" },
-    ],
-
-    sidebar: {
-      "/user/": userSidebar,
-      "/dev/": devSidebar,
-      "/evolution/": evolutionSidebar,
-    },
+    nav,
+    sidebar,
 
     search: {
       provider: "local",
