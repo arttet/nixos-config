@@ -1,5 +1,7 @@
 import { defineConfig } from "vitepress";
-import llmstxt, { copyOrDownloadAsMarkdownButtons } from "vitepress-plugin-llms";
+import llmstxt, {
+  copyOrDownloadAsMarkdownButtons,
+} from "vitepress-plugin-llms";
 
 const userSidebar = [
   {
@@ -114,10 +116,10 @@ const sidebar = {
 };
 
 export default defineConfig({
-  base: process.env.CI_BASE_URL || "/",
   title: "NixOS Configuration",
   description: "Personal NixOS Infrastructure",
 
+  base: process.env.CI_BASE_URL || "/",
   srcDir: "src",
   cleanUrls: true,
   lastUpdated: true,
@@ -139,13 +141,11 @@ export default defineConfig({
     build: {
       minify: "oxc",
       target: "es2022",
-      chunkSizeWarningLimit: 400,
       rolldownOptions: {
         onLog(level, log, defaultHandler) {
           if (
             log.code === "INVALID_ANNOTATION"
-            && typeof log.message === "string"
-            && log.message.includes("@vueuse/core")
+            && log.id?.includes("node_modules/@vueuse/core/")
           ) {
             return;
           }

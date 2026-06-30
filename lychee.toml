@@ -1,4 +1,5 @@
 cache = true
+exclude_path = ["[.]md$"]
 fallback_extensions = ["html"]
 index_files = ["index.html"]
 max_cache_age = "1d"
