@@ -1,9 +1,9 @@
-{ pkgs, ... }:
+{ unstablePkgs, ... }:
 {
-  environment.systemPackages = with pkgs; [
-    nodejs
-    bun
-    pnpm
-    typescript
+  environment.systemPackages = [
+    unstablePkgs.nodejs
+    unstablePkgs.bun
+    unstablePkgs.pnpm
+    unstablePkgs.typescript
   ];
 }

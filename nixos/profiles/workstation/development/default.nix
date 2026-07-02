@@ -7,5 +7,6 @@
     ./javascript.nix
     ./nix-ld.nix
     ./python.nix
+    ./typst.nix
   ];
 }
