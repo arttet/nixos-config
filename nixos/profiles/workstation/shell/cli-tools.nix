@@ -26,6 +26,7 @@
     timeshift
     vendir
     zoxide
+    devbox
     nix-index
     nix-output-monitor
     nh
