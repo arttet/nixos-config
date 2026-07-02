@@ -77,25 +77,3 @@ mod overlay 'misc/justfiles/overlay.just'
 
 [group: 'Documentation']
 mod docs 'misc/justfiles/docs.just'
-
-# ==============================================================================
-# Pull Requests
-# ==============================================================================
-
-[group: 'Pull Requests']
-mod pr 'misc/justfiles/pr.just'
-
-alias prc := pr::create
-alias prr := pr::review
-alias prv := pr::view
-
-# ==============================================================================
-# Deployment
-# ==============================================================================
-
-[group: 'Deployment']
-mod deploy 'misc/justfiles/deployment.just'
-
-alias dl := deploy::list
-alias dc := deploy::create
-alias dd := deploy::delete
