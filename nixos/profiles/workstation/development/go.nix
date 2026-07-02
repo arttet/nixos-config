@@ -1,9 +1,9 @@
-{ pkgs, ... }:
+{ unstablePkgs, ... }:
 {
-  environment.systemPackages = with pkgs; [
-    go
-    gopls
-    delve
-    golangci-lint
+  environment.systemPackages = [
+    unstablePkgs.go
+    unstablePkgs.gopls
+    unstablePkgs.delve
+    unstablePkgs.golangci-lint
   ];
 }

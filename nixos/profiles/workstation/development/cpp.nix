@@ -1,12 +1,13 @@
-{ pkgs, ... }:
+{ unstablePkgs, ... }:
 {
-  environment.systemPackages = with pkgs; [
-    cmake
-    ninja
-    clang
-    llvm
-    lldb
-    gdb
-    pkg-config
+  environment.systemPackages = [
+    unstablePkgs.cmake
+    unstablePkgs.ninja
+    unstablePkgs.clang
+    unstablePkgs.llvm
+    unstablePkgs.lldb
+    unstablePkgs.gdb
+    unstablePkgs.pkg-config
+    unstablePkgs.gcc
   ];
 }

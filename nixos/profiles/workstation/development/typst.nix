@@ -1,7 +1,7 @@
 { unstablePkgs, ... }:
 {
   environment.systemPackages = [
-    unstablePkgs.rustup
-    unstablePkgs.rust-analyzer
+    unstablePkgs.typst
+    unstablePkgs.typstyle
   ];
 }

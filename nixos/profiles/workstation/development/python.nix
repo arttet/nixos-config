@@ -1,9 +1,9 @@
-{ pkgs, ... }:
+{ unstablePkgs, ... }:
 {
-  environment.systemPackages = with pkgs; [
-    python3
-    uv
-    ruff
-    pyright
+  environment.systemPackages = [
+    unstablePkgs.python3
+    unstablePkgs.uv
+    unstablePkgs.ruff
+    unstablePkgs.pyright
   ];
 }
