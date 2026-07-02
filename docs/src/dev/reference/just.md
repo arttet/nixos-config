@@ -55,18 +55,6 @@ Available recipes:
         dev     # Serve docs
         build   # Build docs
         preview # Preview docs
-
-    [Pull Requests]
-    pr:
-        create      # Create a new Pull Request
-        review n="" # Ask Gemini to review the Pull Request
-        view n=""   # View comments for the Pull Request
-
-    [Deployment]
-    deploy:
-        list        # List Cloudflare Pages projects
-        create name # Create a Cloudflare Pages project
-        delete name # Delete a Cloudflare Pages project
 ```
 
 The root profile commands default to the flake `default` target:
