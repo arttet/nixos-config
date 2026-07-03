@@ -24,5 +24,7 @@
     pkgs.docker-buildx
     pkgs.podman
     pkgs.podman-compose
+    pkgs.dive
+    pkgs.act
   ];
 }
