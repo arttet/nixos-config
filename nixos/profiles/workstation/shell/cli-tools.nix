@@ -7,22 +7,35 @@
     age
     bandwhich
     bat
+    broot
     chafa
+    choose
     delta
     dprint
     dust
     duf
     eza
     gh
+    git-graph
+    glow
     gping
+    gum
     hyperfine
+    litecli
     lnav
     micro
+    mise
+    moor
+    navi
+    onefetch
+    ov
     procs
     speedtest-go
+    sqlite
     strace
     sysz
     systemctl-tui
+    tealdeer
     timeshift
     vendir
     zoxide

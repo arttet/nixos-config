@@ -6,6 +6,7 @@
     mission-center
     obsidian
     onlyoffice-desktopeditors
+    sqlitebrowser
     typst
     zathura
   ];

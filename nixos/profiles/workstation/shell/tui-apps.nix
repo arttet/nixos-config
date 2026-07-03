@@ -8,5 +8,7 @@
     unstablePkgs.herdr
     pkgs.btop
     pkgs.nvtopPackages.full
+    pkgs.bpftop
+    pkgs.gh-dash
   ];
 }
