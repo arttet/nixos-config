@@ -164,6 +164,10 @@ overlay.
 Both target files are local machine state and must not be committed to the
 repository.
 
+Unprivileged Wireshark packet capture needs the account to be in the
+`wireshark` group. Add it to `users[].extraGroups` in the local overlay
+(`state.json`) — it is not granted automatically the way `wheel` is.
+
 After the installer completes, reboot:
 
 ```sh

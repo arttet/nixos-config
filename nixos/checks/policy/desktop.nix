@@ -359,6 +359,12 @@
     message = "desktop must enable virt-manager";
   }
   {
+    assertion =
+      desktop.programs.wireshark.enable
+      && packageName desktop.programs.wireshark.package == "wireshark-qt";
+    message = "desktop must enable Wireshark packet capture with the full GUI package";
+  }
+  {
     assertion = hasAllPackages desktop.environment.systemPackages requiredGuiRuntimePackages;
     message = "desktop must include baseline runtime UX tools";
   }
