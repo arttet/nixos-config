@@ -7,6 +7,7 @@
     age
     bandwhich
     bat
+    binwalk
     broot
     chafa
     choose
@@ -27,9 +28,12 @@
     mise
     moor
     navi
+    nmap
     onefetch
     ov
     procs
+    ratarmount
+    socat
     speedtest-go
     sqlite
     strace

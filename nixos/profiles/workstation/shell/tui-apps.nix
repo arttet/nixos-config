@@ -2,6 +2,7 @@
 {
   environment.systemPackages = [
     pkgs.yazi
+    pkgs.superfile
     pkgs.lazygit
     pkgs.lazydocker
     pkgs.zellij
