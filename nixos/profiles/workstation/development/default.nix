@@ -1,5 +1,6 @@
 {
   imports = [
+    ./android.nix
     ./build-tools.nix
     ./cpp.nix
     ./rust.nix

@@ -85,6 +85,12 @@
 
   programs.virt-manager.enable = lib.mkDefault true;
 
+  # vhost_vsock backs the optional <vsock/> device for VM guests (per-VM CID
+  # is configured in virt-manager/virsh, not here).
+  boot.kernelModules = [ "vhost_vsock" ];
+
+  virtualisation.spiceUSBRedirection.enable = lib.mkDefault true;
+
   environment.sessionVariables = {
     QT_QPA_PLATFORM = "wayland";
     QT_WAYLAND_DISABLE_WINDOWDECORATION = "1";
