@@ -10,7 +10,7 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.ref == 'refs/heads/main' && github.sha || '' }}
   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 permissions:
@@ -453,6 +453,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
 
+    concurrency:
+      group: deploy-gh-pages-${{ github.ref }}
+      cancel-in-progress: false
+
     needs:
       - fmt
       - lint
@@ -530,6 +534,10 @@ jobs:
     name: Deploy Cloudflare Pages
     runs-on: ubuntu-latest
     timeout-minutes: 5
+
+    concurrency:
+      group: deploy-cf-pages-${{ github.event.pull_request.number || github.ref }}
+      cancel-in-progress: false
 
     if: needs.cf-preflight.outputs.enabled == 'true'
     needs: cf-preflight
