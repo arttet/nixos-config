@@ -24,6 +24,14 @@ let
   };
 in
 {
+  # Live capture (both the wireshark GUI and termshark, which shells out to
+  # tshark) requires the account to be in the "wireshark" group, added
+  # manually via state.json users[].extraGroups.
+  programs.wireshark = {
+    enable = lib.mkDefault true;
+    package = pkgs.wireshark;
+  };
+
   services.opensnitch = {
     enable = true;
     settings = {
@@ -97,6 +105,7 @@ in
     pkgs.nethogs
     pkgs.opensnitch-ui
     pkgs.proton-pass
+    pkgs.termshark
     pkgs.yara
     pkgs.yubikey-manager
     veracrypt
