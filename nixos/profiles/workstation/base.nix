@@ -9,6 +9,7 @@
     ../../modules/core/power.nix
     ../../modules/core/boot-ux.nix
     ../../modules/core/grub-theme.nix
+    ../../modules/core/cross-build.nix
     ../../modules/storage/disko.nix
     ../../modules/storage/swap.nix
   ];
@@ -19,6 +20,7 @@
   platform.secureBoot.enable = true;
   platform.tuning.enable = true;
   platform.grubTheme.enable = true;
+  platform.crossBuild.enable = true;
 
   boot.kernelPackages = pkgs.linuxPackages_latest;
   boot.initrd.systemd.enable = true;
