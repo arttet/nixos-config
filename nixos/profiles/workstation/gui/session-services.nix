@@ -123,7 +123,7 @@ in
 
   systemd.user.services.hyprpolkitagent = graphicalSessionService {
     description = "Hyprland polkit authentication agent";
-    execStart = lib.getExe pkgs.hyprpolkitagent;
+    execStart = "${pkgs.hyprpolkitagent}/libexec/hyprpolkitagent";
   };
 
   systemd.user.services.udiskie = graphicalSessionService {
