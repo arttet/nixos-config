@@ -10,6 +10,7 @@
   platform.secureBoot.enable = lib.mkForce false;
   platform.tuning.enable = lib.mkForce false;
   platform.grubTheme.enable = lib.mkForce false;
+  platform.crossBuild.enable = lib.mkForce false;
 
   services.qemuGuest.enable = true;
 

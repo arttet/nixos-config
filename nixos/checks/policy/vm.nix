@@ -16,4 +16,8 @@
     assertion = !vm.platform.grubTheme.enable;
     message = "vm must not enable GRUB theme";
   }
+  {
+    assertion = !vm.platform.crossBuild.enable;
+    message = "vm must not enable cross-build binfmt emulation";
+  }
 ]
