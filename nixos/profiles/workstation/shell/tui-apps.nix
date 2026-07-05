@@ -5,7 +5,7 @@
     pkgs.superfile
     pkgs.lazygit
     pkgs.lazydocker
-    pkgs.zellij
+    unstablePkgs.zellij
     unstablePkgs.herdr
     pkgs.btop
     pkgs.nvtopPackages.full
