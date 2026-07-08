@@ -51,6 +51,8 @@ Three flake targets exposed by `flake.nix`. The user-facing product is `desktop`
 | `workstation` | Headless baseline used by checks and dev workflows           |
 | `vm`          | Disposable QEMU profile for runtime smoke tests              |
 
+`desktop` also evaluates on `aarch64-linux` as `desktop-aarch64` (multi-arch readiness; x86-only inputs may need per-arch gating).
+
 Layering (strict, enforced by `docs/dev/architecture/composition.md`):
 
 ```
@@ -103,8 +105,7 @@ From `AGENTS.md` — load before touching anything:
 `flake.nix` exposes static policy assertions under `checks.${system}`:
 
 - `formatting` — treefmt
-- `workstation-kernel-policy` — workstation uses `pkgs.linuxPackages_latest`
-- `workstation-secure-boot-policy` — GRUB enabled with `--disable-shim-lock` + `--modules=tpm`; `sbctl`, `efibootmgr`, `sbsigntool`, `grub2` present on workstation, absent from `vm`
-- `workstation-storage-layout` — disko GPT layout: 512M ESP, 512M /boot, LUKS2-encrypted btrfs root with `@root` + `@swap` subvolumes
+- `deadnix` / `statix` / `json-schemas` — repo-wide lint checks (`nixos/checks/lint.nix`)
+- `vm-policy` / `workstation-policy` / `desktop-policy` — per-host module assertions (`nixos/checks/policy/`). `workstation-policy` includes the kernel choice (`pkgs.linuxPackages_latest`), Secure Boot setup (GRUB `--disable-shim-lock` + `--modules=tpm`; `sbctl`/`efibootmgr`/`sbsigntool`/`grub2` present on workstation, absent from `vm`), and the disko GPT/LUKS2/btrfs storage layout
 
 These run in `just check`. They are evaluation-only — they don't prove runtime behavior.
