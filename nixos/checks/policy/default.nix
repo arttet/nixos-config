@@ -40,7 +40,7 @@ let
 
   vmChecks = import ./vm.nix { inherit vm; };
 
-  workstationChecks = import ./workstation.nix {
+  workstationChecks = import ./workstation {
     inherit
       vm
       workstation
@@ -50,7 +50,7 @@ let
       ;
   };
 
-  desktopChecks = import ./desktop.nix {
+  desktopChecks = import ./desktop {
     inherit
       self
       lib
