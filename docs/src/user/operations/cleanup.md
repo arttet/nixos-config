@@ -20,6 +20,31 @@ To view a detailed history of your system generations (the entries you see in th
 nix profile history --profile /nix/var/nix/profiles/system
 ```
 
+## 📊 Inspecting Store Usage
+
+If the automatic cleanup above still leaves `/nix/store` larger than
+expected, it helps to see _what_ is retaining the space before deleting
+anything. `just top` ranks real store paths by their actual size:
+
+```sh
+just top
+```
+
+Two common causes of a bloated store to look out for in the results:
+
+- **Duplicated toolchains from mixing nixpkgs channels.** If any packages are
+  pinned to `nixpkgs-unstable` while the rest of the system uses the stable
+  channel, you'll often see two separate copies of `glibc`/`gcc` and their
+  dependents — nothing is shared between the two channels' closures.
+- **Retained build-time dependencies.** `nix.settings.keep-outputs` and
+  `keep-derivations` (see `docs/dev/architecture/tuning.md`) intentionally
+  keep build dependencies around for faster rebuilds, at the cost of store
+  size.
+
+Before reaching for `just gc`, try `just optimise` first — it hard-links
+identical files across store paths and can reclaim space with no risk of
+losing anything.
+
 ## 🗑️ Manual Cleanup
 
 If you are running low on disk space, you can manually trigger the garbage collector.
