@@ -240,3 +240,19 @@ This baseline does not:
 - enable kernel lockdown mode
 - enable TPM or YubiKey unlock
 - replace threat modeling with generic sysctl blobs
+
+## Homelab Service Boundary
+
+The Pi target does not import service credentials into Nix. The AdGuard administrator bcrypt
+verifier is generated interactively on the device and stored root-only under `/persist`; complete
+WireGuard profiles remain under the administrator's persistent home and are activated explicitly.
+Samba credentials are provisioned once through interactive `smbpasswd` and retained only in the
+passdb on encrypted `/srv`. The AdGuard
+configuration renderer runs as root and writes a read-only runtime configuration, so UI changes are
+not a source of durable state.
+
+Only SSH is admitted by the host firewall with rate limiting. DNS, AdGuard UI, Samba, Caddy, Forgejo SSH,
+and diagnostic rules require the configured LAN interface or IPv4 LAN source CIDR. Podman workload
+backends bind to localhost and are reached through Caddy. Nix installs
+WireGuard tools but does not validate or activate user-managed profiles; operators must review
+`AllowedIPs` before activation.

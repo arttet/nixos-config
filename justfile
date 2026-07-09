@@ -90,8 +90,9 @@ dry profile="default":
 [doc('Test system generation')]
 [group('NixOS')]
 test profile="default":
-    nix shell nixpkgs#nushell nixpkgs#openssl nixpkgs#check-jsonschema -c nu scripts/tests/run.nu
-    {{ SUDO }} nixos-rebuild test --impure --flake "path:{{ justfile_directory() }}#{{ profile }}" {{ NIX_EXTRA_FLAGS }}
+    just build {{ profile }}
+    nix shell nixpkgs#nushell nixpkgs#openssl nixpkgs#jsonschema-cli -c nu scripts/tests/run.nu
+    case "{{ profile }}" in default|desktop) nix build .#checks.x86_64-linux.desktop-policy --no-link ;; workstation) nix build .#checks.x86_64-linux.workstation-policy --no-link ;; vm) nix build .#checks.x86_64-linux.vm-policy --no-link ;; *) echo "No policy check is defined for profile: {{ profile }}"; exit 1 ;; esac
 
 [doc('Switch system generation')]
 [group('NixOS')]
@@ -180,6 +181,9 @@ mod workstation 'misc/justfiles/workstation.just'
 
 [group('Desktop')]
 mod desktop 'misc/justfiles/desktop.just'
+
+[group('Homelab Raspberry Pi')]
+mod homelab 'misc/justfiles/homelab.just'
 
 # ==============================================================================
 # Local Overlay

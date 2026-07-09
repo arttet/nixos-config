@@ -1,8 +1,15 @@
+adguardhome
 arttet
 Astal
+Beszel
+beszel
 Cachix
 catppuccin
+Forgejo
+forgejo
 numtide
+openspeedtest
+raspberrypi
 Rofi
 Thunar
 Yazi

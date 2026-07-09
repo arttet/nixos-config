@@ -15,12 +15,17 @@ We follow a strict "No Leakage" policy between layers:
 To keep the codebase maintainable, modules are organized by their technical domain:
 
 - `nixos/modules/core/`: Essential platform logic (Boot, Security, Users).
+- `nixos/modules/homelab/`: Raspberry Pi server state, storage, network, status, and isolated service modules.
 - `nixos/modules/storage/`: Filesystem and disk encryption (Disko).
 - `nixos/profiles/`: Large-scale system shapes.
 
 ### Best Practice: Explicit Imports
 
 We avoid "Nix magic" like global auto-discovery of modules. Every module used by a profile must be explicitly imported in its `default.nix`. This makes the system structure searchable and easy to audit.
+
+The homelab module follows the same rule: `server.nix` is an explicit, inert aggregator. `config.nix`
+maps validated platform state into typed options, while storage, networking, status, and each service
+consume those options without reading JSON themselves.
 
 ## 📦 Package Selection Policy
 

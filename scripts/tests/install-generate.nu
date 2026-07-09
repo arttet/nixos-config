@@ -10,6 +10,14 @@ def has-command [name: string] {
   (which $name | length) > 0
 }
 
+def has-jsonschema-validator [] {
+  has-command "jsonschema-cli"
+}
+
+def run-jsonschema-validate [schema: string, instance: string] {
+  jsonschema-cli validate $schema -i $instance | complete
+}
+
 def has-compatible-mkpasswd [] {
   if not (has-command "mkpasswd") {
     return false
@@ -20,7 +28,7 @@ def has-compatible-mkpasswd [] {
 }
 
 def has-nix-validation-tools [] {
-  (has-command "nix") and (has-command "check-jsonschema")
+  (has-command "nix") and (has-jsonschema-validator)
 }
 
 def assert-clean-stderr [label: string, stderr: string] {
@@ -184,7 +192,7 @@ def assert-multi-user-state [root: string, hardware: string] {
     ]
   } | to json --indent 2 | save --force $state
 
-  let schema_check = (check-jsonschema --schemafile schemas/platform-state.v1.schema.json $state | complete)
+  let schema_check = (run-jsonschema-validate schemas/platform-state.v1.schema.json $state)
   assert-command-ok "validate multi-user state" $schema_check
 
   let user_check = (
@@ -399,7 +407,7 @@ def assert-generated-dotfiles-state [root: string, hardware: string] {
   assert equal $user.sources.dotfilesRoot $dotfiles
   assert equal $user.sources.links [ "config/nushell" "config/git" ]
 
-  let schema_check = (check-jsonschema --schemafile schemas/platform-state.v1.schema.json $state | complete)
+  let schema_check = (run-jsonschema-validate schemas/platform-state.v1.schema.json $state)
   assert-command-ok "validate generated dotfiles platform state" $schema_check
 
   let hm_check = (
@@ -475,10 +483,10 @@ def main [] {
     assert not ($disko_state | columns | any {|column| $column == "luks" })
 
     if (has-nix-validation-tools) {
-      let schema_check = (check-jsonschema --schemafile schemas/platform-state.v1.schema.json $paths.platform_state | complete)
+      let schema_check = (run-jsonschema-validate schemas/platform-state.v1.schema.json $paths.platform_state)
       assert-command-ok "validate generated platform state" $schema_check
 
-      let disko_schema_check = (check-jsonschema --schemafile schemas/disko-state.v1.schema.json $paths.disko | complete)
+      let disko_schema_check = (run-jsonschema-validate schemas/disko-state.v1.schema.json $paths.disko)
       assert-command-ok "validate generated disko state" $disko_schema_check
 
       assert-disko-template-shape $paths.disko

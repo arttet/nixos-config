@@ -1,0 +1,54 @@
+{
+  "schemaVersion": 1,
+  "host": {
+    "hostname": "homelab",
+    "timezone": "UTC"
+  },
+  "homelab": {
+    "lanCidr": "192.0.2.0/24",
+    "domain": "pi.lan",
+    "lanInterface": "end0",
+    "storage": {
+      "luksDevice": "/dev/disk/by-uuid/123e4567-e89b-12d3-a456-426614174000",
+      "mapperName": "homelab-data",
+      "fileSystemType": "ext4"
+    },
+    "services": {
+      "wireguard": true,
+      "adguard": true,
+      "beszel": true,
+      "caddy": true,
+      "forgejo": true,
+      "forgejoRunner": true,
+      "samba": true,
+      "podman": true,
+      "iperf3": true,
+      "openspeedtest": true
+    },
+    "forgejo": {
+      "domain": "git.pi.lan",
+      "runnerEnvironmentFile": "/srv/secrets/forgejo-runner.env"
+    },
+    "openspeedtest": {
+      "domain": "speed.pi.lan"
+    },
+    "beszel": {
+      "domain": "monitor.pi.lan",
+      "agentEnvironmentFile": "/srv/secrets/beszel-agent.env"
+    },
+    "adguard": {
+      "upstreamDns": ["https://cloudflare-dns.com/dns-query"]
+    }
+  },
+  "users": [
+    {
+      "name": "user",
+      "description": "User",
+      "authorizedKeysFile": "/etc/nixos/local/users/operator/authorized_keys",
+      "isAdmin": true,
+      "extraGroups": [],
+      "shell": "bash",
+      "sources": null
+    }
+  ]
+}

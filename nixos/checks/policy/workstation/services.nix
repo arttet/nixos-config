@@ -29,7 +29,7 @@
     message = "void placeholder user must not have admin groups";
   }
   {
-    assertion = workstation.system.stateVersion == "25.11";
-    message = "workstation stateVersion must be 25.11";
+    assertion = workstation.system.stateVersion == "26.05";
+    message = "workstation stateVersion must be 26.05";
   }
 ]

@@ -1,5 +1,6 @@
 {
   home-manager,
+  homelabPolicySystem,
   lib,
   pkgs,
   self,
@@ -70,9 +71,15 @@ let
       requiredGuiFontPackages
       ;
   };
+
+  homelabChecks = import ./homelab-rpi5.nix {
+    inherit (homelabPolicySystem) config;
+    inherit lib;
+  };
 in
 {
   vm-policy = mkPolicy "vm-policy" vmChecks;
   workstation-policy = mkPolicy "workstation-policy" workstationChecks;
   desktop-policy = mkPolicy "desktop-policy" desktopChecks;
+  homelab-rpi5-policy = mkPolicy "homelab-rpi5-policy" homelabChecks;
 }

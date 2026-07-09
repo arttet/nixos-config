@@ -45,6 +45,17 @@ Available recipes:
         test         # Validate the desktop profile
         power-checks # Print real-hardware desktop power validation commands
 
+    [Homelab Raspberry Pi]
+    homelab:
+        check            # Validate local state, target evaluation, and policy
+        image            # Build the Raspberry Pi 5 microSD image
+        flash device     # Safely flash the image to a whole block device
+        deploy [mode]         # Activate on NIXOS_TARGET_HOST; defaults to test
+        deploy-to host [mode] # Activate on an explicit server
+        storage-unlock        # Unlock the existing LUKS SSD and start storage services
+        status                # Show compact health and service state over one SSH connection
+        benchmark-network     # Run direct and reverse iperf3 throughput tests
+
     [Local Overlay]
     overlay:
         path  # Print the local user overlay path

@@ -110,3 +110,15 @@ Back up data, not the full OS image.
 ```
 
 Operational backup details live in the User Guide.
+
+## Homelab Storage
+
+`homelab-rpi5` currently uses the image's SD ext4 root partition for recovery-stable boot. Stable
+Bash is the only homelab login shell, and its history defaults to the per-user runtime directory.
+This layout is specific to the Pi target and does not use the workstation `disko` layout.
+
+The data SSD is an existing LUKS2 container selected by `/dev/disk/by-uuid/...`. It is neither an
+initrd dependency nor a declarative filesystem mount. The root-only `homelab-storage-unlock` helper
+opens it interactively, verifies the existing filesystem, mounts `/srv`, prepares the Podman workload,
+Samba, Beszel, secrets, and journal directory layout, and starts `homelab-storage.target`. Formatting, filesystem
+repair, and automatic unlock are deliberately outside this workflow.

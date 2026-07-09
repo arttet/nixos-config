@@ -27,10 +27,11 @@ The fastest way to understand and use the platform.
 
 Everything you need to get the system running on your hardware or in a virtual environment.
 
-| Guide                                         | Description                              |
-| :-------------------------------------------- | :--------------------------------------- |
-| **[Workstation](./installation/workstation)** | Detailed hardware installation runbook.  |
-| **[VM](./installation/vm)**                   | Setting up a disposable testing sandbox. |
+| Guide                                                     | Description                                                   |
+| :-------------------------------------------------------- | :------------------------------------------------------------ |
+| **[Workstation](./installation/workstation)**             | Detailed hardware installation runbook.                       |
+| **[VM](./installation/vm)**                               | Setting up a disposable testing sandbox.                      |
+| **[Raspberry Pi 5 Homelab](./installation/homelab-rpi5)** | Building, flashing, validating, and updating the headless Pi. |
 
 ### 🛠️ Daily Operations
 

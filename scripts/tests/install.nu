@@ -7,6 +7,11 @@ use ../install/constants.nu *
 use ../install/disko.nu *
 use ../common/ui.nu *
 
+def run-jsonschema-validate [schema: string, instance?: string] {
+  let arguments = if $instance == null { [$schema] } else { [$schema "-i" $instance] }
+  run-external "jsonschema-cli" "validate" ...$arguments | complete
+}
+
 def assert-source-ok [path: string] {
   let result = (nu --no-config-file --commands $"source ($path)" | complete)
 
@@ -197,8 +202,23 @@ def test-disko-config-password-file [] {
 }
 
 def test-installer-contract-schemas [] {
-  let result = (check-jsonschema --check-metaschema schemas/platform-state.v1.schema.json schemas/disko-state.v1.schema.json | complete)
-  assert equal $result.exit_code 0 $"JSON schemas must be valid metaschemas; stderr: ($result.stderr)"
+  for schema in [schemas/platform-state.v1.schema.json schemas/disko-state.v1.schema.json] {
+    let result = (run-jsonschema-validate $schema)
+    assert equal $result.exit_code 0 $"JSON schema must compile: ($schema); stderr: ($result.stderr)"
+  }
+
+  let root = (mktemp -d | str trim)
+  try {
+    let invalid_schema = ($root | path join "invalid.schema.json")
+    let instance = ($root | path join "instance.json")
+    { type: 42 } | to json | save $invalid_schema
+    {} | to json | save $instance
+
+    let result = (run-jsonschema-validate $invalid_schema $instance)
+    assert ($result.exit_code != 0) "jsonschema must reject an invalid schema"
+  } finally {
+    rm --recursive --force $root
+  }
 }
 
 def test-target-flag-removed [] {

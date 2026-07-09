@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "host": {
+    "hostname": "homelab",
+    "timezone": "UTC"
+  },
+  "homelab": {
+    "lanCidr": "192.0.2.0/24",
+    "storage": {
+      "luksDevice": "/dev/sda1",
+      "mapperName": "homelab-data",
+      "fileSystemType": "ext4"
+    }
+  },
+  "users": [
+    {
+      "name": "user",
+      "description": "User",
+      "authorizedKeysFile": "/etc/nixos/local/users/operator/authorized_keys",
+      "sources": null
+    }
+  ]
+}

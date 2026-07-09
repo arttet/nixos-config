@@ -4,7 +4,8 @@ The NixOS Configuration is a layered infrastructure designed to separate public 
 
 ## 📊 Profile Comparison
 
-The platform is composed of three primary targets. Use this table to understand the technical boundaries and feature sets of each profile.
+The platform includes workstation, disposable VM, and dedicated Raspberry Pi targets. The Pi target
+is an independent headless composition and does not inherit workstation storage, boot, GUI, or tuning.
 
 | Feature          | `workstation-gui`       | `workstation`           | `vm`                    |
 | :--------------- | :---------------------- | :---------------------- | :---------------------- |

@@ -43,7 +43,7 @@ export def ensure-dir [dir: string] {
 export def validate-json [schema: string, data: string] {
   require-json-schema-tool
 
-  let result = (check-jsonschema --schemafile $schema $data | complete)
+  let result = (jsonschema-cli validate $schema -i $data | complete)
   if $result.exit_code != 0 {
     let stderr = ($result.stderr | str trim)
     let stdout = ($result.stdout | str trim)
@@ -59,7 +59,7 @@ export def write-json-contract [schema: string, path: string, value: record] {
 }
 
 export def require-json-schema-tool [] {
-  if (which check-jsonschema | length) == 0 {
-    error make { msg: "check-jsonschema is required to validate installer JSON contracts" }
+  if (which jsonschema-cli | length) == 0 {
+    error make { msg: "jsonschema-cli is required to validate installer JSON contracts" }
   }
 }
