@@ -163,6 +163,10 @@ nix.settings = {
   max-jobs = "auto";
   cores = 0;
   auto-optimise-store = true;
+  keep-outputs = true;
+  keep-derivations = true;
+  min-free = 1024 * 1024 * 1024; # 1 GiB
+  max-free = 10 * 1024 * 1024 * 1024; # 10 GiB
   experimental-features = [ "nix-command" "flakes" ];
 };
 ```

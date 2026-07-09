@@ -1,5 +1,15 @@
+################################################################################
+# Requires just >= 1.52.0+
+################################################################################
+
 set dotenv-load
-set dotenv-path := ".envrc"
+set dotenv-path := ".env"
+
+SUDO := env("SUDO", "doas")
+NIX_EXTRA_FLAGS := env("NIX_EXTRA_FLAGS", "")
+
+export NIX_CONFIG := env("NIX_CONFIG", "") + "\n" + "extra-experimental-features = nix-command flakes"
+export SYSTEMD_COLORS := env("SYSTEMD_COLORS", "1")
 
 # ==============================================================================
 # Help
@@ -20,32 +30,121 @@ help:
 [group('Development')]
 fmt:
     @echo "✨ Formatting code..."
-    dprint fmt
     just --fmt
+    dprint fmt
     nix fmt
     @echo "✅ Code formatted!"
 
-[doc('Run repository checks')]
+[doc('Enter the flake dev shell')]
 [group('Development')]
+develop:
+    nix develop
+
+# ==============================================================================
+# NixOS
+# ==============================================================================
+
+[doc('Show flake outputs')]
+[group('NixOS')]
+show:
+    nix flake show
+
+[doc('Update flake inputs')]
+[group('NixOS')]
+update:
+    nix flake update
+
+[doc('Run flake checks')]
+[group('NixOS')]
 check:
     nix flake check
 
-[doc('Build a NixOS profile closure')]
-[group('Development')]
+[doc('Build profile')]
+[group('NixOS')]
 build profile="default":
-    nix build --impure .#nixosConfigurations.{{ profile }}.config.system.build.toplevel --no-link
+    nix build --impure --no-link .#nixosConfigurations.{{ profile }}.config.system.build.toplevel {{ NIX_EXTRA_FLAGS }}
 
-[doc('Run script tests and selected profile checks')]
-[group('Development')]
+[doc('Preview system activation')]
+[group('NixOS')]
+dry profile="default":
+    {{ SUDO }} nixos-rebuild dry-activate --impure --flake "path:{{ justfile_directory() }}#{{ profile }}" {{ NIX_EXTRA_FLAGS }}
+
+[doc('Test system generation')]
+[group('NixOS')]
 test profile="default":
-    just build {{ profile }}
     nix shell nixpkgs#nushell nixpkgs#openssl nixpkgs#check-jsonschema -c nu scripts/tests/run.nu
-    case "{{ profile }}" in default|desktop) nix build .#checks.x86_64-linux.desktop-policy --no-link ;; workstation) nix build .#checks.x86_64-linux.workstation-policy --no-link ;; vm) nix build .#checks.x86_64-linux.vm-policy --no-link ;; *) echo "No policy check is defined for profile: {{ profile }}"; exit 1 ;; esac
+    {{ SUDO }} nixos-rebuild test --impure --flake "path:{{ justfile_directory() }}#{{ profile }}" {{ NIX_EXTRA_FLAGS }}
 
-[doc('Switch the installed NixOS system to a profile')]
-[group('Development')]
+[doc('Switch system generation')]
+[group('NixOS')]
 switch profile="default":
-    doas nixos-rebuild switch --install-bootloader --flake "path:{{ justfile_directory() }}#{{ profile }}" --impure
+    {{ SUDO }} nixos-rebuild switch --impure --flake "path:{{ justfile_directory() }}#{{ profile }}" {{ NIX_EXTRA_FLAGS }}
+
+[doc('Install boot generation')]
+[group('NixOS')]
+boot profile="default":
+    {{ SUDO }} nixos-rebuild boot --impure --install-bootloader --flake "path:{{ justfile_directory() }}#{{ profile }}" {{ NIX_EXTRA_FLAGS }}
+
+[doc('Rollback system generation')]
+[group('NixOS')]
+rollback:
+    {{ SUDO }} nixos-rebuild switch --rollback
+
+[doc('Show NixOS version')]
+[group('NixOS')]
+version:
+    nixos-version
+
+[doc('List system generations')]
+[group('NixOS')]
+list:
+    {{ SUDO }} nixos-rebuild list-generations
+
+[doc('Show system closure size')]
+[group('NixOS')]
+size:
+    nix path-info -Sh /run/current-system
+
+[doc('Show system dependency tree')]
+[group('NixOS')]
+tree:
+    nix-store -q --tree /run/current-system
+
+[doc('Explain package dependency')]
+[group('NixOS')]
+why pkg:
+    nix why-depends /run/current-system nixpkgs#{{ pkg }}
+
+[doc('Show failed units and errors')]
+[group('NixOS')]
+failed:
+    systemctl list-units --failed
+    journalctl --boot --catalog -p err --output=short-iso
+
+[doc('Show current boot logs')]
+[group('NixOS')]
+logs:
+    journalctl --boot --catalog
+
+[doc('Show kernel boot warnings')]
+[group('NixOS')]
+warn:
+    journalctl --boot --dmesg -p warning
+
+[doc('Delete old generations')]
+[group('NixOS')]
+gc days="30":
+    {{ SUDO }} nix-collect-garbage --delete-older-than {{ days }}d
+
+[doc('Optimise Nix store')]
+[group('NixOS')]
+optimise:
+    {{ SUDO }} nix store optimise
+
+[doc('Repair Nix store')]
+[group('NixOS')]
+repair:
+    {{ SUDO }} nix store verify --all --repair
 
 # ==============================================================================
 # VM Runtime
