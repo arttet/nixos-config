@@ -96,6 +96,10 @@ in
           max-jobs = lib.mkDefault "auto";
           cores = lib.mkDefault 0;
           auto-optimise-store = lib.mkDefault true;
+          keep-outputs = lib.mkDefault true;
+          keep-derivations = lib.mkDefault true;
+          min-free = lib.mkDefault (1024 * 1024 * 1024); # 1 GiB
+          max-free = lib.mkDefault (10 * 1024 * 1024 * 1024); # 10 GiB
         };
       })
 
