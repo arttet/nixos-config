@@ -15,6 +15,7 @@
     "**/.vitepress/cache",
     "**/.vitepress/dist",
     ".git",
+    ".tools",
     "LICENSE",
     "target"
   ],

@@ -26,8 +26,13 @@ jobs:
   # ---------------------------------------------------------------------------
   fmt:
     name: Format
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 5
+
+    env:
+      MISE_GLOBAL_CONFIG_FILE: ${{ github.workspace }}/misc/mise/mise.fmt.toml
+      MISE_DATA_DIR: ${{ github.workspace }}/.tools/mise
+      DPRINT_CACHE_DIR: ${{ github.workspace }}/.tools/dprint
 
     steps:
       - name: Checkout
@@ -35,14 +40,33 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Setup Just
-        uses: extractions/setup-just@53165ef7e734c5c07cb06b3c8e7b647c5aa16db3 # v4
+      - name: Restore mise cache
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v5
+        with:
+          path: |
+            ${{ env.MISE_DATA_DIR }}
+            ${{ env.DPRINT_CACHE_DIR }}
+          key: ${{ runner.os }}-mise-fmt-${{ hashFiles('misc/mise/mise.fmt.toml', 'dprint.json') }}
 
-      - name: Source Format Check
-        uses: dprint/check@9cb3a2b17a8e606d37aae341e49df3654933fc23 # v2.3
+      - name: Install mise
+        run: |
+          [ -x "$MISE_DATA_DIR/bin/mise" ] || curl -fsSL https://mise.run | MISE_INSTALL_PATH="$MISE_DATA_DIR/bin/mise" sh
+          echo "$MISE_DATA_DIR/bin" >> "$GITHUB_PATH"
+          echo "$MISE_DATA_DIR/shims" >> "$GITHUB_PATH"
+
+      - name: Install tools
+        run: |
+          mise install
+          mise reshim
 
       - name: Justfile Format Check
         run: just --fmt --check
+
+      - name: Source Format Check
+        run: dprint check
+
+      - name: Nix Format Check
+        run: nixfmt --check .
 
   # ---------------------------------------------------------------------------
   # Stage 1: Lint Quality Gate
