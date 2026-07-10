@@ -1,0 +1,4 @@
+[tools]
+just = "1.56.0"
+dprint = "0.55.1"
+"github:NixOS/nixfmt" = "1.4.0"

@@ -2,6 +2,9 @@
 .nix-config-local/
 .nixos-local/
 
+# Tools
+.tools
+
 # Environment files
 .env
 .env.*

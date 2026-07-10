@@ -1,5 +1,5 @@
 ################################################################################
-# Requires just >= 1.52.0+
+# Requires just >= 1.56.0+
 ################################################################################
 
 set dotenv-load
@@ -150,29 +150,29 @@ repair:
 # VM Runtime
 # ==============================================================================
 
-[group: 'VM Runtime']
+[group('VM Runtime')]
 mod vm 'misc/justfiles/vm.just'
 
 # ==============================================================================
 # Workstation
 # ==============================================================================
 
-[group: 'Workstation']
+[group('Workstation')]
 mod workstation 'misc/justfiles/workstation.just'
 
-[group: 'Desktop']
+[group('Desktop')]
 mod desktop 'misc/justfiles/desktop.just'
 
 # ==============================================================================
 # Local Overlay
 # ==============================================================================
 
-[group: 'Local Overlay']
+[group('Local Overlay')]
 mod overlay 'misc/justfiles/overlay.just'
 
 # ==============================================================================
 # Documentation
 # ==============================================================================
 
-[group: 'Documentation']
+[group('Documentation')]
 mod docs 'misc/justfiles/docs.just'
