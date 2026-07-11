@@ -18,7 +18,7 @@ This creates an executable VM runner, placing it in the `target/` directory (whi
 
 You have two ways to run the VM depending on your workflow.
 
-#### Option A: Interactive (Foreground)
+### Option A: Interactive (Foreground)
 
 If you want to see the boot process and log into the console directly:
 
@@ -34,7 +34,7 @@ just vm run
 To gracefully shut down from inside the VM, type `sudo poweroff`.
 If the VM hangs and you need to force-quit from your terminal, press `Ctrl+A`, let go, and then press `x`.
 
-#### Option B: Background Daemon (Headless)
+### Option B: Background Daemon (Headless)
 
 If you want the VM to run quietly in the background so you can SSH into it (the preferred workflow for testing network services or running automated checks):
 

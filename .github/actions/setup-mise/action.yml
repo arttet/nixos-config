@@ -1,0 +1,42 @@
+name: Setup mise
+description: Install pinned mise binary with checksum verification
+
+inputs:
+  version:
+    description: mise version tag (e.g. v2026.7.5)
+    required: true
+  sha256:
+    description: SHA-256 of mise-<version>-linux-x64-musl.tar.gz
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Install mise
+      shell: bash
+      env:
+        MISE_TAG: ${{ inputs.version }}
+        MISE_TGZ_SHA256: ${{ inputs.sha256 }}
+      run: |
+        set -euo pipefail
+
+        if [ ! -x "$MISE_INSTALL_PATH" ]; then
+          cd "$RUNNER_TEMP"
+          curl -fsSL -o "mise-${MISE_TAG}-linux-x64-musl.tar.gz" \
+            "https://github.com/jdx/mise/releases/download/${MISE_TAG}/mise-${MISE_TAG}-linux-x64-musl.tar.gz"
+          echo "${MISE_TGZ_SHA256}  mise-${MISE_TAG}-linux-x64-musl.tar.gz" | sha256sum -c -
+
+          tar -xzf "mise-${MISE_TAG}-linux-x64-musl.tar.gz"
+          mkdir -p "$(dirname "$MISE_INSTALL_PATH")"
+
+          install -m 755 mise/bin/mise "$MISE_INSTALL_PATH"
+        fi
+
+        echo "$MISE_DATA_DIR/bin" >> "$GITHUB_PATH"
+        echo "$MISE_DATA_DIR/shims" >> "$GITHUB_PATH"
+
+    - name: Install tools
+      shell: bash
+      run: |
+        mise install
+        mise reshim

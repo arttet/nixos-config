@@ -104,18 +104,18 @@ export def render-screen [
   let actual_width = (ui-width)
   let inner_width = $actual_width - 4
   let border_line = ("" | fill --alignment l --character '─' --width ($actual_width - 2))
-  
+
   let frame_color = if $danger { "danger" } else { "frame" }
   let top = (paint $frame_color $"┌($border_line)┐")
   let bottom = (paint $frame_color $"└($border_line)┘")
   let rule = (paint $frame_color $"├($border_line)┤")
-  
+
   let heading = if $danger { paint danger $title } else { paint heading $title }
   let title_len = ($title | ansi strip | str length)
   let heading_pad = $inner_width - $title_len
   let heading_padded = $heading + ("" | fill --alignment l --character " " --width $heading_pad)
   let formatted_heading = $"(paint $frame_color '│')  ($heading_padded)  (paint $frame_color '│')"
-  
+
   let formatted_rows = ($rows | each {|row|
     let pad_len = $inner_width - ($row | ansi strip | str length)
     let padded = $row + ("" | fill --alignment l --character " " --width $pad_len)

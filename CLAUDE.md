@@ -55,7 +55,7 @@ Three flake targets exposed by `flake.nix`. The user-facing product is `desktop`
 
 Layering (strict, enforced by `docs/dev/architecture/composition.md`):
 
-```
+```text
 nixos/modules/{core,storage}/   →  reusable capability modules (each gated by `platform.<name>.enable`)
 nixos/profiles/                 →  collections that define a system shape (base, vm, workstation/*)
 nixos/hosts/<target>/           →  final composition entry point per flake target

@@ -16,96 +16,100 @@ concurrency:
 permissions:
   contents: read # Default read-only for all jobs
 
-defaults:
-  run:
-    shell: bash
+env:
+  MISE_VERSION: v2026.7.5
+  MISE_SHA256: e04f7a6820a095ca0451a8745a335fc84d8b0656dcec535361a5de788f6b3065 # mise-v2026.7.5-linux-x64-musl.tar.gz
+  MISE_DATA_DIR: ${{ github.workspace }}/.tools/mise
+  MISE_INSTALL_PATH: ${{ github.workspace }}/.tools/mise/bin/mise
+  DPRINT_CACHE_DIR: ${{ github.workspace }}/.tools/dprint
 
 jobs:
-  # ---------------------------------------------------------------------------
+  # ==============================================================================
   # Stage 1: Format Quality Gate
-  # ---------------------------------------------------------------------------
+  # ==============================================================================
   fmt:
     name: Format
     runs-on: ubuntu-26.04
     timeout-minutes: 5
 
-    env:
-      MISE_GLOBAL_CONFIG_FILE: ${{ github.workspace }}/misc/mise/mise.fmt.toml
-      MISE_DATA_DIR: ${{ github.workspace }}/.tools/mise
-      DPRINT_CACHE_DIR: ${{ github.workspace }}/.tools/dprint
-
     steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
+        with:
+          egress-policy: audit
+
       - name: Checkout
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           persist-credentials: false
 
-      - name: Restore mise cache
+      - name: Restore tools cache
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v5
         with:
           path: |
             ${{ env.MISE_DATA_DIR }}
             ${{ env.DPRINT_CACHE_DIR }}
-          key: ${{ runner.os }}-mise-fmt-${{ hashFiles('misc/mise/mise.fmt.toml', 'dprint.json') }}
+          key: ci-tools-${{ env.MISE_VERSION }}-${{ runner.os }}-${{ hashFiles('mise.toml', 'dprint.json') }}
 
       - name: Install mise
-        run: |
-          [ -x "$MISE_DATA_DIR/bin/mise" ] || curl -fsSL https://mise.run | MISE_INSTALL_PATH="$MISE_DATA_DIR/bin/mise" sh
-          echo "$MISE_DATA_DIR/bin" >> "$GITHUB_PATH"
-          echo "$MISE_DATA_DIR/shims" >> "$GITHUB_PATH"
+        uses: ./.github/actions/setup-mise
+        with:
+          version: ${{ env.MISE_VERSION }}
+          sha256: ${{ env.MISE_SHA256 }}
 
-      - name: Install tools
-        run: |
-          mise install
-          mise reshim
+      - name: Format Checks
+        run: mise run fmt:all
 
-      - name: Justfile Format Check
-        run: just --fmt --check
-
-      - name: Source Format Check
-        run: dprint check
-
-      - name: Nix Format Check
-        run: nixfmt --check .
-
-  # ---------------------------------------------------------------------------
+  # ==============================================================================
   # Stage 1: Lint Quality Gate
-  # ---------------------------------------------------------------------------
+  # ==============================================================================
   lint:
     name: Lint
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 5
 
     steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
+        with:
+          egress-policy: audit
+
       - name: Checkout
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           persist-credentials: false
 
-      - name: YAML Lint
-        uses: ibiqlik/action-yamllint@2576378a8e339169678f9939646ee3ee325e845c # v3.1.1
-
-      - name: Setup Go
-        uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6.5.0
+      - name: Restore tools cache
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v5
         with:
-          go-version: stable
-          cache: false
+          path: |
+            ${{ env.MISE_DATA_DIR }}
+            ${{ env.DPRINT_CACHE_DIR }}
+          key: ci-tools-${{ env.MISE_VERSION }}-${{ runner.os }}-${{ hashFiles('mise.toml', 'dprint.json') }}
 
-      - name: Install actionlint
-        run: go install github.com/rhysd/actionlint/cmd/actionlint@v1.7.12
+      - name: Install mise
+        uses: ./.github/actions/setup-mise
+        with:
+          version: ${{ env.MISE_VERSION }}
+          sha256: ${{ env.MISE_SHA256 }}
 
-      - name: ActionLint
-        run: actionlint
+      - name: Lint Checks
+        run: mise run lint:all
 
-  # ---------------------------------------------------------------------------
+  # ==============================================================================
   # Stage 1: Nix Quality Gate
-  # ---------------------------------------------------------------------------
-  nix-check:
+  # ==============================================================================
+  check:
     name: Nix Check
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 5
 
     steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
+        with:
+          egress-policy: audit
+
       - name: Checkout
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
@@ -115,161 +119,154 @@ jobs:
         uses: cachix/install-nix-action@8aa03977d8d733052d78f4e008a241fd1dbf36b3 # v31
         with:
           extra_nix_config: |
-            experimental-features = nix-command flakes
-            substituters = https://cache.nixos.org/
-            trusted-public-keys = cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=
             download-attempts = 5
             connect-timeout = 60
             stalled-download-timeout = 300
-            allow-dirty = false
+            cores = 0
 
       - name: Check flake
         run: nix flake check
 
-  # ---------------------------------------------------------------------------
+  # ==============================================================================
   # Stage 1: Security Quality Gate
-  # ---------------------------------------------------------------------------
+  # ==============================================================================
   security:
     name: Security
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
+    runs-on: ubuntu-26.04
+    timeout-minutes: 10
 
     permissions:
       contents: read # Default read-only for this job
       security-events: write # Required to upload security scan results to GitHub Security tab.
 
+    env:
+      CLAMAV_DB_DIR: ${{ github.workspace }}/.tools/clamav-db
+      TRIVY_CACHE_DIR: ${{ github.workspace }}/.tools/trivy-db
+
     steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
+        with:
+          egress-policy: audit
+
       - name: Checkout
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           fetch-depth: 0
           persist-credentials: false
 
-      - name: Secret scanning
-        uses: trufflesecurity/trufflehog@00155c9dc586f34d189adc83d3ac2698c2ec551f # main
+      - name: Restore tools cache
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v5
         with:
-          extra_args: --results=verified,unknown
+          path: |
+            ${{ env.MISE_DATA_DIR }}
+            ${{ env.DPRINT_CACHE_DIR }}
+          key: ci-tools-${{ env.MISE_VERSION }}-${{ runner.os }}-${{ hashFiles('mise.toml', 'dprint.json') }}
 
-      - name: Trivy filesystem scan
-        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+      - name: Resolve date
+        run: echo "DATE=$(date -u +%Y-%m-%d)" >> "$GITHUB_ENV"
+
+      - name: Restore database cache
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v5
         with:
-          scan-type: fs
-          scan-ref: .
-          scanners: secret,misconfig
-          format: table
-          exit-code: "1"
-          severity: HIGH,CRITICAL
-          cache: "true"
+          path: |
+            ${{ env.CLAMAV_DB_DIR }}
+            ${{ env.TRIVY_CACHE_DIR }}
+          key: security-db-${{ env.DATE }}
+          restore-keys: security-db-
+
+      - name: Install mise
+        uses: ./.github/actions/setup-mise
+        with:
+          version: ${{ env.MISE_VERSION }}
+          sha256: ${{ env.MISE_SHA256 }}
+
+      - name: Secret scanning
+        run: mise run security:secrets
+
+      - name: Trivy scan
+        run: mise run security:trivy
 
       - name: Trivy SARIF
-        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
-        if: always()
-        continue-on-error: true
-        with:
-          scan-type: fs
-          scan-ref: .
-          scanners: secret,misconfig
-          format: sarif
-          output: trivy-results.sarif
-          exit-code: "0"
-          severity: HIGH,CRITICAL
-          cache: "true"
+        run: mise run security:trivy:sarif
 
       - name: Upload Trivy SARIF
+        if: ${{ !env.ACT }}
         uses: github/codeql-action/upload-sarif@54f647b7e1bb85c95cddabcd46b0c578ec92bc1a # v4.36.3
-        if: always()
         with:
           sarif_file: trivy-results.sarif
 
-  # ---------------------------------------------------------------------------
-  # Stage 1: Antivirus Scan Gate
-  # ---------------------------------------------------------------------------
-  antivirus:
-    name: Antivirus
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
+      - name: Trivy gate
+        run: mise run security:trivy:gate
 
-    steps:
-      - name: Checkout
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
-        with:
-          persist-credentials: false
+      - name: SAST scan (OSS rules)
+        run: mise run security:semgrep
 
-      - name: Install ClamAV
-        run: |
-          sudo apt-get update
-          sudo apt-get install --yes clamav
+      - name: Update ClamAV database
+        run: mise run security:clamav:update
 
-      - name: Prepare freshclam
-        run: |
-          sudo systemctl stop clamav-freshclam 2>/dev/null || true
-          sudo pkill -f freshclam 2>/dev/null || true
-          sudo rm -f /var/log/clamav/freshclam.log
+      - name: Malware scan
+        run: mise run security:clamav:scan
 
-      - name: Update virus database
-        run: sudo freshclam
-
-      - name: Scan for malware
-        run: |
-          clamscan -r \
-            --infected \
-            --exclude-dir='^\.git$' \
-            --exclude-dir='^target$' \
-            --exclude-dir='^docs/\.vitepress/cache$' \
-            --exclude-dir='^docs/\.vitepress/dist$' \
-            .
-
-  # ---------------------------------------------------------------------------
+  # ==============================================================================
   # Stage 1: Documentation Gate
-  # ---------------------------------------------------------------------------
+  # ==============================================================================
   docs:
     name: Documentation
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 5
 
     steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
+        with:
+          egress-policy: audit
+
       - name: Checkout
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           persist-credentials: false
+          fetch-depth: 0
 
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+      - name: Restore tools cache
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v5
+        with:
+          path: |
+            ${{ env.MISE_DATA_DIR }}
+            ${{ env.DPRINT_CACHE_DIR }}
+          key: ci-tools-${{ env.MISE_VERSION }}-${{ runner.os }}-${{ hashFiles('mise.toml', 'dprint.json') }}
 
       - name: Restore Bun cache
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v5
         with:
           path: ~/.bun/install/cache
-          key: ${{ runner.os }}-bun-${{ hashFiles('docs/bun.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-bun-
+          key: bun-${{ runner.os }}-${{ hashFiles('docs/bun.lock') }}
+          restore-keys: bun-${{ runner.os }}-
 
-      - name: Install docs dependencies
-        working-directory: docs
-        run: bun install --frozen-lockfile
-
-      - name: Audit docs dependencies
-        working-directory: docs
-        run: bun audit
-
-      - name: Build docs (Cloudflare Pages)
-        working-directory: docs
-        env:
-          CI_BASE_URL: /
-        run: bun run docs:build
-
-      - name: Install Lychee
-        uses: jaxxstorm/action-install-gh-release@25e24d2d23ae098373794ef1d6faecb48ee52da8 # v3.0.0
+      - name: Restore lychee cache
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v5
         with:
-          repo: lycheeverse/lychee
-          tag: lychee-v0.24.2
-          digest: 1f4e0ef7f6554a6ed33dd7ac144fb2e1bbed98598e7af973042fc5cd43951c9a
-          platform: linux
-          arch: x86_64
+          path: .lycheecache
+          key: lychee-${{ github.sha }}
+          restore-keys: lychee-
+
+      - name: Install mise
+        uses: ./.github/actions/setup-mise
+        with:
+          version: ${{ env.MISE_VERSION }}
+          sha256: ${{ env.MISE_SHA256 }}
+
+      - name: Install dependencies
+        run: mise run docs:install
+
+      - name: Audit dependencies
+        run: mise run docs:audit
+
+      - name: Build Cloudflare Pages docs
+        run: mise run docs:build
 
       - name: Link Check
-        run: >-
-          lychee --config lychee.toml --root-dir "$GITHUB_WORKSPACE/docs/.vitepress/dist" docs/.vitepress/dist
+        run: mise run docs:links
 
       - name: Upload Cloudflare Pages artifact
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
@@ -277,29 +274,86 @@ jobs:
           name: cloudflare-docs-pages
           path: docs/.vitepress/dist/
 
-      - name: Build docs (GitHub Pages)
-        working-directory: docs
+      - name: Build GitHub Pages docs
         env:
           CI_BASE_URL: /nixos-config/
-        run: bun run docs:build
+        run: mise run docs:build
 
       - name: Upload GitHub Pages artifact
         uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5
         with:
-          name: github-pages
+          name: github-docs-pages
           path: docs/.vitepress/dist
 
-  # ---------------------------------------------------------------------------
-  # Stage 2: Installer Validation
-  # ---------------------------------------------------------------------------
-  installer:
-    name: Installer
+  # ==============================================================================
+  # Stage 1: Attest Build Provenance
+  # ==============================================================================
+  attest:
+    name: Attest Build
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    needs: [docs]
 
-    needs: [fmt, lint, nix-check, security, antivirus, docs]
+    if: |
+      github.actor != 'dependabot[bot]' &&
+      (github.event_name == 'workflow_dispatch' || github.event_name == 'push' ||
+        (github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork != true))
+
+    permissions:
+      attestations: write # Required to create artifact attestations
+      contents: read # Required to download the build artifact
+      id-token: write # Required by Sigstore to sign attestations via OIDC
 
     steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
+        with:
+          egress-policy: audit
+
+      - name: Download docs artifact
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: cloudflare-docs-pages
+          path: docs/.vitepress/dist
+
+      - name: Package docs output
+        run: tar -czf docs-build.tar.gz -C docs/.vitepress/dist .
+
+      - name: Attest build provenance
+        if: ${{ !env.ACT }}
+        uses: actions/attest-build-provenance@a2bbfa25375fe432b6a289bc6b6cd05ecd0c4c32 # v4.1.0
+        with:
+          subject-path: docs-build.tar.gz
+
+      - name: Generate SBOM
+        uses: anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610 # v0.24.0
+        with:
+          path: docs/.vitepress/dist
+          format: spdx-json
+          output-file: sbom.spdx.json
+
+      - name: Attest SBOM
+        if: ${{ !env.ACT }}
+        uses: actions/attest@59d89421af93a897026c735860bf21b6eb4f7b26 # v4.1.0
+        with:
+          subject-path: docs-build.tar.gz
+          sbom-path: sbom.spdx.json
+
+  # ==============================================================================
+  # Stage 2: Installer Validation
+  # ==============================================================================
+  installer:
+    name: Installer
+    runs-on: ubuntu-26.04
+    timeout-minutes: 5
+    needs: [fmt, lint, check, docs]
+
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
+        with:
+          egress-policy: audit
+
       - name: Checkout
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
@@ -309,28 +363,29 @@ jobs:
         uses: cachix/install-nix-action@8aa03977d8d733052d78f4e008a241fd1dbf36b3 # v31
         with:
           extra_nix_config: |
-            experimental-features = nix-command flakes
-            substituters = https://cache.nixos.org/
-            trusted-public-keys = cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=
             download-attempts = 5
             connect-timeout = 60
             stalled-download-timeout = 300
             allow-dirty = false
 
       - name: Validate scripts
-        run: nix shell nixpkgs#nushell nixpkgs#openssl nixpkgs#check-jsonschema -c nu scripts/tests/run.nu
+        run: nix shell --inputs-from . nixpkgs#nushell nixpkgs#openssl nixpkgs#check-jsonschema -c nu scripts/tests/run.nu
 
-  # ---------------------------------------------------------------------------
+  # ==============================================================================
   # Stage 2: Disk Layout Validation
-  # ---------------------------------------------------------------------------
+  # ==============================================================================
   disko:
     name: Disko
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 5
-
-    needs: [fmt, lint, nix-check, security, antivirus, docs]
+    needs: [fmt, lint, check, docs]
 
     steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
+        with:
+          egress-policy: audit
+
       - name: Checkout
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
@@ -340,9 +395,6 @@ jobs:
         uses: cachix/install-nix-action@8aa03977d8d733052d78f4e008a241fd1dbf36b3 # v31
         with:
           extra_nix_config: |
-            experimental-features = nix-command flakes
-            substituters = https://cache.nixos.org/
-            trusted-public-keys = cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=
             download-attempts = 5
             connect-timeout = 60
             stalled-download-timeout = 300
@@ -354,24 +406,28 @@ jobs:
       - name: Validate real disko on loopback disk
         run: |
           # shellcheck disable=SC2016
-          nix shell nixpkgs#nushell nixpkgs#openssl nixpkgs#check-jsonschema -c sh -c '
+          nix shell --inputs-from . nixpkgs#nushell nixpkgs#openssl nixpkgs#check-jsonschema -c sh -c '
             sudo env "PATH=$PATH" unshare --mount --propagation private sh -c '"'"'
               umount -R /mnt 2>/dev/null || true
               RUN_DISKO_LOOP_TEST=1 nu scripts/tests/run.nu
             '"'"'
           '
 
-  # ---------------------------------------------------------------------------
+  # ==============================================================================
   # Stage 2: VM Build
-  # ---------------------------------------------------------------------------
+  # ==============================================================================
   vm:
     name: VM
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-
-    needs: [fmt, lint, nix-check, security, antivirus, docs]
+    runs-on: ubuntu-26.04
+    timeout-minutes: 5
+    needs: [fmt, lint, check, docs]
 
     steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
+        with:
+          egress-policy: audit
+
       - name: Checkout
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
@@ -381,9 +437,6 @@ jobs:
         uses: cachix/install-nix-action@8aa03977d8d733052d78f4e008a241fd1dbf36b3 # v31
         with:
           extra_nix_config: |
-            experimental-features = nix-command flakes
-            substituters = https://cache.nixos.org/
-            trusted-public-keys = cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=
             download-attempts = 5
             connect-timeout = 60
             stalled-download-timeout = 300
@@ -392,17 +445,21 @@ jobs:
       - name: Build VM
         run: nix build .#nixosConfigurations.vm.config.system.build.vm --no-link
 
-  # ---------------------------------------------------------------------------
+  # ==============================================================================
   # Stage 2: Workstation Build
-  # ---------------------------------------------------------------------------
+  # ==============================================================================
   workstation:
     name: Workstation
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-
-    needs: [fmt, lint, nix-check, security, antivirus, docs]
+    runs-on: ubuntu-26.04
+    timeout-minutes: 5
+    needs: [fmt, lint, check, docs]
 
     steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
+        with:
+          egress-policy: audit
+
       - name: Checkout
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
@@ -412,9 +469,6 @@ jobs:
         uses: cachix/install-nix-action@8aa03977d8d733052d78f4e008a241fd1dbf36b3 # v31
         with:
           extra_nix_config: |
-            experimental-features = nix-command flakes
-            substituters = https://cache.nixos.org/
-            trusted-public-keys = cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=
             download-attempts = 5
             connect-timeout = 60
             stalled-download-timeout = 300
@@ -423,113 +477,60 @@ jobs:
       - name: Build workstation
         run: nix build .#nixosConfigurations.workstation.config.system.build.toplevel --no-link
 
-  # ---------------------------------------------------------------------------
+  # ==============================================================================
   # Stage 2: Desktop Build
-  # ---------------------------------------------------------------------------
+  # ==============================================================================
   desktop:
     name: Desktop
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 30
-
-    needs: [fmt, lint, nix-check, security, antivirus, docs]
+    # needs: [fmt, lint, check, docs]
 
     steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
+        with:
+          egress-policy: audit
+
       - name: Checkout
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           persist-credentials: false
 
-      - name: Free Disk Space for Desktop
-        uses: endersonmenezes/free-disk-space@7901478139cff6e9d44df5972fd8ab8fcade4db1 # v3
-        with:
-          remove_android: true
-          remove_dotnet: true
-          remove_haskell: true
-          rm_cmd: "rmz"
-
       - name: Install Nix
         uses: cachix/install-nix-action@8aa03977d8d733052d78f4e008a241fd1dbf36b3 # v31
         with:
           extra_nix_config: |
-            experimental-features = nix-command flakes
-            substituters = https://cache.nixos.org/
-            trusted-public-keys = cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=
             download-attempts = 5
             connect-timeout = 60
             stalled-download-timeout = 300
-            allow-dirty = false
 
-      - name: Restore Nix сache
+      - name: Restore Nix cache
         uses: nix-community/cache-nix-action@7df957e333c1e5da7721f60227dbba6d06080569 # v7
         with:
           primary-key: nix-desktop-${{ runner.os }}-${{ hashFiles('**/*.nix', '**/flake.lock') }}
-          restore-prefixes-first-match: nix-desktop-${{ runner.os }}-
           gc-max-store-size-linux: 3G
 
       - name: Build desktop
         run: nix build .#nixosConfigurations.desktop.config.system.build.toplevel --no-link
 
-  # ---------------------------------------------------------------------------
-  # Stage 3: Deploy GitHub Pages
-  # ---------------------------------------------------------------------------
-  deploy-gh-pages:
-    name: Deploy GitHub Pages
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-
-    concurrency:
-      group: deploy-gh-pages-${{ github.ref }}
-      cancel-in-progress: false
-
-    needs:
-      - fmt
-      - lint
-      - nix-check
-      - security
-      - antivirus
-      - docs
-      - installer
-      - disko
-      - vm
-      - workstation
-      - desktop
-
-    if: |
-      github.event_name == 'push' &&
-      github.ref == 'refs/heads/main' &&
-      github.actor != 'dependabot[bot]'
-
-    permissions:
-      contents: read # Required to download GitHub Pages artifacts.
-      pages: write # Required to deploy GitHub Pages artifacts.
-      id-token: write # Required for OIDC authentication with GitHub Pages.
-
-    environment:
-      name: github-pages
-      url: ${{ steps.github_pages.outputs.page_url }}
-
-    steps:
-      - name: Release on GitHub Pages
-        id: github_pages
-        uses: actions/deploy-pages@cd2ce8fcbc39b97be8ca5fce6e763baed58fa128 # v5
-        with:
-          artifact_name: github-pages
-
-  # ---------------------------------------------------------------------------
+  # ==============================================================================
   # Stage 3: Cloudflare Preflight
-  # ---------------------------------------------------------------------------
+  # ==============================================================================
   cf-preflight:
     name: Cloudflare Preflight
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
+    runs-on: ubuntu-26.04
+    timeout-minutes: 5
 
     needs:
+      # Stage 1
       - fmt
       - lint
-      - nix-check
+      - check
       - security
-      - antivirus
       - docs
+      - attest
+      # Stage 2
       - installer
       - disko
       - vm
@@ -545,26 +546,34 @@ jobs:
       enabled: ${{ steps.check.outputs.enabled }}
 
     steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
+        with:
+          egress-policy: block
+
       - name: Check Cloudflare configuration
         id: check
         env:
-          ENABLED: ${{ secrets.CLOUDFLARE_API_TOKEN != '' && secrets.CLOUDFLARE_ACCOUNT_ID != '' && vars.CF_DOCS_PAGES_PROJECT != '' }}
+          ENABLED: >-
+            ${{ secrets.CLOUDFLARE_API_TOKEN != '' &&
+            secrets.CLOUDFLARE_ACCOUNT_ID != '' &&
+            vars.CF_DOCS_PAGES_PROJECT != '' &&
+            vars.CF_DOCS_PAGES_DOMAIN != '' }}
         run: echo "enabled=$ENABLED" >> "$GITHUB_OUTPUT"
 
-  # ---------------------------------------------------------------------------
+  # ==============================================================================
   # Stage 3: Deploy Cloudflare Pages
-  # ---------------------------------------------------------------------------
+  # ==============================================================================
   deploy-cf-pages:
     name: Deploy Cloudflare Pages
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 5
+    needs: [cf-preflight]
+    if: needs.cf-preflight.outputs.enabled == 'true'
 
     concurrency:
       group: deploy-cf-pages-${{ github.event.pull_request.number || github.ref }}
       cancel-in-progress: false
-
-    if: needs.cf-preflight.outputs.enabled == 'true'
-    needs: cf-preflight
 
     permissions:
       contents: read # Required to download documentation artifacts.
@@ -575,15 +584,32 @@ jobs:
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
       CF_DOCS_PAGES_PROJECT: ${{ vars.CF_DOCS_PAGES_PROJECT }}
       CF_DOCS_BRANCH: pr-${{ github.event.pull_request.number }}
+      GH_TOKEN: ${{ github.token }}
 
     steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
+        with:
+          egress-policy: audit
+
       - name: Checkout
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           persist-credentials: false
 
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+      - name: Restore tools cache
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v5
+        with:
+          path: |
+            ${{ env.MISE_DATA_DIR }}
+            ${{ env.DPRINT_CACHE_DIR }}
+          key: ci-tools-${{ env.MISE_VERSION }}-${{ runner.os }}-${{ hashFiles('mise.toml', 'dprint.json') }}
+
+      - name: Install mise
+        uses: ./.github/actions/setup-mise
+        with:
+          version: ${{ env.MISE_VERSION }}
+          sha256: ${{ env.MISE_SHA256 }}
 
       - name: Download docs artifact
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
@@ -602,12 +628,54 @@ jobs:
         if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
         run: bunx wrangler pages deploy ./docs/.vitepress/dist --project-name "$CF_DOCS_PAGES_PROJECT"
 
-      - name: Update sticky PR comment
-        if: ${{ github.event_name == 'pull_request' && steps.cf_docs_preview.outputs.docs_preview_url != '' }}
-        uses: marocchino/sticky-pull-request-comment@0ea0beb66eb9baf113663a64ec522f60e49231c0 # v3.0.4
-        with:
-          header: docs-preview
-          message: |
-            ## Documentation Preview
+      - name: Update PR comment
+        if: ${{ github.event_name == 'pull_request' && !env.ACT }}
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          DOCS_URL: https://pr-${{ github.event.pull_request.number }}.${{ vars.CF_DOCS_PAGES_DOMAIN }}
+        run: |
+          gh pr comment "$PR_NUMBER" \
+            --repo "$GITHUB_REPOSITORY" \
+            --edit-last --create-if-none \
+            --body "## Documentation Preview
+          Deployed: $DOCS_URL"
 
-            Deployed: ${{ steps.cf_docs_preview.outputs.docs_preview_url }}
+  # ==============================================================================
+  # Stage 3: Deploy GitHub Pages
+  # ==============================================================================
+  deploy-gh-pages:
+    name: Deploy GitHub Pages
+    runs-on: ubuntu-26.04
+    timeout-minutes: 5
+    needs: [cf-preflight]
+
+    if: |
+      github.event_name == 'push' &&
+      github.ref == 'refs/heads/main' &&
+      github.actor != 'dependabot[bot]'
+
+    concurrency:
+      group: deploy-gh-pages
+      cancel-in-progress: false
+
+    permissions:
+      contents: read # Required to download GitHub Pages artifacts.
+      pages: write # Required to deploy GitHub Pages artifacts.
+      id-token: write # Required for OIDC authentication with GitHub Pages.
+
+    environment:
+      name: github-pages
+      url: ${{ steps.github_pages.outputs.page_url }}
+
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
+        with:
+          egress-policy: audit
+
+      - name: Release on GitHub Pages
+        if: ${{ !env.ACT }}
+        id: github_pages
+        uses: actions/deploy-pages@cd2ce8fcbc39b97be8ca5fce6e763baed58fa128 # v5
+        with:
+          artifact_name: github-docs-pages

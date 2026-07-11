@@ -1,0 +1,193 @@
+[tools]
+"npm:cspell" = "10.0.1"
+"npm:markdownlint-cli2" = "0.23.0"
+"npm:wrangler" = "4.107.0"
+
+act = "0.2.89"
+actionlint = "1.7.12"
+bun = "1.3.14"
+dprint = "0.55.1"
+editorconfig-checker = "3.8.0"
+just = "1.56.0"
+lychee = "0.24.2"
+semgrep = "1.169.0"
+trivy = "0.72.0"
+trufflehog = "3.95.9"
+uv = "0.11.28"
+yamllint = "1.38.0"
+zizmor = "1.26.1"
+
+[env]
+MSYS_NO_PATHCONV = "1"
+CLAMAV_DB_DIR = "{{config_root}}/.tools/clamav-db"
+CLAMAV_IMAGE = "clamav/clamav:1.5.3_base"
+SEMGREP_IMAGE = "semgrep/semgrep:1.169.0"
+CF_DOCS_PAGES_PROJECT = "nixos-config-docs"
+npm_config_fetch_retries = "5"
+npm_config_fetch_retry_mintimeout = "20000"
+npm_config_fetch_retry_maxtimeout = "120000"
+npm_config_fetch_timeout = "300000"
+
+# ==============================================================================
+# Stage 1: Format Quality Gate
+# ==============================================================================
+
+[tasks."fmt:just"]
+description = "Justfile format check"
+run = "just --fmt --check"
+
+[tasks."fmt:editorconfig"]
+description = "EditorConfig check"
+run = "ec"
+
+[tasks."fmt:dprint"]
+description = "Source format check"
+run = "dprint check"
+
+[tasks."fmt:all"]
+description = "All format checks"
+depends = ["fmt:just", "fmt:editorconfig", "fmt:dprint"]
+
+# ==============================================================================
+# Stage 1: Lint Quality Gate
+# ==============================================================================
+
+[tasks."lint:actions"]
+description = "GitHub Workflow lint"
+run = "actionlint"
+
+[tasks."lint:yaml"]
+description = "YAML lint"
+run = "yamllint ."
+
+[tasks."lint:zizmor"]
+description = "GitHub Actions security audit"
+run = "zizmor --persona pedantic .github/workflows/"
+
+[tasks."lint:cspell"]
+description = "Spell check"
+run = "cspell --no-progress"
+
+[tasks."lint:markdown"]
+description = "Markdown lint"
+run = "markdownlint-cli2 **/*.md"
+
+[tasks."lint:all"]
+description = "All lint checks"
+depends = [
+  "lint:actions",
+  "lint:yaml",
+  "lint:zizmor",
+  "lint:cspell",
+  "lint:markdown",
+]
+
+# ==============================================================================
+# Stage 1: Security Quality Gate
+# ==============================================================================
+
+[tasks."security:secrets"]
+description = "Secret scanning over git history"
+run = "trufflehog git file://. --results=verified,unknown --fail"
+
+[tasks."security:semgrep"]
+description = "SAST scan (OSS rules)"
+shell = "bash -c"
+run = """
+semgrep scan --verbose --config p/ci --oss-only --metrics=off --error --exclude .tools
+"""
+
+[tasks."security:trivy"]
+description = "Trivy scan"
+run = """
+trivy fs \
+  --scanners secret,misconfig \
+  --severity HIGH,CRITICAL \
+  --skip-dirs .tools,target,.serena,node_modules,docs/node_modules \
+  --format json --output trivy.json --exit-code 0 \
+  .
+"""
+
+[tasks."security:trivy:sarif"]
+description = "Convert trivy.json to SARIF"
+run = "trivy convert --format sarif --output trivy-results.sarif trivy.json"
+depends = ["security:trivy"]
+
+[tasks."security:trivy:gate"]
+description = "Fail on HIGH/CRITICAL findings"
+run = "trivy convert --format table --exit-code 1 --severity HIGH,CRITICAL trivy.json"
+depends = ["security:trivy"]
+
+[tasks."security:clamav:update"]
+description = "Update virus databases into CLAMAV_DB_DIR"
+shell = "bash -c"
+run = """
+mkdir -p "$CLAMAV_DB_DIR"
+docker run --rm -v "$CLAMAV_DB_DIR:/var/lib/clamav" "$CLAMAV_IMAGE" \
+  freshclam --foreground --debug
+"""
+
+[tasks."security:clamav:scan"]
+description = "Malware scan of the working tree (CI/Linux; on Windows see MSYS notes)"
+shell = "bash -c"
+run = """
+docker run --rm \
+  --entrypoint clamscan \
+  -v "$PWD:/scandir:ro" \
+  -v "$CLAMAV_DB_DIR:/var/lib/clamav:ro" \
+  "$CLAMAV_IMAGE" \
+  --recursive \
+  --infected \
+  --exclude-dir='^/scandir/\\.git' \
+  --exclude-dir='^/scandir/\\.tools/clamav-db' \
+  /scandir
+"""
+
+[tasks."security:all"]
+description = "All security checks"
+depends = [
+  "security:secrets",
+  "security:semgrep",
+  "security:trivy:gate",
+  "security:trivy:sarif",
+  "security:clamav:update",
+  "security:clamav:scan",
+]
+
+# ==============================================================================
+# Stage 1: Documentation Gate
+# ==============================================================================
+
+[tasks."docs:install"]
+description = "Install dependencies"
+dir = "docs"
+run = "bun install --frozen-lockfile"
+
+[tasks."docs:audit"]
+description = "Audit docs dependencies"
+dir = "docs"
+run = "bun audit"
+depends = ["docs:install"]
+
+[tasks."docs:build"]
+description = "Build VitePress docs"
+dir = "docs"
+run = "bun run docs:build"
+depends = ["docs:install"]
+
+[tasks."docs:links"]
+description = "Link check over built docs"
+run = 'lychee --config lychee.toml --root-dir "{{config_root}}/docs/.vitepress/dist" docs/.vitepress/dist'
+
+[tasks."docs:deploy:cloudflare"]
+description = "Deploy built docs to Cloudflare Pages (requires CLOUDFLARE_API_TOKEN)"
+dir = "docs"
+shell = "bash -c"
+run = """
+: "${CF_DOCS_PAGES_PROJECT:?CF_DOCS_PAGES_PROJECT is required}"
+if [ -n "${CF_DOCS_BRANCH:-}" ]; then
+  wrangler pages deploy .vitepress/dist --project-name "${CF_DOCS_PAGES_PROJECT}" --branch "${CF_DOCS_BRANCH}"
+else
+  wrangler pages deploy .vitepress/dist --project-name "${CF_DOCS_PAGES_PROJECT}"
+fi
+"""

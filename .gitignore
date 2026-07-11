@@ -16,3 +16,5 @@ result
 .serena/
 .wrangler/
 .lycheecache
+trivy.json
+trivy-results.sarif
