@@ -9,6 +9,7 @@ ksshaskpass
 mkpasswd
 opensnitch
 opensnitchd
+passdb
 pipewire
 polkit
 restic

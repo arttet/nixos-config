@@ -1,4 +1,5 @@
 cache = true
+exclude = ["(?i)^https://REPLACE-WITH-UPSTREAM/"]
 exclude_path = ["[.]md$"]
 fallback_extensions = ["html"]
 index_files = ["index.html"]

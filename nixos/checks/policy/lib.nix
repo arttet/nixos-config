@@ -24,12 +24,15 @@ let
 
   mkPolicy =
     name: checks:
-    pkgs.writeText "${name}.txt" (
-      lib.concatMapStringsSep "\n" (
-        check: if check.assertion then "ok: ${check.message}" else throw check.message
-      ) checks
-      + "\n"
-    );
+    pkgs.runCommand "${name}.txt" { } ''
+      ${builtins.concatStringsSep "\n" (
+        map (
+          check:
+          if check.assertion then "echo ${lib.escapeShellArg "ok: ${check.message}"}" else throw check.message
+        ) checks
+      )}
+      touch "$out"
+    '';
 
   hasPackage =
     name: packages:

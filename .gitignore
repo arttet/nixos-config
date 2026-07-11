@@ -1,6 +1,7 @@
 # Local-only overlays and machine state must stay outside git.
 .nix-config-local/
 .nixos-local/
+secrets/
 
 # Tools
 .tools

@@ -30,6 +30,7 @@ in
     touch $out
   '';
   json-schemas = pkgs.runCommand "json-schemas" { nativeBuildInputs = [ pkgs.check-jsonschema ]; } ''
+    shopt -s nullglob
     cd ${cleanSource}
     check-jsonschema --check-metaschema schemas/*.schema.json
     check-jsonschema --schemafile schemas/platform-state.v1.schema.json schemas/fixtures/platform-state.*.valid.json

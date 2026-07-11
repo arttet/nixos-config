@@ -1,9 +1,17 @@
 {
   description = "NixOS Configuration: personal reproducible infrastructure";
 
+  nixConfig = {
+    extra-substituters = [ "https://nixos-raspberrypi.cachix.org" ];
+    extra-trusted-public-keys = [
+      "nixos-raspberrypi.cachix.org-1:4iMO9LXa8BqhU+Rpg6LQKiGa2lsNh/j2oiYLNOQ5sPI="
+    ];
+  };
+
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-26.05";
     nixpkgs-unstable.url = "github:nixos/nixpkgs/nixpkgs-unstable";
+    nixos-raspberrypi.url = "github:nvmd/nixos-raspberrypi/main";
     disko.url = "github:nix-community/disko/latest";
     disko.inputs.nixpkgs.follows = "nixpkgs";
     home-manager.url = "github:nix-community/home-manager/release-26.05";
@@ -25,6 +33,7 @@
       home-manager,
       nixpkgs,
       nixpkgs-unstable,
+      nixos-raspberrypi,
       treefmt-nix,
       zen-browser,
       walker,
@@ -32,6 +41,8 @@
       ...
     }:
     let
+      homelabCheckSystem = "aarch64-linux";
+      homelabCheckPkgs = nixos-raspberrypi.legacyPackages.${homelabCheckSystem};
       inherit (nixpkgs) lib;
 
       supportedSystems = import systems;
@@ -52,10 +63,18 @@
       unstablePkgs = unstablePkgsFor primarySystem;
 
       version = "0.1.0";
+      homelabVersion = "0.1.0";
       revision = if self ? rev then self.shortRev else "dev";
       fullVersion = "${version}-${revision}";
+      homelabFullVersion = "${homelabVersion}-${revision}";
       build = {
-        inherit version revision fullVersion;
+        inherit
+          version
+          revision
+          fullVersion
+          homelabVersion
+          homelabFullVersion
+          ;
       };
       treefmtEvalFor =
         system:
@@ -107,6 +126,89 @@
           unstablePkgs = unstablePkgsFor system;
         };
 
+      # The deployable `.#homelab-rpi5` output must exist for `just homelab deploy`
+      # (`nixos-rebuild --flake .#homelab-rpi5`), yet `nix flake check` evaluates it
+      # in a pure/CI context where no local overlay is present. Fall back to the
+      # committed placeholder state (fake key, RFC-5737 CIDR) so evaluation succeeds;
+      # real deploys override it via NIX_CONFIG_LOCAL_STATE under `--impure`.
+      homelabModuleArgs = {
+        inherit build;
+        localStateFile =
+          if localOverlayArgs.localStateFile != null then
+            localOverlayArgs.localStateFile
+          else
+            homelabPolicyState;
+        localHardwareConfig = null;
+      };
+      homelabPolicyKey = builtins.toFile "homelab-policy.pub" "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGZha2Vob21lbGFicG9saWN5a2V5bm90YXNlY3JldA== policy@test\n";
+      homelabPolicyState = builtins.toFile "homelab-policy-state.json" (
+        builtins.toJSON {
+          schemaVersion = 1;
+          host = {
+            hostname = "homelab";
+            timezone = "UTC";
+          };
+          users = [
+            {
+              name = "user";
+              description = "User";
+              authorizedKeysFile = builtins.unsafeDiscardStringContext (toString homelabPolicyKey);
+              isAdmin = true;
+              extraGroups = [ ];
+              shell = "bash";
+              sources = null;
+            }
+          ];
+          homelab = {
+            lanCidr = "192.0.2.0/24";
+            services = {
+              wireguard = true;
+              adguard = true;
+              beszel = true;
+              caddy = true;
+              forgejo = true;
+              forgejoRunner = true;
+              samba = true;
+              podman = true;
+              iperf3 = true;
+              openspeedtest = true;
+            };
+            domain = "pi.lan";
+            lanInterface = "end0";
+            forgejo = {
+              domain = "git.pi.lan";
+              runnerEnvironmentFile = "/srv/secrets/forgejo-runner.env";
+            };
+            openspeedtest.domain = "speed.pi.lan";
+            beszel = {
+              domain = "monitor.pi.lan";
+              agentEnvironmentFile = "/srv/secrets/beszel-agent.env";
+            };
+            storage = {
+              luksDevice = "/dev/disk/by-uuid/123e4567-e89b-12d3-a456-426614174000";
+              mapperName = "homelab-data";
+              fileSystemType = "ext4";
+            };
+            adguard.upstreamDns = [ "https://dns.example.invalid/dns-query" ];
+          };
+        }
+      );
+      mkHomelabRpi5 =
+        specialArgs:
+        nixos-raspberrypi.lib.nixosSystem {
+          inherit specialArgs;
+          modules = [
+            nixos-raspberrypi.nixosModules.sd-image
+            nixos-raspberrypi.nixosModules.raspberry-pi-5.base
+            ./nixos/hosts/homelab-rpi5/default.nix
+          ];
+        };
+      homelabPolicySystem = mkHomelabRpi5 (
+        homelabModuleArgs
+        // {
+          localStateFile = homelabPolicyState;
+        }
+      );
       mkSystem =
         system: hostModule:
         nixpkgs.lib.nixosSystem {
@@ -139,6 +241,7 @@
       policyChecks = import ./nixos/checks/policy {
         inherit
           home-manager
+          homelabPolicySystem
           lib
           pkgs
           self
@@ -146,6 +249,37 @@
           workstationStorageLayout
           ;
       };
+      homelabPolicyCheck =
+        pkgs:
+        let
+          checks = import ./nixos/checks/policy/homelab-rpi5.nix {
+            inherit (homelabPolicySystem) config;
+            inherit lib;
+          };
+          failedChecks = builtins.filter (check: !(check.assertion or false)) checks;
+          failureMessage = builtins.concatStringsSep "\n" (
+            lib.imap0 (
+              index: check:
+              let
+                message =
+                  if (check ? message) && check.message != null then
+                    check.message
+                  else
+                    "unnamed homelab-rpi5 policy check #${toString index}";
+              in
+              "- ${message}"
+            ) failedChecks
+          );
+        in
+        pkgs.runCommand "homelab-rpi5-policy.txt" { } (
+          if failedChecks != [ ] then
+            throw "homelab-rpi5 policy failed:\n${failureMessage}"
+          else
+            ''
+              echo "homelab-rpi5 policy passed"
+              touch "$out"
+            ''
+        );
     in
     {
       lib.build = build;
@@ -155,7 +289,6 @@
       packages.${primarySystem} = {
         default = self.nixosConfigurations.default.config.system.build.toplevel;
       };
-
       devShells = forAllSystems (
         system:
         let
@@ -164,8 +297,9 @@
         {
           default = systemPkgs.mkShell {
             packages = with systemPkgs; [
-              check-jsonschema
               dprint
+              iperf3
+              jsonschema-cli
               just
               nushell
               openssl
@@ -206,10 +340,69 @@
 
       nixosConfigurations.desktop-aarch64 = mkSystem "aarch64-linux" ./nixos/hosts/desktop/default.nix;
 
+      nixosConfigurations.homelab-rpi5 = mkHomelabRpi5 homelabModuleArgs;
+
       checks.${primarySystem} = {
         formatting = treefmtEval.config.build.check self;
+        workstation-kernel-policy = pkgs.writeText "workstation-kernel-policy.txt" (
+          assert
+            self.nixosConfigurations.workstation.config.boot.kernelPackages.kernel.outPath
+            == pkgs.linuxPackages_latest.kernel.outPath;
+          "workstation uses pkgs.linuxPackages_latest\n"
+        );
+        workstation-secure-boot-policy = pkgs.writeText "workstation-secure-boot-policy.txt" (
+          assert self.nixosConfigurations.workstation.config.boot.loader.grub.enable;
+          assert builtins.elem "--disable-shim-lock"
+            self.nixosConfigurations.workstation.config.boot.loader.grub.extraGrubInstallArgs;
+          assert builtins.elem "--modules=tpm"
+            self.nixosConfigurations.workstation.config.boot.loader.grub.extraGrubInstallArgs;
+          assert builtins.elem pkgs.sbctl
+            self.nixosConfigurations.workstation.config.environment.systemPackages;
+          assert builtins.elem pkgs.efibootmgr
+            self.nixosConfigurations.workstation.config.environment.systemPackages;
+          assert builtins.elem pkgs.sbsigntool
+            self.nixosConfigurations.workstation.config.environment.systemPackages;
+          assert builtins.elem pkgs.grub2
+            self.nixosConfigurations.workstation.config.environment.systemPackages;
+          assert !(builtins.elem pkgs.sbctl self.nixosConfigurations.vm.config.environment.systemPackages);
+          assert
+            !(builtins.elem pkgs.efibootmgr self.nixosConfigurations.vm.config.environment.systemPackages);
+          assert
+            !(builtins.elem pkgs.sbsigntool self.nixosConfigurations.vm.config.environment.systemPackages);
+          "workstation uses GRUB with sbctl Secure Boot support\n"
+        );
+        workstation-storage-layout = pkgs.writeText "workstation-storage-layout.json" (
+          assert workstationStorageLayout.disk.workstation.device == "/dev/disk/by-id/workstation-example";
+          assert workstationStorageLayout.disk.workstation.content.type == "gpt";
+          assert workstationStorageLayout.disk.workstation.content.partitions.ESP.size == "512M";
+          assert
+            workstationStorageLayout.disk.workstation.content.partitions.ESP.content.mountpoint == "/boot/efi";
+          assert workstationStorageLayout.disk.workstation.content.partitions.boot.size == "512M";
+          assert
+            workstationStorageLayout.disk.workstation.content.partitions.boot.content.mountpoint == "/boot";
+          assert workstationStorageLayout.disk.workstation.content.partitions.luks.size == "100%";
+          assert workstationStorageLayout.disk.workstation.content.partitions.luks.content.type == "luks";
+          assert
+            workstationStorageLayout.disk.workstation.content.partitions.luks.content.name == "cryptroot";
+          assert
+            workstationStorageLayout.disk.workstation.content.partitions.luks.content.extraFormatArgs == [
+              "--type"
+              "luks2"
+            ];
+          assert
+            workstationStorageLayout.disk.workstation.content.partitions.luks.content.content.type == "btrfs";
+          assert
+            workstationStorageLayout.disk.workstation.content.partitions.luks.content.content.subvolumes."@root".mountpoint
+            == "/";
+          assert
+            workstationStorageLayout.disk.workstation.content.partitions.luks.content.content.subvolumes."@swap".mountpoint
+            == "/swap";
+          builtins.toJSON workstationStorageLayout
+        );
       }
       // lintChecks
       // policyChecks;
+
+      checks.${homelabCheckSystem}.homelab-rpi5-policy = homelabPolicyCheck homelabCheckPkgs;
     };
 }

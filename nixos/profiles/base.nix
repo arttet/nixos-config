@@ -59,5 +59,4 @@
     Version: ${build.fullVersion}
   '';
 
-  system.stateVersion = "25.11";
 }

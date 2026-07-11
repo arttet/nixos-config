@@ -1,4 +1,5 @@
 hostnames
+homelab
 keymaps
 llms
 maxtimeout

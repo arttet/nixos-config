@@ -2,6 +2,7 @@ dnsovertls
 dnssec
 fastopen
 iommu
+iperf
 nftables
 nmcli
 nslookup

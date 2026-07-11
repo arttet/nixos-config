@@ -22,6 +22,7 @@ The flake check includes:
 - formatting through `treefmt-nix`
 - `statix`
 - `deadnix`
+- JSON Schema compilation and fixture validation through the Rust `jsonschema-rs` CLI
 - repository policy assertions
 
 ## 🧪 Runtime Validation (QEMU)
@@ -37,7 +38,12 @@ Workstation profiles can also be validated without real hardware:
 ```sh
 just workstation test
 just workstation-gui test
+NIX_CONFIG_LOCAL_STATE=/absolute/path/to/homelab-rpi5.json just homelab check
 ```
+
+The homelab check also validates stable LUKS UUID paths, a non-empty LAN CIDR and AdGuard upstream
+list, ephemeral-root policy, SSD service gating, source-aware firewall rules, the absence of
+Nix-managed WireGuard profiles, and the fixed `25.11` migration baseline.
 
 `workstation-gui test` validates the graphical configuration without launching Hyprland or requiring a GPU.
 
@@ -89,3 +95,8 @@ Expected result:
 Real install apply mode also performs pre-flight checks before destructive disk
 operations: UEFI boot mode, required installer commands, free `/mnt`, and network
 connectivity to `cache.nixos.org`.
+
+The homelab policy validates the AArch64/Raspberry Pi boot model, Ethernet DHCP, mDNS, key-only SSH,
+locked accounts, passwordless wheel `doas`, packages, and desktop-service separation. Flash safety is
+unit-tested with synthetic `lsblk` metadata; automated tests never write to block devices. A real Pi
+boot, filesystem expansion, Ethernet, and SSH must be confirmed using the user runbook.

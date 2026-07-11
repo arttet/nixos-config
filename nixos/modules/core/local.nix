@@ -26,5 +26,5 @@
     file = localStateFile;
   };
 
-  users.defaultUserShell = pkgs.nushell;
+  users.defaultUserShell = pkgs.bashInteractive;
 }

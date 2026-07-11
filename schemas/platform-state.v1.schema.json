@@ -24,13 +24,119 @@
         }
       }
     },
+    "homelab": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["lanCidr", "storage"],
+      "properties": {
+        "lanCidr": {
+          "$ref": "#/$defs/ipv4Cidr"
+        },
+        "domain": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9.-]*[A-Za-z0-9]$"
+        },
+        "lanInterface": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_.:-]+$"
+        },
+        "storage": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["luksDevice", "mapperName", "fileSystemType"],
+          "properties": {
+            "luksDevice": {
+              "type": "string",
+              "pattern": "^/dev/disk/by-uuid/[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}$"
+            },
+            "mapperName": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]{0,126}$"
+            },
+            "fileSystemType": {
+              "type": "string",
+              "enum": ["btrfs", "ext4", "xfs"]
+            }
+          }
+        },
+        "services": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "wireguard": { "type": "boolean" },
+            "adguard": { "type": "boolean" },
+            "beszel": { "type": "boolean" },
+            "caddy": { "type": "boolean" },
+            "forgejo": { "type": "boolean" },
+            "forgejoRunner": { "type": "boolean" },
+            "samba": { "type": "boolean" },
+            "iperf3": { "type": "boolean" },
+            "podman": { "type": "boolean" },
+            "openspeedtest": { "type": "boolean" }
+          }
+        },
+        "forgejo": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "domain": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9.-]*[A-Za-z0-9]$"
+            },
+            "runnerEnvironmentFile": {
+              "$ref": "#/$defs/absolutePath"
+            }
+          }
+        },
+        "openspeedtest": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "domain": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9.-]*[A-Za-z0-9]$"
+            }
+          }
+        },
+        "beszel": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "domain": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9.-]*[A-Za-z0-9]$"
+            },
+            "agentEnvironmentFile": {
+              "$ref": "#/$defs/absolutePath"
+            }
+          }
+        },
+        "adguard": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["upstreamDns"],
+          "properties": {
+            "upstreamDns": {
+              "type": "array",
+              "minItems": 1,
+              "uniqueItems": true,
+              "items": { "type": "string", "minLength": 1 }
+            }
+          }
+        }
+      }
+    },
     "users": {
       "type": "array",
       "minItems": 1,
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["name", "description", "hashedPasswordFile", "sources"],
+        "required": ["name", "description", "sources"],
+        "anyOf": [
+          { "required": ["hashedPasswordFile"] },
+          { "required": ["authorizedKeysFile"] }
+        ],
         "properties": {
           "name": {
             "type": "string",
@@ -45,6 +151,10 @@
             "pattern": "^[A-Za-z0-9 ._-]+$"
           },
           "hashedPasswordFile": {
+            "type": "string",
+            "pattern": "^/[^\\u0000]*$"
+          },
+          "authorizedKeysFile": {
             "type": "string",
             "pattern": "^/[^\\u0000]*$"
           },
@@ -109,6 +219,20 @@
           }
         }
       }
+    }
+  },
+  "$defs": {
+    "absolutePath": {
+      "type": "string",
+      "pattern": "^/[^\\u0000]*$"
+    },
+    "ipv4Cidr": {
+      "type": "string",
+      "pattern": "^((25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])\\.){3}(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])/([0-9]|[12][0-9]|3[0-2])$"
+    },
+    "ipv6Cidr": {
+      "type": "string",
+      "pattern": "^[0-9A-Fa-f:]+/([0-9]|[1-9][0-9]|1[01][0-9]|12[0-8])$"
     }
   }
 }
