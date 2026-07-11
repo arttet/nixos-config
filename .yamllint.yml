@@ -2,6 +2,8 @@
 extends: default
 
 ignore: |
+  .serena/
+  .tools/
   docs/node_modules/
   docs/.vitepress/cache/
   docs/.vitepress/dist/

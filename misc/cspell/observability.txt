@@ -1,0 +1,17 @@
+clamav
+clamd
+clamscan
+freshclam
+journalctl
+misconfig
+ncdu
+nethogs
+nvtop
+sarif
+SARIF
+scandir
+semgrep
+SEMGREP
+upower
+yara
+zizmor

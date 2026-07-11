@@ -21,6 +21,7 @@ Once your machine is running this NixOS Configuration, you no longer perform man
 1. **Modify**: Update your local clone (e.g., enable a new tool in the Nix modules).
 2. **Validate**: Check changes locally using `just check` or by booting the VM with `just vm run`.
 3. **Apply**: Switch your running system to the new generation:
+
    ```sh
    just switch
    ```

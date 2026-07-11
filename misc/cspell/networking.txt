@@ -1,0 +1,13 @@
+dnsovertls
+dnssec
+fastopen
+iommu
+nftables
+nmcli
+nslookup
+qdisc
+resolvectl
+tlsv
+traceroute
+wlan
+wpctl

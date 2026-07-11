@@ -58,7 +58,7 @@ jobs:
           NIGHTLY_DOTFILES_MODULE: ${{ vars.NIGHTLY_DOTFILES_MODULE }}
           NIGHTLY_DOTFILES_ROOT: ${{ vars.NIGHTLY_DOTFILES_ROOT }}
           NIGHTLY_DOTFILES_LINKS: ${{ vars.NIGHTLY_DOTFILES_LINKS }}
-        run: nix shell nixpkgs#nushell -c nu scripts/ci/nightly-preflight.nu
+        run: nix shell --inputs-from . nixpkgs#nushell -c nu scripts/ci/nightly-preflight.nu
 
   nightly-desktop:
     name: Desktop Nightly
@@ -110,13 +110,15 @@ jobs:
           NIGHTLY_DOTFILES_MODULE: ${{ needs.preflight.outputs.dotfiles_module }}
           NIGHTLY_DOTFILES_ROOT: ${{ needs.preflight.outputs.dotfiles_root }}
           NIGHTLY_DOTFILES_LINKS: ${{ needs.preflight.outputs.dotfiles_links }}
-        run: nix shell nixpkgs#nushell nixpkgs#mkpasswd nixpkgs#check-jsonschema -c nu scripts/ci/nightly-prepare.nu
+        run: nix shell --inputs-from . nixpkgs#nushell nixpkgs#mkpasswd nixpkgs#check-jsonschema -c nu scripts/ci/nightly-prepare.nu
 
       - name: Validate nightly platform state
+        env:
+          STATE_FILE: ${{ steps.prepare.outputs.state }}
         run: |
-          nix shell nixpkgs#check-jsonschema -c check-jsonschema \
+          nix shell --inputs-from . nixpkgs#check-jsonschema -c check-jsonschema \
             --schemafile schemas/platform-state.v1.schema.json \
-            "${{ steps.prepare.outputs.state }}"
+            "$STATE_FILE"
 
       - name: Validate desktop
         env:
@@ -242,13 +244,28 @@ jobs:
         run: cp target/ci/update/flake.lock flake.lock
 
       - name: Create flake update PR
-        uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
-        with:
-          branch: automation/nightly-flake-update-${{ github.run_id }}
-          commit-message: "chore: update flake lock"
-          title: "chore: update flake lock"
-          body: |
-            Nightly desktop validation passed with the updated flake lock.
+        if: ${{ !env.ACT }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_ID: ${{ github.run_id }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-            This PR was created from a manual Nightly run with `deploy=true`.
-          delete-branch: true
+          branch="automation/nightly-flake-update-$RUN_ID"
+          git checkout -b "$branch"
+          git add flake.lock
+          git commit -m "chore: update flake lock"
+          git push origin "$branch"
+
+          cat > /tmp/pr_body.txt << 'EOF'
+          Nightly desktop validation passed with the updated flake lock.
+
+          This PR was created from a manual Nightly run with `deploy=true`.
+          EOF
+
+          gh pr create \
+            --title "chore: update flake lock" \
+            --body-file /tmp/pr_body.txt \
+            --head "$branch" \
+            --base main

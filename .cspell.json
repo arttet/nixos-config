@@ -1,0 +1,65 @@
+{
+  "$schema": "https://raw.githubusercontent.com/streetsidesoftware/cspell/main/cspell.schema.json",
+  "version": "0.2",
+  "language": "en,en-GB",
+  "enableGlobDot": true,
+  "files": [
+    "**/*.md",
+    "**/*.mdx",
+    "**/*.yml",
+    "**/*.yaml",
+    "**/*.json",
+    "**/*.jsonc",
+    "**/*.toml"
+  ],
+  "ignorePaths": [
+    ".github/**",
+    "node_modules/**",
+    "**/node_modules/**",
+    "docs/.vitepress/dist/**",
+    "docs/.vitepress/cache/**",
+    "target/**",
+    ".tools/**",
+    ".serena/**",
+    "bun.lock",
+    "**/bun.lock",
+    "misc/cspell/**",
+    "trivy.json",
+    "trivy-results.sarif"
+  ],
+  "ignoreRegExpList": [
+    "/@[0-9a-f]{7,40}/g",
+    "/\\b[0-9a-f]{40}\\b/g",
+    "/[\\u0400-\\u04FF]+/g"
+  ],
+  "dictionaryDefinitions": [
+    { "name": "names", "path": "./misc/cspell/names.txt", "addWords": true },
+    {
+      "name": "networking",
+      "path": "./misc/cspell/networking.txt",
+      "addWords": true
+    },
+    {
+      "name": "observability",
+      "path": "./misc/cspell/observability.txt",
+      "addWords": true
+    },
+    { "name": "infra", "path": "./misc/cspell/infra.txt", "addWords": true },
+    {
+      "name": "systems",
+      "path": "./misc/cspell/systems.txt",
+      "addWords": true
+    },
+    { "name": "crypto", "path": "./misc/cspell/crypto.txt", "addWords": true },
+    { "name": "general", "path": "./misc/cspell/general.txt", "addWords": true }
+  ],
+  "dictionaries": [
+    "names",
+    "networking",
+    "observability",
+    "infra",
+    "systems",
+    "crypto",
+    "general"
+  ]
+}

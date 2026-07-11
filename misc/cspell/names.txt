@@ -1,0 +1,13 @@
+arttet
+Astal
+Cachix
+catppuccin
+numtide
+Rofi
+Thunar
+Yazi
+Timeshift
+Ventoy
+Wireshark
+YARA
+Yubi

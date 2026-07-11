@@ -26,19 +26,37 @@ help:
 # Development
 # ==============================================================================
 
-[doc('Format code')]
+[doc('Format source files')]
 [group('Development')]
 fmt:
     @echo "✨ Formatting code..."
-    just --fmt
-    dprint fmt
-    nix fmt
+    mise exec -- just --fmt
+    mise exec -- dprint fmt
+    mise exec -- nix fmt
     @echo "✅ Code formatted!"
 
-[doc('Enter the flake dev shell')]
+[doc('Lint source files')]
 [group('Development')]
-develop:
-    nix develop
+lint:
+    @echo "🔍 Running linters..."
+    mise run fmt:all
+    mise run lint:all
+    @echo "✅ Linting complete!"
+
+[doc('Run CI locally')]
+[group('Development')]
+ci:
+    mise exec -- act --list
+    mise exec -- act --bind --artifact-server-path target/act-artifacts \
+        -P ubuntu-26.04=catthehacker/ubuntu:act-latest
+
+[doc('Remove local caches artifacts')]
+[group('Development')]
+clean:
+    @echo "🧹 Cleaning local caches artifacts..."
+    rm -rf .tools target result .wrangler .lycheecache trivy.json trivy-results.sarif
+    @just docs clean
+    @echo "✅ Clean!"
 
 # ==============================================================================
 # NixOS
