@@ -121,6 +121,20 @@
               "minItems": 1,
               "uniqueItems": true,
               "items": { "type": "string", "minLength": 1 }
+            },
+            "domain": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9.-]*[A-Za-z0-9]$"
+            }
+          }
+        },
+        "samba": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "shares": {
+              "type": "object",
+              "additionalProperties": { "$ref": "#/$defs/absolutePath" }
             }
           }
         }

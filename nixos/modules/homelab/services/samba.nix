@@ -21,6 +21,17 @@ let
       exec ${pkgs.samba}/bin/smbpasswd -a samba
     '';
   };
+  shareSettings = lib.mapAttrs (_name: path: {
+    inherit path;
+    browseable = "yes";
+    "create mask" = "0660";
+    "directory mask" = "2770";
+    "force group" = "samba";
+    "force user" = "samba";
+    "guest ok" = "no";
+    "read only" = "no";
+    "valid users" = "samba";
+  }) cfg.samba.shares;
 in
 {
   config = lib.mkIf (cfg.enable && cfg.services.samba) {
@@ -46,6 +57,7 @@ in
           "bind interfaces only" = "yes";
           "disable netbios" = "yes";
           interfaces = "lo ${cfg.lanInterface}";
+          "log level" = "1";
           "map to guest" = "never";
           "server max protocol" = "SMB3";
           "server min protocol" = "SMB3_00";
@@ -53,18 +65,8 @@ in
           "state directory" = "/srv/samba/state";
           "private dir" = "/srv/samba/state/private";
         };
-        private = {
-          path = "/srv/samba/shares/private";
-          browseable = "yes";
-          "create mask" = "0660";
-          "directory mask" = "2770";
-          "force group" = "samba";
-          "force user" = "samba";
-          "guest ok" = "no";
-          "read only" = "no";
-          "valid users" = "samba";
-        };
-      };
+      }
+      // shareSettings;
     };
     systemd.services.samba-smbd = {
       wantedBy = lib.mkForce [ "homelab-storage.target" ];

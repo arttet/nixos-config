@@ -17,8 +17,17 @@ in
       extraOptions = [
         "--network=homelab"
         "--read-only"
+        "--tmpfs=/etc/nginx/conf.d:mode=0777"
+        "--tmpfs=/var/cache/nginx:mode=0777"
+        "--tmpfs=/var/run:mode=0777"
+        "--tmpfs=/tmp:mode=1777"
         "--cap-drop=ALL"
         "--memory=128m"
+        "--health-cmd=curl -sf http://localhost:3000/ || exit 1"
+        "--health-interval=30s"
+        "--health-timeout=5s"
+        "--health-retries=3"
+        "--health-start-period=30s"
       ];
     };
 

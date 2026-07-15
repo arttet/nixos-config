@@ -31,3 +31,8 @@ test:
 [no-cd]
 switch:
     nixos-rebuild switch --impure --sudo --flake ".#{{ target }}" --target-host "{{ target_host }}" {{ nix_build_flags }}
+
+[doc('Set a generation as the boot default without activating it live')]
+[no-cd]
+boot:
+    nixos-rebuild boot --impure --sudo --flake ".#{{ target }}" --target-host "{{ target_host }}" {{ nix_build_flags }}
