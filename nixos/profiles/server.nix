@@ -21,22 +21,9 @@
     allowedTCPPorts = lib.mkDefault [ ];
   };
 
-  security = {
-    sudo = {
-      enable = true;
-      wheelNeedsPassword = false;
-    };
-    doas = {
-      enable = true;
-      extraRules = [
-        {
-          groups = [ "wheel" ];
-          noPass = true;
-          persist = false;
-          keepEnv = false;
-        }
-      ];
-    };
+  security.sudo = {
+    enable = true;
+    wheelNeedsPassword = false;
   };
 
   users.defaultUserShell = lib.mkDefault pkgs.bashInteractive;
