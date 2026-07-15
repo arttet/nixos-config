@@ -48,6 +48,7 @@ let
       if ! ${pkgs.util-linux}/bin/findmnt --mountpoint /var/log/journal >/dev/null 2>&1; then
         ${pkgs.util-linux}/bin/mount --bind /srv/system/log/journal /var/log/journal
         ${pkgs.systemd}/bin/systemd-tmpfiles --create --prefix /var/log/journal
+        ${pkgs.systemd}/bin/systemctl restart systemd-journald
       fi
 
       mkdir -p /srv/data/forgejo /srv/data/forgejo-runner /srv/data/beszel /srv/data/beszel/agent /srv/secrets
@@ -55,6 +56,11 @@ let
       ${pkgs.coreutils}/bin/chmod 0750 /srv/data/forgejo /srv/data/forgejo-runner /srv/data/beszel
       ${pkgs.coreutils}/bin/chmod 0700 /srv/secrets
       ${pkgs.coreutils}/bin/chown root:root /srv/secrets
+      ${lib.optionalString cfg.services.podman ''
+        mkdir -p /srv/containers/storage
+        ${pkgs.coreutils}/bin/chmod 0711 /srv/containers/storage
+        ${pkgs.coreutils}/bin/chown root:root /srv/containers/storage
+      ''}
       ${lib.optionalString (cfg.services.forgejo || cfg.services.forgejoRunner) ''
         if [ "$(${pkgs.coreutils}/bin/stat -c '%u' /srv/data/forgejo)" != "1000" ]; then
           ${pkgs.coreutils}/bin/chown --recursive 1000:1000 /srv/data/forgejo /srv/data/forgejo-runner
@@ -66,13 +72,19 @@ let
         fi
       ''}
       ${lib.optionalString cfg.services.samba ''
-        mkdir -p /srv/samba/state/private /srv/samba/shares/private
+        mkdir -p /srv/samba/state/private
         ${pkgs.coreutils}/bin/chmod 700 /srv/samba/state /srv/samba/state/private
-        ${pkgs.coreutils}/bin/chmod 0750 /srv/samba/shares
-        ${pkgs.coreutils}/bin/chmod 2770 /srv/samba/shares/private
         ${pkgs.coreutils}/bin/chown root:root /srv/samba/state /srv/samba/state/private
-        ${pkgs.coreutils}/bin/chown root:samba /srv/samba/shares
-        ${pkgs.coreutils}/bin/chown samba:samba /srv/samba/shares/private
+        mkdir -p /srv/samba/shared
+        ${pkgs.coreutils}/bin/chmod 0750 /srv/samba/shared
+        ${pkgs.coreutils}/bin/chown root:samba /srv/samba/shared
+        ${lib.concatStrings (
+          lib.mapAttrsToList (_name: path: ''
+            mkdir -p ${path}
+            ${pkgs.coreutils}/bin/chmod 2770 ${path}
+            ${pkgs.coreutils}/bin/chown samba:samba ${path}
+          '') cfg.samba.shares
+        )}
       ''}
 
       ${pkgs.systemd}/bin/journalctl --flush
