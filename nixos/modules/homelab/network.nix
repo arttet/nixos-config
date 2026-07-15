@@ -10,10 +10,10 @@ in
   config = lib.mkIf cfg.enable {
     networking = {
       useDHCP = false;
-      interfaces = {
-        "${cfg.lanInterface}".useDHCP = true;
-        eth0.useDHCP = lib.mkDefault true;
-      };
+      interfaces = lib.mkMerge [
+        { "${cfg.lanInterface}".useDHCP = true; }
+        { eth0.useDHCP = lib.mkDefault true; }
+      ];
       nftables.enable = true;
       firewall.trustedInterfaces = [ ];
     };
