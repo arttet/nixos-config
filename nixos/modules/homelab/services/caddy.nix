@@ -1,4 +1,9 @@
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 let
   cfg = config.platform.homelab;
   dashboard = pkgs.linkFarm "homelab-dashboard" [
