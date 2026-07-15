@@ -1,0 +1,599 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Homelab Infra Dashboard</title>
+        <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' style='stop-color:%233b82f6'/%3E%3Cstop offset='100%25' style='stop-color:%238b5cf6'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='32' height='32' rx='8' fill='url(%23g)'/%3E%3Cpath d='M8 12h4v8H8zm6-4h4v12h-4zm6 6h4v6h-4z' fill='white' opacity='0.9'/%3E%3C/svg%3E" />
+        <style>
+            [data-theme="dark"] {
+                --bg-primary: #0a0e1a;
+                --bg-card: #111827;
+                --bg-row-hover: #1e293b;
+                --bg-url-box: rgba(255, 255, 255, 0.03);
+                --bg-stats: #111827;
+                --bg-toast: #111827;
+                --bg-code: rgba(255, 255, 255, 0.05);
+                --bg-icon: rgba(255, 255, 255, 0.05);
+                --border: #2d3748;
+                --border-url: transparent;
+                --border-url-hover: #2d3748;
+                --border-toast: #10b981;
+                --text-primary: #f1f5f9;
+                --text-secondary: #94a3b8;
+                --text-muted: #64748b;
+                --accent-blue: #3b82f6;
+                --accent-purple: #8b5cf6;
+                --accent-green: #10b981;
+                --accent-orange: #f59e0b;
+                --accent-red: #ef4444;
+                --accent-cyan: #06b6d4;
+                --accent-pink: #ec4899;
+                --copy-btn-bg: rgba(59, 130, 246, 0.1);
+                --copy-btn-border: rgba(59, 130, 246, 0.25);
+                --copy-btn-hover: rgba(59, 130, 246, 0.2);
+                --copy-btn-copied-bg: rgba(16, 185, 129, 0.15);
+                --copy-btn-copied-border: rgba(16, 185, 129, 0.3);
+                --shadow-toast: 0 10px 40px rgba(0, 0, 0, 0.3);
+                --status-badge-bg: rgba(16, 185, 129, 0.1);
+                --status-badge-bg-down: rgba(239, 68, 68, 0.1);
+            }
+
+            [data-theme="light"] {
+                --bg-primary: #f3f4f6;
+                --bg-card: #ffffff;
+                --bg-row-hover: #f9fafb;
+                --bg-url-box: #f3f4f6;
+                --bg-stats: #ffffff;
+                --bg-toast: #ffffff;
+                --bg-code: rgba(0, 0, 0, 0.05);
+                --bg-icon: rgba(0, 0, 0, 0.05);
+                --border: #e5e7eb;
+                --border-url: #e5e7eb;
+                --border-url-hover: #d1d5db;
+                --border-toast: #10b981;
+                --text-primary: #111827;
+                --text-secondary: #6b7280;
+                --text-muted: #9ca3af;
+                --accent-blue: #2563eb;
+                --accent-purple: #7c3aed;
+                --accent-green: #059669;
+                --accent-orange: #d97706;
+                --accent-red: #dc2626;
+                --accent-cyan: #0891b2;
+                --accent-pink: #db2777;
+                --copy-btn-bg: rgba(37, 99, 235, 0.08);
+                --copy-btn-border: rgba(37, 99, 235, 0.2);
+                --copy-btn-hover: rgba(37, 99, 235, 0.12);
+                --copy-btn-copied-bg: rgba(5, 150, 105, 0.1);
+                --copy-btn-copied-border: rgba(5, 150, 105, 0.25);
+                --shadow-toast: 0 10px 40px rgba(0, 0, 0, 0.1);
+                --status-badge-bg: rgba(5, 150, 105, 0.1);
+                --status-badge-bg-down: rgba(220, 38, 38, 0.1);
+            }
+
+            * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+            }
+
+            body {
+                font-family:
+                    "Inter",
+                    -apple-system,
+                    BlinkMacSystemFont,
+                    "Segoe UI",
+                    Roboto,
+                    sans-serif;
+                background: var(--bg-primary);
+                color: var(--text-primary);
+                min-height: 100vh;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                padding: 3rem 1rem;
+                transition:
+                    background 0.3s,
+                    color 0.3s;
+            }
+
+            .container {
+                max-width: 900px;
+                width: 100%;
+            }
+
+            /* Header */
+            .header {
+                text-align: center;
+                margin-bottom: 2.5rem;
+                position: relative;
+            }
+
+            .header h1 {
+                font-size: 2.25rem;
+                font-weight: 700;
+                background: linear-gradient(
+                    135deg,
+                    var(--accent-blue),
+                    var(--accent-purple)
+                );
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+                background-clip: text;
+            }
+
+            /* Theme toggle */
+            .theme-toggle {
+                position: absolute;
+                top: 0;
+                right: 0;
+                width: 48px;
+                height: 48px;
+                border-radius: 12px;
+                border: 1px solid var(--border);
+                background: var(--bg-card);
+                color: var(--text-primary);
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 1.25rem;
+                transition: all 0.2s;
+            }
+
+            .theme-toggle:hover {
+                border-color: var(--accent-blue);
+                background: var(--bg-row-hover);
+            }
+
+            /* Stats bar */
+            .stats {
+                display: flex;
+                gap: 1.5rem;
+                margin-bottom: 1.5rem;
+                padding: 0.75rem 1.25rem;
+                background: var(--bg-stats);
+                border: 1px solid var(--border);
+                border-radius: 10px;
+                transition:
+                    background 0.3s,
+                    border-color 0.3s;
+            }
+
+            .stat {
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+                font-size: 0.875rem;
+            }
+
+            .stat-dot {
+                width: 8px;
+                height: 8px;
+                border-radius: 50%;
+                animation: pulse 2s infinite;
+            }
+
+            .stat-dot.green {
+                background: var(--accent-green);
+            }
+            .stat-dot.blue {
+                background: var(--accent-blue);
+            }
+
+            @keyframes pulse {
+                0%,
+                100% {
+                    opacity: 1;
+                }
+                50% {
+                    opacity: 0.5;
+                }
+            }
+
+            .stat span {
+                color: var(--text-secondary);
+            }
+            .stat strong {
+                color: var(--text-primary);
+                font-weight: 600;
+            }
+
+            /* Table */
+            .table-wrapper {
+                background: var(--bg-card);
+                border: 1px solid var(--border);
+                border-radius: 12px;
+                overflow: hidden;
+                transition:
+                    background 0.3s,
+                    border-color 0.3s;
+            }
+
+            .table-header {
+                display: grid;
+                grid-template-columns: 2fr 3fr 1fr 100px;
+                padding: 1rem 1.25rem;
+                background: var(--bg-row-hover);
+                border-bottom: 1px solid var(--border);
+                font-size: 0.75rem;
+                font-weight: 600;
+                color: var(--text-muted);
+                text-transform: uppercase;
+                letter-spacing: 0.05em;
+                transition:
+                    background 0.3s,
+                    border-color 0.3s;
+            }
+
+            .row {
+                display: grid;
+                grid-template-columns: 2fr 3fr 1fr 100px;
+                padding: 0.875rem 1.25rem;
+                align-items: center;
+                border-bottom: 1px solid var(--border);
+                transition:
+                    background 0.15s,
+                    border-color 0.3s;
+            }
+
+            .row:last-child {
+                border-bottom: none;
+            }
+            .row:hover {
+                background: var(--bg-row-hover);
+            }
+
+            .service-name {
+                font-weight: 600;
+                font-size: 0.9375rem;
+                display: flex;
+                align-items: center;
+                gap: 0.625rem;
+            }
+
+            .service-name .purpose {
+                display: block;
+                font-weight: 400;
+                font-size: 0.75rem;
+                color: var(--text-muted);
+            }
+
+            .service-icon {
+                width: 32px;
+                height: 32px;
+                border-radius: 8px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 1rem;
+                flex-shrink: 0;
+                background: var(--bg-icon);
+                transition: background 0.3s;
+            }
+
+            .service-icon.blue {
+                border: 1px solid var(--accent-blue);
+            }
+            .service-icon.orange {
+                border: 1px solid var(--accent-orange);
+            }
+            .service-icon.green {
+                border: 1px solid var(--accent-green);
+            }
+            .service-icon.purple {
+                border: 1px solid var(--accent-purple);
+            }
+
+            .service-url {
+                color: var(--accent-blue);
+                font-family:
+                    "JetBrains Mono", "Fira Code", "Cascadia Code", monospace;
+                font-size: 0.8125rem;
+                padding: 0.375rem 0.625rem;
+                background: var(--bg-url-box);
+                border-radius: 6px;
+                border: 1px solid var(--border-url);
+                transition: all 0.15s;
+                cursor: pointer;
+                display: inline-block;
+                max-width: fit-content;
+                user-select: all;
+                text-decoration: none;
+            }
+
+            .service-url:hover {
+                border-color: var(--border-url-hover);
+                text-decoration: underline;
+            }
+
+            .status-badge {
+                display: inline-flex;
+                align-items: center;
+                gap: 0.375rem;
+                padding: 0.25rem 0.625rem;
+                border-radius: 20px;
+                font-size: 0.75rem;
+                font-weight: 500;
+                background: var(--status-badge-bg);
+                color: var(--accent-green);
+                transition: background 0.3s;
+            }
+
+            .status-badge.down {
+                background: var(--status-badge-bg-down);
+                color: var(--accent-red);
+            }
+
+            .status-badge.checking {
+                background: var(--bg-icon);
+                color: var(--text-muted);
+            }
+
+            .status-badge::before {
+                content: "";
+                width: 6px;
+                height: 6px;
+                border-radius: 50%;
+                background: currentColor;
+            }
+
+            .copy-btn {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                gap: 0.375rem;
+                padding: 0.5rem 0.75rem;
+                background: var(--copy-btn-bg);
+                border: 1px solid var(--copy-btn-border);
+                border-radius: 6px;
+                color: var(--accent-blue);
+                font-size: 0.75rem;
+                font-weight: 500;
+                cursor: pointer;
+                transition: all 0.15s;
+                width: 100%;
+                justify-self: center;
+            }
+
+            .copy-btn:hover {
+                background: var(--copy-btn-hover);
+                border-color: var(--accent-blue);
+            }
+
+            .copy-btn:active {
+                transform: scale(0.95);
+            }
+
+            .copy-btn.copied {
+                background: var(--copy-btn-copied-bg);
+                border-color: var(--copy-btn-copied-border);
+                color: var(--accent-green);
+            }
+
+            /* Toast notification */
+            .toast {
+                position: fixed;
+                bottom: 2rem;
+                left: 50%;
+                transform: translateX(-50%) translateY(100px);
+                padding: 0.75rem 1.25rem;
+                background: var(--bg-toast);
+                border: 1px solid var(--border-toast);
+                border-radius: 8px;
+                color: var(--text-primary);
+                font-size: 0.875rem;
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+                opacity: 0;
+                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                z-index: 1000;
+                box-shadow: var(--shadow-toast);
+            }
+
+            .toast.show {
+                transform: translateX(-50%) translateY(0);
+                opacity: 1;
+            }
+
+            .toast-icon {
+                color: var(--accent-green);
+                font-size: 1.125rem;
+            }
+
+            /* Responsive */
+            @media (max-width: 768px) {
+                .table-header {
+                    display: none;
+                }
+
+                .row {
+                    grid-template-columns: 1fr;
+                    gap: 0.625rem;
+                    padding: 1rem;
+                }
+
+                .service-url {
+                    max-width: 100%;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    white-space: nowrap;
+                }
+
+                .copy-btn {
+                    max-width: 120px;
+                }
+
+                .stats {
+                    flex-direction: column;
+                    gap: 0.5rem;
+                }
+
+                .theme-toggle {
+                    position: static;
+                    margin: 1rem auto 0;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <h1>Homelab Infra Dashboard</h1>
+                <button
+                    class="theme-toggle"
+                    id="themeToggle"
+                    title="Toggle theme"
+                >
+                    🌙
+                </button>
+            </div>
+
+            <div class="stats">
+                <div class="stat">
+                    <div class="stat-dot green"></div>
+                    <span>Services:</span>
+                    <strong>4</strong>
+                </div>
+                <div class="stat">
+                    <div class="stat-dot blue"></div>
+                    <span>Domain:</span>
+                    <strong>*.pi.lan</strong>
+                </div>
+            </div>
+
+            <div class="table-wrapper" id="services">
+                <div class="table-header">
+                    <div>Service</div>
+                    <div>URL</div>
+                    <div>Status</div>
+                    <div>Action</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="toast" id="toast">
+            <span class="toast-icon">✓</span>
+            <span id="toast-message">Copied to clipboard</span>
+        </div>
+
+        <script>
+            const services = [
+                { name: "DNS", purpose: "AdGuard Home", icon: "🛡️", color: "blue", host: "dns.pi.lan" },
+                { name: "Git", purpose: "Forgejo", icon: "🐙", color: "orange", host: "git.pi.lan" },
+                { name: "Monitoring", purpose: "Beszel", icon: "📊", color: "green", host: "monitor.pi.lan" },
+                { name: "Speed Test", purpose: "OpenSpeedTest", icon: "⚡", color: "purple", host: "speed.pi.lan" },
+            ];
+
+            // Theme toggle
+            const themeToggle = document.getElementById("themeToggle");
+            const html = document.documentElement;
+
+            function setTheme(theme) {
+                html.setAttribute("data-theme", theme);
+                themeToggle.textContent = theme === "dark" ? "🌙" : "☀️";
+                localStorage.setItem("theme", theme);
+            }
+
+            const savedTheme = localStorage.getItem("theme") || "dark";
+            setTheme(savedTheme);
+
+            themeToggle.addEventListener("click", () => {
+                const current = html.getAttribute("data-theme");
+                setTheme(current === "dark" ? "light" : "dark");
+            });
+
+            // Toast
+            function showToast(message) {
+                const toast = document.getElementById("toast");
+                const msg = document.getElementById("toast-message");
+                msg.textContent = message;
+                toast.classList.add("show");
+                setTimeout(() => toast.classList.remove("show"), 2000);
+            }
+
+            function copyToClipboard(text, btn) {
+                const textarea = document.createElement("textarea");
+                textarea.value = text;
+                textarea.style.position = "fixed";
+                textarea.style.opacity = "0";
+                document.body.appendChild(textarea);
+                textarea.select();
+                try {
+                    document.execCommand("copy");
+                    btn.classList.add("copied");
+                    btn.innerHTML = "✓ Copied";
+                    showToast("Copied: " + text);
+                } catch (err) {
+                    navigator.clipboard
+                        .writeText(text)
+                        .then(() => {
+                            btn.classList.add("copied");
+                            btn.innerHTML = "✓ Copied";
+                            showToast("Copied: " + text);
+                        })
+                        .catch(() => showToast("Failed to copy"));
+                }
+                document.body.removeChild(textarea);
+                setTimeout(() => {
+                    btn.classList.remove("copied");
+                    btn.innerHTML = "📋 Copy";
+                }, 2000);
+            }
+
+            // Build rows
+            const wrapper = document.getElementById("services");
+            for (const svc of services) {
+                const url = `https://${svc.host}`;
+
+                const row = document.createElement("div");
+                row.className = "row";
+
+                const nameCell = document.createElement("div");
+                nameCell.className = "service-name";
+                nameCell.innerHTML = `
+                    <div class="service-icon ${svc.color}">${svc.icon}</div>
+                    <span>${svc.name}<span class="purpose">${svc.purpose}</span></span>
+                `;
+
+                const urlCell = document.createElement("div");
+                const a = document.createElement("a");
+                a.className = "service-url";
+                a.href = url;
+                a.textContent = svc.host;
+                urlCell.appendChild(a);
+
+                const statusCell = document.createElement("div");
+                const badge = document.createElement("span");
+                badge.className = "status-badge checking";
+                badge.textContent = "Checking";
+                statusCell.appendChild(badge);
+
+                const actionCell = document.createElement("div");
+                const copyBtn = document.createElement("button");
+                copyBtn.className = "copy-btn";
+                copyBtn.innerHTML = "📋 Copy";
+                copyBtn.addEventListener("click", (e) => {
+                    e.stopPropagation();
+                    copyToClipboard(url, copyBtn);
+                });
+                actionCell.appendChild(copyBtn);
+
+                row.append(nameCell, urlCell, statusCell, actionCell);
+                wrapper.appendChild(row);
+
+                fetch(url, { mode: "no-cors" })
+                    .then(() => {
+                        badge.className = "status-badge";
+                        badge.textContent = "Active";
+                    })
+                    .catch(() => {
+                        badge.className = "status-badge down";
+                        badge.textContent = "Down";
+                    });
+            }
+        </script>
+    </body>
+</html>
