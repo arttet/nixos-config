@@ -27,9 +27,18 @@ let
       #!${pkgs.runtimeShell}
       set -eu
 
-      destination="/run/adguardhome-config/AdGuardHome.yaml"
+      destination="/var/lib/adguardhome/AdGuardHome.yaml"
       mkdir -p "$(${pkgs.coreutils}/bin/dirname "$destination")"
+      ${pkgs.coreutils}/bin/chown adguard:adguard "$(${pkgs.coreutils}/bin/dirname "$destination")"
       ${pkgs.coreutils}/bin/chmod 700 "$(${pkgs.coreutils}/bin/dirname "$destination")"
+
+      # Only seed the initial config once: AdGuardHome owns this file after
+      # first start (schema migrations, UI-driven settings changes), so
+      # re-rendering it on every boot would silently wipe those.
+      if [ -f "$destination" ]; then
+        exit 0
+      fi
+
       if [ ! -f "${passwordHashFile}" ]; then
         printf 'AdGuard administrator password hash file is missing at %s\n' "${passwordHashFile}" >&2
         printf 'Please run "doas homelab-adguard-password-set" first to generate it.\n' >&2
@@ -53,6 +62,7 @@ let
         printf '  - name: admin\n'
         printf '    password: "%s"\n' "$hash"
       } >> "$destination"
+      ${pkgs.coreutils}/bin/chown adguard:adguard "$destination"
       ${pkgs.coreutils}/bin/chmod 600 "$destination"
     '';
   };
@@ -84,13 +94,21 @@ in
 {
   config = lib.mkIf (cfg.enable && cfg.services.adguard) {
     environment.systemPackages = [ setPassword ];
+
+    users.groups.adguard = { };
+    users.users.adguard = {
+      isSystemUser = true;
+      group = "adguard";
+      home = "/var/lib/adguardhome";
+      createHome = false;
+    };
     networking.firewall.extraInputRules = ''
       ip saddr ${cfg.lanCidr} udp dport 53 accept
       ip saddr ${cfg.lanCidr} tcp dport { 53, 3000 } accept
     '';
 
     services.resolved.extraConfig = ''
-      DNS=127.0.0.1
+      DNS=127.0.0.1 1.1.1.1 8.8.8.8
       DNSStubListener=no
     '';
     environment.etc."resolv.conf".source = lib.mkForce "/run/systemd/resolve/resolv.conf";
@@ -118,10 +136,9 @@ in
       requires = [ "adguardhome-config.service" ];
       serviceConfig = {
         Type = "simple";
-        DynamicUser = true;
-        RuntimeDirectory = "adguardhome";
-        LoadCredential = "adguard-config:/run/adguardhome-config/AdGuardHome.yaml";
-        ExecStart = "${pkgs.adguardhome}/bin/AdGuardHome --no-check-update --config %d/adguard-config --work-dir /run/adguardhome";
+        User = "adguard";
+        Group = "adguard";
+        ExecStart = "${pkgs.adguardhome}/bin/AdGuardHome --no-check-update --config /var/lib/adguardhome/AdGuardHome.yaml --work-dir /var/lib/adguardhome";
         Restart = "on-failure";
         AmbientCapabilities = [ "CAP_NET_BIND_SERVICE" ];
         CapabilityBoundingSet = [ "CAP_NET_BIND_SERVICE" ];
