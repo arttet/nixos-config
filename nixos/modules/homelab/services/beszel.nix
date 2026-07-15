@@ -44,7 +44,7 @@ in
         CHECK_UPDATES = "false";
       };
       serviceConfig = {
-        ExecStart = "${hubBin} serve --http 127.0.0.1:8090";
+        ExecStart = "${hubBin} serve --http 127.0.0.1:8090 --dir /srv/data/beszel/pb_data";
         WorkingDirectory = "/srv/data/beszel";
         User = "beszel";
         Group = "beszel";
