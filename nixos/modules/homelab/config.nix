@@ -12,6 +12,7 @@ let
   stateForgejo = state.forgejo or { };
   stateOpenSpeedTest = state.openspeedtest or { };
   stateBeszel = state.beszel or { };
+  stateSamba = state.samba or { };
   serviceNames = [
     "adguard"
     "beszel"
@@ -73,10 +74,17 @@ in
 
     services = lib.genAttrs serviceNames (name: lib.mkEnableOption "the homelab ${name} service");
 
-    adguard.upstreamDns = lib.mkOption {
-      type = lib.types.listOf lib.types.str;
-      default = [ ];
-      description = "AdGuard Home upstream DNS resolvers.";
+    adguard = {
+      upstreamDns = lib.mkOption {
+        type = lib.types.listOf lib.types.str;
+        default = [ ];
+        description = "AdGuard Home upstream DNS resolvers.";
+      };
+      domain = lib.mkOption {
+        type = lib.types.str;
+        default = "dns.pi.lan";
+        description = "AdGuard Home public virtual host served by Caddy.";
+      };
     };
 
     forgejo = {
@@ -110,6 +118,12 @@ in
         description = "Runtime-only Beszel agent environment file on encrypted storage.";
       };
     };
+
+    samba.shares = lib.mkOption {
+      type = lib.types.attrsOf lib.types.str;
+      default = { };
+      description = "Samba share names mapped to their absolute directory paths, all served under the homelab `samba` account.";
+    };
   };
 
   config = lib.mkIf cfg.enable {
@@ -122,13 +136,16 @@ in
         mapperName = lib.mkDefault (stateStorage.mapperName or "homelab-data");
         fileSystemType = lib.mkDefault (stateStorage.fileSystemType or "");
       };
-      services = lib.genAttrs serviceNames (name: lib.mkDefault (stateServices.${name} or false));
-      adguard.upstreamDns = lib.mkDefault (
-        stateAdguard.upstreamDns or [
-          "https://cloudflare-dns.com/dns-query"
-          "https://dns.google/dns-query"
-        ]
-      );
+      services = lib.genAttrs serviceNames (name: lib.mkDefault (stateServices.${name} or true));
+      adguard = {
+        upstreamDns = lib.mkDefault (
+          stateAdguard.upstreamDns or [
+            "https://cloudflare-dns.com/dns-query"
+            "https://dns.google/dns-query"
+          ]
+        );
+        domain = lib.mkDefault (stateAdguard.domain or "dns.pi.lan");
+      };
       forgejo = {
         domain = lib.mkDefault (stateForgejo.domain or "git.pi.lan");
         runnerEnvironmentFile = lib.mkDefault (
@@ -142,6 +159,12 @@ in
           stateBeszel.agentEnvironmentFile or "/srv/secrets/beszel-agent.env"
         );
       };
+      samba.shares = lib.mkDefault (
+        stateSamba.shares or {
+          Multimedia = "/srv/samba/shared/Multimedia";
+          Artyom = "/srv/samba/shared/Artyom";
+        }
+      );
     };
 
     assertions = [
@@ -191,6 +214,12 @@ in
             && builtins.match "/nix/store/.*" cfg.beszel.agentEnvironmentFile == null
           );
         message = "homelab Beszel agent environment file must be an absolute runtime path outside the Nix store.";
+      }
+      {
+        assertion =
+          !cfg.services.samba
+          || lib.all (path: builtins.match "/.*" path != null) (lib.attrValues cfg.samba.shares);
+        message = "homelab samba share paths must be absolute.";
       }
     ];
   };
