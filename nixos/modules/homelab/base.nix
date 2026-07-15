@@ -50,9 +50,13 @@ in
 
     environment.systemPackages = with pkgs; [
       btop
+      dnsutils
       git
       iproute2
+      speedtest-go
+      superfile
       vim
+      yazi
     ];
 
     system.nixos.tags = [ "homelab-${cfg.configVersion}" ];
