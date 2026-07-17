@@ -113,6 +113,14 @@ in
     '';
     environment.etc."resolv.conf".source = lib.mkForce "/run/systemd/resolve/resolv.conf";
 
+    # Without this, systemd-resolved starts before adguardhome.service binds
+    # port 53, marks 127.0.0.1 unreachable, and permanently falls back to
+    # 1.1.1.1/8.8.8.8 for the rest of the boot — silently breaking resolution
+    # of every *.pi.lan hostname for anything running directly on the host
+    # (native services; LAN clients using AdGuard as their own resolver are
+    # unaffected, since they never go through this host's resolved at all).
+    systemd.services.systemd-resolved.after = [ "adguardhome.service" ];
+
     systemd.services.adguardhome-config = {
       description = "Render immutable AdGuard Home configuration";
       before = [ "adguardhome.service" ];

@@ -51,9 +51,9 @@ let
         ${pkgs.systemd}/bin/systemctl restart systemd-journald
       fi
 
-      mkdir -p /srv/data/forgejo /srv/data/forgejo-runner /srv/data/beszel /srv/data/beszel/agent /srv/secrets
+      mkdir -p /srv/data/forgejo /srv/data/forgejo-runner /srv/data/beszel /srv/data/beszel/agent /srv/data/vikunja /srv/data/vikunja/files /srv/data/gatus /srv/secrets
       ${pkgs.coreutils}/bin/chmod 0755 /srv/data
-      ${pkgs.coreutils}/bin/chmod 0750 /srv/data/forgejo /srv/data/forgejo-runner /srv/data/beszel
+      ${pkgs.coreutils}/bin/chmod 0750 /srv/data/forgejo /srv/data/forgejo-runner /srv/data/beszel /srv/data/vikunja /srv/data/gatus
       ${pkgs.coreutils}/bin/chmod 0700 /srv/secrets
       ${pkgs.coreutils}/bin/chown root:root /srv/secrets
       ${lib.optionalString cfg.services.podman ''
@@ -69,6 +69,16 @@ let
       ${lib.optionalString cfg.services.beszel ''
         if [ "$(${pkgs.coreutils}/bin/stat -c '%U' /srv/data/beszel)" != "beszel" ]; then
           ${pkgs.coreutils}/bin/chown --recursive beszel:beszel /srv/data/beszel
+        fi
+      ''}
+      ${lib.optionalString cfg.services.vikunja ''
+        if [ "$(${pkgs.coreutils}/bin/stat -c '%U' /srv/data/vikunja)" != "vikunja" ]; then
+          ${pkgs.coreutils}/bin/chown --recursive vikunja:vikunja /srv/data/vikunja
+        fi
+      ''}
+      ${lib.optionalString cfg.services.gatus ''
+        if [ "$(${pkgs.coreutils}/bin/stat -c '%U' /srv/data/gatus)" != "gatus" ]; then
+          ${pkgs.coreutils}/bin/chown --recursive gatus:gatus /srv/data/gatus
         fi
       ''}
       ${lib.optionalString cfg.services.samba ''

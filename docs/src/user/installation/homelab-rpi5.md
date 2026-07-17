@@ -12,8 +12,9 @@ SD writes, but applications and files under `/home` can still wear the card and 
 accordingly.
 
 SSH, explicitly activated user-managed WireGuard profiles, and AdGuard Home DNS remain available
-without the SSD. Samba, Beszel, Forgejo, and OpenSpeedTest start only after storage unlock. Service ports
-other than SSH are restricted to the configured LAN CIDR.
+without the SSD. Samba, Beszel, Forgejo, OpenSpeedTest, Gatus, and Vikunja start only after storage
+unlock, since all persist their state to the encrypted `/srv` volume rather than the SD card.
+Service ports other than SSH are restricted to the configured LAN CIDR.
 
 ## Prepare local identity
 
@@ -54,9 +55,11 @@ The private file `~/.ssh/homelab-rpi5` remains on the workstation. Only the path
       "caddy": true,
       "forgejo": true,
       "forgejoRunner": true,
+      "gatus": true,
       "podman": true,
       "samba": true,
-      "openspeedtest": true
+      "openspeedtest": true,
+      "vikunja": true
     },
     "domain": "pi.lan",
     "lanInterface": "end0",
@@ -78,6 +81,13 @@ The private file `~/.ssh/homelab-rpi5` remains on the workstation. Only the path
     },
     "adguard": {
       "upstreamDns": ["https://REPLACE-WITH-UPSTREAM/dns-query"]
+    },
+    "gatus": {
+      "domain": "status.pi.lan"
+    },
+    "vikunja": {
+      "domain": "tasks.pi.lan",
+      "environmentFile": "/srv/secrets/vikunja.env"
     }
   }
 }
@@ -88,13 +98,29 @@ public key or `authorized_keys` file. Never point it at the private key.
 
 Every entry under `homelab.services` is opt-in and defaults to `false`. Start with all entries disabled
 to validate SSH, the SD-root recovery boot, and storage unlock. Enable AdGuard, Samba, Beszel, Caddy,
-Podman, Forgejo, and OpenSpeedTest one at a time. Enabling WireGuard only installs `wg` and `wg-quick`;
-profiles remain user-managed outside Nix.
+Podman, Forgejo, OpenSpeedTest, Gatus, and Vikunja one at a time. Enabling WireGuard only installs `wg`
+and `wg-quick`; profiles remain user-managed outside Nix.
 
 AdGuard's administrator bcrypt verifier is generated interactively on the Pi with
 `doas homelab-adguard-password-set` and stored root-only at
 `/persist/etc/homelab/adguard-password.hash`. Samba's passdb is provisioned once with interactive
 `smbpasswd` after storage unlock. Neither credential is part of platform state or the Nix store.
+
+Vikunja needs a persistent signing secret so login sessions survive service restarts; without one
+it generates a random secret at every start and invalidates every session. Generate it once and
+write it to the runtime env file after storage unlock:
+
+```sh
+printf 'VIKUNJA_SERVICE_SECRET=%s\n' "$(openssl rand -hex 32)" > /srv/secrets/vikunja.env
+chmod 600 /srv/secrets/vikunja.env
+```
+
+Use `VIKUNJA_SERVICE_SECRET` (`service.secret`), not the older `VIKUNJA_SERVICE_JWTSECRET`
+(`service.jwtsecret`): Vikunja 2.3.0 logs `both service.secret and service.jwtsecret are set. Using
+service.secret` and ignores the deprecated key entirely if both are present.
+
+As with `/srv/secrets/forgejo-runner.env` and `/srv/secrets/beszel-agent.env`, Nix does not read this
+file's contents; it only passes its absolute path to systemd.
 
 Store complete WireGuard profiles under the administrator's persistent home, for example
 `/home/<admin>/VPN/WireGuard/`. Restrict the directory to mode `0700` and profiles to `0600`, then
@@ -197,9 +223,9 @@ doas true
 ```
 
 Before storage unlock, `/` must be the SD ext4 root; SSH and AdGuard must work; `/srv` must not be
-mounted; Podman workloads, Samba, and Beszel must be inactive
-without failed units. A user-managed WireGuard profile works only after explicit activation.
-`doas true` must not prompt for a password.
+mounted; Podman workloads, Samba, Beszel, Gatus, and Vikunja must be inactive without failed units.
+A user-managed WireGuard profile works only after explicit activation. `doas true` must not prompt
+for a password.
 
 ## Unlock existing SSD storage
 
@@ -223,7 +249,7 @@ After unlock, verify:
 ```sh
 just homelab status
 findmnt /srv /var/log/journal
-systemctl is-active podman-forgejo podman-openspeedtest samba-smbd beszel beszel-agent
+systemctl is-active podman-forgejo podman-openspeedtest samba-smbd beszel beszel-agent gatus vikunja
 systemctl --failed
 journalctl --disk-usage
 ```
@@ -235,6 +261,8 @@ The encrypted `/srv` layout is intentionally split by responsibility:
 /srv/data/forgejo                Forgejo application state
 /srv/data/forgejo-runner         Forgejo runner state and registration
 /srv/data/beszel                 Beszel Hub and agent state
+/srv/data/vikunja                Vikunja application state (SQLite DB + attached files)
+/srv/data/gatus                  Gatus check-history SQLite database
 /srv/secrets                     runtime-only environment files
 /srv/samba/state                 Samba internal state and passdb
 /srv/samba/shares/private        writable private SMB share
@@ -253,7 +281,8 @@ The resulting NT hash stays in the Samba passdb under `/srv/samba/state`; the pl
 stored in platform state, the Nix store, or process arguments.
 
 Samba exposes only the `private` share, requires user `samba`, SMB3, and encryption. Beszel,
-Forgejo, and OpenSpeedTest are exposed through Caddy; backend ports stay bound to localhost.
+Forgejo, OpenSpeedTest, Gatus, and Vikunja are exposed through Caddy; backend ports stay bound to
+localhost.
 
 ## NixOS release upgrade
 

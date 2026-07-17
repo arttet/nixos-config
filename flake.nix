@@ -168,10 +168,12 @@
               caddy = true;
               forgejo = true;
               forgejoRunner = true;
+              gatus = true;
               samba = true;
               podman = true;
               iperf3 = true;
               openspeedtest = true;
+              vikunja = true;
             };
             domain = "pi.lan";
             lanInterface = "end0";
@@ -190,6 +192,11 @@
               fileSystemType = "ext4";
             };
             adguard.upstreamDns = [ "https://dns.example.invalid/dns-query" ];
+            gatus.domain = "status.pi.lan";
+            vikunja = {
+              domain = "tasks.pi.lan";
+              environmentFile = "/srv/secrets/vikunja.env";
+            };
           };
         }
       );
