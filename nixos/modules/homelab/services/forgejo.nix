@@ -12,7 +12,7 @@ in
     ];
 
     virtualisation.oci-containers.containers.forgejo = {
-      image = "codeberg.org/forgejo/forgejo:11";
+      image = "codeberg.org/forgejo/forgejo:16";
       ports = [
         "127.0.0.1:3001:3000"
         "2222:22"
