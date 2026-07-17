@@ -1,4 +1,5 @@
 cryptsetup
+jwtsecret
 luks
 sbctl
 sbsigntool

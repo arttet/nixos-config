@@ -7,6 +7,8 @@ Cachix
 catppuccin
 Forgejo
 forgejo
+Gatus
+gatus
 numtide
 openspeedtest
 raspberrypi
@@ -15,6 +17,8 @@ Thunar
 Yazi
 Timeshift
 Ventoy
+Vikunja
+vikunja
 Wireshark
 YARA
 Yubi
