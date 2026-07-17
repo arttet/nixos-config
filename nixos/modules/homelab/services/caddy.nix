@@ -50,7 +50,11 @@ in
     };
 
     networking.firewall.extraInputRules = ''
-      iifname "${cfg.lanInterface}" tcp dport { 80, 443 } accept
+      # "podman1" is the bridge interface netavark assigns to the "homelab"
+      # custom network (see podman-network-homelab); the forgejo-runner
+      # container reaches Caddy through it via --add-host=...:host-gateway,
+      # since containers on that bridge have no other route to the LAN vhosts.
+      iifname { "${cfg.lanInterface}", "podman1" } tcp dport { 80, 443 } accept
     '';
   };
 }
