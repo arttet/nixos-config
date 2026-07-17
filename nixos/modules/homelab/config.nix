@@ -13,16 +13,20 @@ let
   stateOpenSpeedTest = state.openspeedtest or { };
   stateBeszel = state.beszel or { };
   stateSamba = state.samba or { };
+  stateGatus = state.gatus or { };
+  stateVikunja = state.vikunja or { };
   serviceNames = [
     "adguard"
     "beszel"
     "caddy"
     "forgejo"
     "forgejoRunner"
+    "gatus"
     "iperf3"
     "openspeedtest"
     "podman"
     "samba"
+    "vikunja"
     "wireguard"
   ];
 in
@@ -124,6 +128,25 @@ in
       default = { };
       description = "Samba share names mapped to their absolute directory paths, all served under the homelab `samba` account.";
     };
+
+    gatus.domain = lib.mkOption {
+      type = lib.types.str;
+      default = "status.pi.lan";
+      description = "Gatus public virtual host served by Caddy.";
+    };
+
+    vikunja = {
+      domain = lib.mkOption {
+        type = lib.types.str;
+        default = "tasks.pi.lan";
+        description = "Vikunja public virtual host served by Caddy.";
+      };
+      environmentFile = lib.mkOption {
+        type = lib.types.str;
+        default = "/srv/secrets/vikunja.env";
+        description = "Runtime-only Vikunja JWT secret environment file on encrypted storage.";
+      };
+    };
   };
 
   config = lib.mkIf cfg.enable {
@@ -165,6 +188,11 @@ in
           Artyom = "/srv/samba/shared/Artyom";
         }
       );
+      gatus.domain = lib.mkDefault (stateGatus.domain or "status.pi.lan");
+      vikunja = {
+        domain = lib.mkDefault (stateVikunja.domain or "tasks.pi.lan");
+        environmentFile = lib.mkDefault (stateVikunja.environmentFile or "/srv/secrets/vikunja.env");
+      };
     };
 
     assertions = [
@@ -214,6 +242,15 @@ in
             && builtins.match "/nix/store/.*" cfg.beszel.agentEnvironmentFile == null
           );
         message = "homelab Beszel agent environment file must be an absolute runtime path outside the Nix store.";
+      }
+      {
+        assertion =
+          !cfg.services.vikunja
+          || (
+            builtins.match "/.*" cfg.vikunja.environmentFile != null
+            && builtins.match "/nix/store/.*" cfg.vikunja.environmentFile == null
+          );
+        message = "homelab Vikunja environment file must be an absolute runtime path outside the Nix store.";
       }
       {
         assertion =

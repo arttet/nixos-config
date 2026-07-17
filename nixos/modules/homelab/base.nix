@@ -53,6 +53,7 @@ in
       dnsutils
       git
       iproute2
+      openssl
       speedtest-go
       superfile
       vim

@@ -11,9 +11,11 @@
     ./services/caddy.nix
     ./services/forgejo.nix
     ./services/forgejo-runner.nix
+    ./services/gatus.nix
     ./services/iperf3.nix
     ./services/openspeedtest.nix
     ./services/samba.nix
+    ./services/vikunja.nix
     ./services/wireguard.nix
   ];
 }

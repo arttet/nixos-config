@@ -78,7 +78,7 @@ in
         DATA_DIR = "/srv/data/beszel/agent";
         DOCKER_HOST = "unix:///run/podman/podman.sock";
         HUB_URL = "http://127.0.0.1:8090";
-        SERVICE_PATTERNS = "beszel*,caddy*,podman*,sshd*";
+        SERVICE_PATTERNS = "beszel*,caddy*,samba*,sshd*,gatus*,vikunja*";
       };
       serviceConfig = {
         ExecStart = agentBin;

@@ -20,10 +20,12 @@
       "caddy": true,
       "forgejo": true,
       "forgejoRunner": true,
+      "gatus": true,
       "samba": true,
       "podman": true,
       "iperf3": true,
-      "openspeedtest": true
+      "openspeedtest": true,
+      "vikunja": true
     },
     "forgejo": {
       "domain": "git.pi.lan",
@@ -38,6 +40,13 @@
     },
     "adguard": {
       "upstreamDns": ["https://cloudflare-dns.com/dns-query"]
+    },
+    "gatus": {
+      "domain": "status.pi.lan"
+    },
+    "vikunja": {
+      "domain": "tasks.pi.lan",
+      "environmentFile": "/srv/secrets/vikunja.env"
     }
   },
   "users": [

@@ -285,6 +285,12 @@
             .service-icon.purple {
                 border: 1px solid var(--accent-purple);
             }
+            .service-icon.cyan {
+                border: 1px solid var(--accent-cyan);
+            }
+            .service-icon.pink {
+                border: 1px solid var(--accent-pink);
+            }
 
             .service-url {
                 color: var(--accent-blue);
@@ -455,7 +461,7 @@
                 <div class="stat">
                     <div class="stat-dot green"></div>
                     <span>Services:</span>
-                    <strong>4</strong>
+                    <strong id="serviceCount">–</strong>
                 </div>
                 <div class="stat">
                     <div class="stat-dot blue"></div>
@@ -480,13 +486,6 @@
         </div>
 
         <script>
-            const services = [
-                { name: "DNS", purpose: "AdGuard Home", icon: "🛡️", color: "blue", host: "dns.pi.lan" },
-                { name: "Git", purpose: "Forgejo", icon: "🐙", color: "orange", host: "git.pi.lan" },
-                { name: "Monitoring", purpose: "Beszel", icon: "📊", color: "green", host: "monitor.pi.lan" },
-                { name: "Speed Test", purpose: "OpenSpeedTest", icon: "⚡", color: "purple", host: "speed.pi.lan" },
-            ];
-
             // Theme toggle
             const themeToggle = document.getElementById("themeToggle");
             const html = document.documentElement;
@@ -543,57 +542,69 @@
                 }, 2000);
             }
 
-            // Build rows
+            // Build rows from the Nix-generated service list
             const wrapper = document.getElementById("services");
-            for (const svc of services) {
-                const url = `https://${svc.host}`;
+            const serviceCount = document.getElementById("serviceCount");
 
-                const row = document.createElement("div");
-                row.className = "row";
+            fetch("./config.json")
+                .then((r) => r.json())
+                .then((data) => {
+                    const services = data.services || [];
+                    serviceCount.textContent = services.length;
 
-                const nameCell = document.createElement("div");
-                nameCell.className = "service-name";
-                nameCell.innerHTML = `
-                    <div class="service-icon ${svc.color}">${svc.icon}</div>
-                    <span>${svc.name}<span class="purpose">${svc.purpose}</span></span>
-                `;
+                    for (const svc of services) {
+                        const url = `https://${svc.host}`;
 
-                const urlCell = document.createElement("div");
-                const a = document.createElement("a");
-                a.className = "service-url";
-                a.href = url;
-                a.textContent = svc.host;
-                urlCell.appendChild(a);
+                        const row = document.createElement("div");
+                        row.className = "row";
 
-                const statusCell = document.createElement("div");
-                const badge = document.createElement("span");
-                badge.className = "status-badge checking";
-                badge.textContent = "Checking";
-                statusCell.appendChild(badge);
+                        const nameCell = document.createElement("div");
+                        nameCell.className = "service-name";
+                        nameCell.innerHTML = `
+                            <div class="service-icon ${svc.color}">${svc.icon}</div>
+                            <span>${svc.name}<span class="purpose">${svc.purpose}</span></span>
+                        `;
 
-                const actionCell = document.createElement("div");
-                const copyBtn = document.createElement("button");
-                copyBtn.className = "copy-btn";
-                copyBtn.innerHTML = "📋 Copy";
-                copyBtn.addEventListener("click", (e) => {
-                    e.stopPropagation();
-                    copyToClipboard(url, copyBtn);
+                        const urlCell = document.createElement("div");
+                        const a = document.createElement("a");
+                        a.className = "service-url";
+                        a.href = url;
+                        a.textContent = svc.host;
+                        urlCell.appendChild(a);
+
+                        const statusCell = document.createElement("div");
+                        const badge = document.createElement("span");
+                        badge.className = "status-badge checking";
+                        badge.textContent = "Checking";
+                        statusCell.appendChild(badge);
+
+                        const actionCell = document.createElement("div");
+                        const copyBtn = document.createElement("button");
+                        copyBtn.className = "copy-btn";
+                        copyBtn.innerHTML = "📋 Copy";
+                        copyBtn.addEventListener("click", (e) => {
+                            e.stopPropagation();
+                            copyToClipboard(url, copyBtn);
+                        });
+                        actionCell.appendChild(copyBtn);
+
+                        row.append(nameCell, urlCell, statusCell, actionCell);
+                        wrapper.appendChild(row);
+
+                        fetch(url, { mode: "no-cors" })
+                            .then(() => {
+                                badge.className = "status-badge";
+                                badge.textContent = "Active";
+                            })
+                            .catch(() => {
+                                badge.className = "status-badge down";
+                                badge.textContent = "Down";
+                            });
+                    }
+                })
+                .catch(() => {
+                    serviceCount.textContent = "?";
                 });
-                actionCell.appendChild(copyBtn);
-
-                row.append(nameCell, urlCell, statusCell, actionCell);
-                wrapper.appendChild(row);
-
-                fetch(url, { mode: "no-cors" })
-                    .then(() => {
-                        badge.className = "status-badge";
-                        badge.textContent = "Active";
-                    })
-                    .catch(() => {
-                        badge.className = "status-badge down";
-                        badge.textContent = "Down";
-                    });
-            }
         </script>
     </body>
 </html>

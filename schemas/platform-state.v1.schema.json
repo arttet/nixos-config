@@ -69,10 +69,12 @@
             "caddy": { "type": "boolean" },
             "forgejo": { "type": "boolean" },
             "forgejoRunner": { "type": "boolean" },
+            "gatus": { "type": "boolean" },
             "samba": { "type": "boolean" },
             "iperf3": { "type": "boolean" },
             "podman": { "type": "boolean" },
-            "openspeedtest": { "type": "boolean" }
+            "openspeedtest": { "type": "boolean" },
+            "vikunja": { "type": "boolean" }
           }
         },
         "forgejo": {
@@ -135,6 +137,29 @@
             "shares": {
               "type": "object",
               "additionalProperties": { "$ref": "#/$defs/absolutePath" }
+            }
+          }
+        },
+        "gatus": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "domain": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9.-]*[A-Za-z0-9]$"
+            }
+          }
+        },
+        "vikunja": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "domain": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9.-]*[A-Za-z0-9]$"
+            },
+            "environmentFile": {
+              "$ref": "#/$defs/absolutePath"
             }
           }
         }
