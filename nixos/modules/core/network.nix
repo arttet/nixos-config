@@ -19,22 +19,6 @@ in
   };
 
   config = lib.mkIf cfg.enable {
-    # pi.lan is only known to the homelab AdGuard, not to any public DNS
-    # (Cloudflare/Google) our dnsproxy/resolved chain actually queries.
-    # A systemd-networkd dummy-interface approach was tried for real
-    # per-domain DNS routing, but enabling systemd-networkd made it start
-    # managing the real Wi-Fi link alongside NetworkManager (wait-online
-    # failures, interface flapping) - not an acceptable tradeoff for one
-    # local domain, so plain /etc/hosts entries it is.
-    networking.hosts."192.168.0.53" = [
-      "pi.lan"
-      "git.pi.lan"
-      "speed.pi.lan"
-      "monitor.pi.lan"
-      "dns.pi.lan"
-      "nas.pi.lan"
-    ];
-
     environment.systemPackages = with pkgs; [
       dnsutils
       iputils
@@ -56,6 +40,14 @@ in
       enable = true;
       settings = {
         upstream = [
+          # pi.lan is only known to the homelab AdGuard, not to any public
+          # DNS our default upstreams below actually query. dnsproxy's
+          # conditional-forwarding syntax ("[/domain/]server") routes the
+          # whole zone there, subdomains included, so new *.pi.lan services
+          # never need a config change here again (unlike the previous
+          # /etc/hosts allowlist this replaces, which needed a new line per
+          # hostname).
+          "[/pi.lan/]192.168.0.53"
           "https://1.1.1.1/dns-query"
           "https://1.0.0.1/dns-query"
         ];
