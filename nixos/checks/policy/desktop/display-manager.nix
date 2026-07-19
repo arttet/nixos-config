@@ -52,4 +52,23 @@
     assertion = desktop.services.displayManager.defaultSession == "hyprland-uwsm";
     message = "desktop SDDM must preselect the Hyprland UWSM session";
   }
+  {
+    assertion =
+      desktop.platform.virtualConsole.enable
+      && desktop.services.kmscon.enable
+      && desktop.services.kmscon.hwRender
+      && desktop.services.kmscon.useXkbConfig
+      && desktop.services.kmscon.term == "xterm-256color"
+      && contains "font-size=16" desktop.services.kmscon.extraConfig
+      && builtins.length desktop.services.kmscon.fonts == 1
+      && (builtins.head desktop.services.kmscon.fonts).name == "IosevkaTerm Nerd Font";
+    message = "desktop must enable kmscon with IosevkaTerm Nerd Font";
+  }
+  {
+    assertion =
+      builtins.elem "kmsconvt@tty1.service" desktop.systemd.targets.getty.wants
+      && builtins.elem "kmsconvt@tty1.service" desktop.systemd.services.display-manager.after
+      && desktop.systemd.services.display-manager.conflicts == [ ];
+    message = "desktop must reserve tty1 for kmscon before SDDM allocates its VT";
+  }
 ]
