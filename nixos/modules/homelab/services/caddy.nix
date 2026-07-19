@@ -89,6 +89,12 @@ in
     services.caddy = {
       enable = true;
       dataDir = "/persist/var/lib/caddy";
+      # NixOS does not expose the Debian-style trust-store locations Caddy's
+      # automatic installer expects. TLS remains handled by Caddy's local CA;
+      # trust is declared explicitly in the NixOS profiles instead.
+      globalConfig = ''
+        skip_install_trust
+      '';
       virtualHosts = {
         "${cfg.domain}".extraConfig = ''
           tls internal
