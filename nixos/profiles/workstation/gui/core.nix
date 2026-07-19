@@ -39,6 +39,7 @@
 
   platform.greetd.enable = lib.mkDefault false;
   platform.sddm.enable = lib.mkDefault true;
+  platform.virtualConsole.enable = lib.mkDefault true;
   platform.bootUx.quiet = lib.mkDefault true;
   platform.theme.enable = lib.mkDefault true;
 
