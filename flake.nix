@@ -133,6 +133,9 @@
       # real deploys override it via NIX_CONFIG_LOCAL_STATE under `--impure`.
       homelabModuleArgs = {
         inherit build;
+        # Homelab runs on aarch64; expose the matching unstable package set
+        # for individual tools that are not in the pinned Raspberry Pi set.
+        unstablePkgs = unstablePkgsFor homelabCheckSystem;
         localStateFile =
           if localOverlayArgs.localStateFile != null then
             localOverlayArgs.localStateFile

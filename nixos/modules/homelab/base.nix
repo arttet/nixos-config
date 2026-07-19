@@ -2,6 +2,7 @@
   config,
   lib,
   pkgs,
+  unstablePkgs,
   ...
 }:
 let
@@ -48,9 +49,13 @@ in
       users.root.hashedPassword = lib.mkForce "!";
     };
 
-    environment.systemPackages = with pkgs; [
+    environment.systemPackages = [
+      unstablePkgs.systemctl-tui
+    ]
+    ++ (with pkgs; [
       btop
       dnsutils
+      duf
       git
       iproute2
       openssl
@@ -58,7 +63,7 @@ in
       superfile
       vim
       yazi
-    ];
+    ]);
 
     system.nixos.tags = [ "homelab-${cfg.configVersion}" ];
     environment.variables.HOMELAB_CONFIG_VERSION = cfg.configVersion;
