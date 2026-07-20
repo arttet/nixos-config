@@ -18,6 +18,7 @@ tty-checks:
     @echo "systemctl show kmsconvt@tty1.service -p ActiveState -p SubState -p TTYPath"
     @echo "loginctl list-sessions"
     @echo "journalctl -b -u kmsconvt@tty1.service -u display-manager.service"
+    @echo "journalctl -b -u display-manager.service | rg 'Device or resource busy|No suitable DRM'"
     @echo "Switch to tty1 with Ctrl+Alt+F1 and confirm the login prompt and Nerd Font glyphs."
 
 [doc('Print real-hardware desktop power validation commands')]

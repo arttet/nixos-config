@@ -68,7 +68,10 @@
     assertion =
       builtins.elem "kmsconvt@tty1.service" desktop.systemd.targets.getty.wants
       && builtins.elem "kmsconvt@tty1.service" desktop.systemd.services.display-manager.after
+      && contains "/bin/sleep 1" (
+        toString desktop.systemd.services."kmsconvt@".serviceConfig.ExecStartPost
+      )
       && desktop.systemd.services.display-manager.conflicts == [ ];
-    message = "desktop must reserve tty1 for kmscon before SDDM allocates its VT";
+    message = "desktop must wait for kmscon to reserve tty1 before SDDM allocates its VT";
   }
 ]

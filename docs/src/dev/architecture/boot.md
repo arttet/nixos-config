@@ -104,7 +104,10 @@ The graphical target reserves `tty1` for `kmscon` and starts it before SDDM.
 This is necessary because the kernel virtual console only supports bitmap PSF
 fonts, while `kmscon` can render the configured `IosevkaTerm Nerd Font`. SDDM
 0.21 allocates the next free virtual terminal, so its Wayland greeter starts on
-`tty2` while `Ctrl+Alt+F1` remains a usable text login console.
+`tty2` while `Ctrl+Alt+F1` remains a usable text login console. The kmscon unit
+includes a short startup barrier because systemd otherwise considers the
+process active before it has opened `tty1`, allowing SDDM to race for the same
+VT and DRM device.
 
 The platform keeps `services.xserver.enable = false`. This makes the SDDM
 greeter Wayland-only while retaining XWayland inside the user Hyprland session
@@ -125,6 +128,7 @@ journalctl -b -p warning
 systemctl show getty.target -p Wants
 systemctl status kmsconvt@tty1.service display-manager.service
 loginctl list-sessions
+journalctl -b -u display-manager.service | rg 'Device or resource busy|No suitable DRM'
 ```
 
 Expected result:
@@ -138,3 +142,4 @@ Expected result:
 - `kmsconvt@tty1.service` is active and `Ctrl+Alt+F1` opens a login prompt with
   Nerd Font glyph support.
 - The SDDM greeter and the graphical user session use a VT other than `tty1`.
+- The final journal command produces no output.
