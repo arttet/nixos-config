@@ -62,11 +62,23 @@ in
         "podman-network-homelab.service"
         "podman-forgejo.service"
         "podman.socket"
+        # The runner reaches Forgejo through https://git.pi.lan, i.e. through
+        # Caddy, and its preStart copies Caddy's generated local root.crt
+        # (which only exists once Caddy has started). Ordering after Caddy
+        # avoids the "dial 10.89.0.1:443: connection refused" + missing-cert
+        # failures seen when it started before Caddy was up.
+        "caddy.service"
       ];
       requires = [
         "homelab-storage.target"
         "podman-network-homelab.service"
         "podman.socket"
+        # Hard-require the services the runner cannot function without:
+        # Forgejo itself (the API it registers against) and Caddy (the only
+        # route to it, plus the source of the CA cert preStart needs). If
+        # either goes away the runner is stopped/restarted with it.
+        "podman-forgejo.service"
+        "caddy.service"
       ];
       # Caddy keeps its local CA certificate at mode 0600, unreadable to the
       # runner container's own user; copy it out to a world-readable path

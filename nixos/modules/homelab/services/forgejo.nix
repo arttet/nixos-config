@@ -33,7 +33,7 @@ in
       };
       extraOptions = [
         "--network=homelab"
-        "--memory=768m"
+        "--memory=1024m"
         "--health-cmd=curl -sf http://localhost:3000/api/healthz || exit 1"
         "--health-interval=30s"
         "--health-timeout=5s"

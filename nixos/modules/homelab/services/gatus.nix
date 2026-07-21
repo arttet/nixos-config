@@ -113,6 +113,10 @@ in
         # there once storage/endpoints are redirected to /srv.
         StateDirectory = lib.mkForce [ ];
         ReadWritePaths = [ "/srv/data/gatus" ];
+        NoNewPrivileges = true;
+        PrivateTmp = true;
+        ProtectHome = true;
+        ProtectSystem = "strict";
       };
     };
   };

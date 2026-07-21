@@ -142,12 +142,26 @@ in
       ];
       wants = [ "network-online.target" ];
       requires = [ "adguardhome-config.service" ];
+      # The After ordering above vs. systemd-resolved.after = [adguardhome]
+      # below forms a real cycle through sysinit/network(-online).target;
+      # systemd breaks it automatically on every boot, but the unit it
+      # sacrifices to break the cycle is sometimes adguardhome itself, and
+      # Restart=on-failure never fires for a clean SIGTERM stop like that —
+      # it silently stays down and the whole *.pi.lan zone stops resolving.
+      # Restart=always plus a startup deadline gives it a way back regardless
+      # of how it was stopped, mirroring the same fix already applied to
+      # caddy.service for its own boot-race restart needs.
+      unitConfig = {
+        StartLimitIntervalSec = 60;
+        StartLimitBurst = 10;
+      };
       serviceConfig = {
         Type = "simple";
         User = "adguard";
         Group = "adguard";
         ExecStart = "${pkgs.adguardhome}/bin/AdGuardHome --no-check-update --config /var/lib/adguardhome/AdGuardHome.yaml --work-dir /var/lib/adguardhome";
-        Restart = "on-failure";
+        Restart = "always";
+        RestartSec = "5s";
         AmbientCapabilities = [ "CAP_NET_BIND_SERVICE" ];
         CapabilityBoundingSet = [ "CAP_NET_BIND_SERVICE" ];
         NoNewPrivileges = true;

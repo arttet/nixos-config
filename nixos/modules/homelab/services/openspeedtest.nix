@@ -22,6 +22,12 @@ in
         "--tmpfs=/var/run:mode=0777"
         "--tmpfs=/tmp:mode=1777"
         "--cap-drop=ALL"
+        # crond tries to run inside the image even though cert renewal (its
+        # only purpose) is disabled by default; without this capability the
+        # setcap'd crond binary cannot acquire CAP_SETGID and logs a harmless
+        # "Operation not permitted". Adding it back only silences the noise
+        # while leaving every other capability dropped.
+        "--cap-add=SETGID"
         "--memory=128m"
         "--health-cmd=curl -sf http://localhost:3000/ || exit 1"
         "--health-interval=30s"

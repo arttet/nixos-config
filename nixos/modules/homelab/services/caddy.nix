@@ -124,6 +124,19 @@ in
       };
     };
 
+    # Recover from the boot-time journald/storage transition or another
+    # unexpected clean exit. An explicit `systemctl stop` is not restarted.
+    systemd.services.caddy = {
+      unitConfig = {
+        StartLimitIntervalSec = lib.mkForce 60;
+        StartLimitBurst = lib.mkForce 10;
+      };
+      serviceConfig = {
+        Restart = lib.mkForce "always";
+        RestartSec = "5s";
+      };
+    };
+
     networking.firewall.extraInputRules = ''
       # "podman1" is the bridge interface netavark assigns to the "homelab"
       # custom network (see podman-network-homelab); the forgejo-runner

@@ -89,6 +89,16 @@ let
         && !(builtins.elem 10250 config.networking.firewall.allowedTCPPorts);
       message = "homelab-rpi5 has no k3s/containerd runtime or cluster firewall exposure";
     }
+    {
+      assertion =
+        let
+          containers = config.virtualisation.oci-containers.containers or { };
+          hasHealthCheck =
+            container: builtins.any (opt: lib.hasPrefix "--health-cmd" opt) container.extraOptions;
+        in
+        builtins.all hasHealthCheck (lib.attrValues containers);
+      message = "every homelab container must define a podman --health-cmd";
+    }
   ];
 in
 lib.concatLists [
