@@ -39,6 +39,12 @@ in
       ];
     };
 
+    # Trust the same Caddy local CA that is exported for workstation browsers,
+    # so command-line clients on the homelab host validate https://*.pi.lan.
+    security.pki.certificateFiles = lib.optionals (
+      cfg.services.caddy && builtins.pathExists ../../../certs/caddy-homelab-ca.crt
+    ) [ ../../../certs/caddy-homelab-ca.crt ];
+
     networking.firewall = {
       extraInputRules = ''
         iifname "${cfg.lanInterface}" tcp dport 22 ct state new limit rate 10/minute accept

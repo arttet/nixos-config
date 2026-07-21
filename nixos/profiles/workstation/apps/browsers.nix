@@ -51,6 +51,20 @@ let
           ProviderURL = "https://1.1.1.1/dns-query";
           Locked = false;
         };
+        # Firefox (and Zen, being Firefox-based) ignores the OS trust store by
+        # default and keeps its own NSS cert DB. ImportEnterpriseRoots alone
+        # is unreliable on NixOS: it scans distro-specific paths (e.g.
+        # /etc/pki/nssdb, /usr/local/share/ca-certificates/) that NixOS
+        # doesn't populate the same way other distros do, so it can silently
+        # find nothing. The explicit Install list below points straight at
+        # the homelab Caddy root CA instead of relying on that scan; guarded
+        # by pathExists so evaluation doesn't fail before the cert is added.
+        Certificates = {
+          ImportEnterpriseRoots = true;
+          Install = lib.optionals (builtins.pathExists ../../../../certs/caddy-homelab-ca.crt) [
+            ../../../../certs/caddy-homelab-ca.crt
+          ];
+        };
         Preferences = {
           "browser.gesture.swipe.left" = {
             Value = zenTouchpadPreferences."browser.gesture.swipe.left";

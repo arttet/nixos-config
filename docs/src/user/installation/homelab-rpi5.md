@@ -284,6 +284,27 @@ Samba exposes only the `private` share, requires user `samba`, SMB3, and encrypt
 Forgejo, OpenSpeedTest, Gatus, and Vikunja are exposed through Caddy; backend ports stay bound to
 localhost.
 
+### Trust the Caddy local CA
+
+Caddy keeps the private CA key on the Pi. Only its public root certificate belongs in the repository.
+After the first Caddy start, copy that certificate to the workstation and verify its fingerprint before
+rebuilding:
+
+```sh
+scp admin@homelab-rpi5.local:/persist/var/lib/caddy/.local/share/caddy/pki/authorities/local/root.crt \
+  certs/caddy-homelab-ca.crt
+openssl x509 -in certs/caddy-homelab-ca.crt -noout -sha256 -fingerprint
+just desktop build
+```
+
+Compare the fingerprint with the same `openssl x509` command run on the Pi through the trusted SSH
+session. The desktop profile installs the root system-wide and into Firefox-compatible browsers; the
+homelab profile installs it for command-line clients on the Pi. Never copy Caddy's `root.key`.
+
+If Caddy's CA is regenerated, replace the committed public certificate, repeat the fingerprint check,
+and rebuild both the desktop and homelab. Existing certificates remain untrusted until their clients
+receive the replacement root.
+
 ## NixOS release upgrade
 
 The Raspberry Pi system follows the `nixpkgs` package set pinned by `nixos-raspberrypi`, not the

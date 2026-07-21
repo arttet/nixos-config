@@ -19,6 +19,20 @@ in
   };
 
   config = lib.mkIf cfg.enable {
+    # Trust the homelab Caddy "tls internal" root CA system-wide, so every
+    # https://*.pi.lan service works without per-browser cert exceptions.
+    # This is required (not just cosmetic) for WebAuthn/passkeys (Pocket ID)
+    # and WebSocket-heavy UIs (Cockpit, ntfy), which browsers block outright
+    # over an untrusted cert even when the initial page loads. The root cert
+    # (public part; the private key never leaves the Pi) is exported from
+    # /persist/var/lib/caddy/.local/share/caddy/pki/authorities/local/root.crt
+    # into <repo-root>/certs/caddy-homelab-ca.crt. Guarded by pathExists so
+    # the repo still evaluates before the file is dropped in / on machines
+    # without it.
+    security.pki.certificateFiles =
+      lib.optionals (builtins.pathExists ../../../certs/caddy-homelab-ca.crt)
+        [ ../../../certs/caddy-homelab-ca.crt ];
+
     environment.systemPackages = with pkgs; [
       dnsutils
       iputils
