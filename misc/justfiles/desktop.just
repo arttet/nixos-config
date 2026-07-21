@@ -9,17 +9,19 @@ test: build
     nix build .#checks.x86_64-linux.desktop-policy --no-link
     @echo "Desktop validation passed."
 
-[doc('Print real-hardware tty1 validation commands')]
+[doc('Print real-hardware virtual console validation commands')]
 [no-cd]
 tty-checks:
     @echo "Run these commands on installed real hardware:"
     @echo "systemctl show getty.target -p Wants"
-    @echo "systemctl status kmsconvt@tty1.service display-manager.service"
-    @echo "systemctl show kmsconvt@tty1.service -p ActiveState -p SubState -p TTYPath"
+    @echo "systemctl status kmsconvt@tty3.service display-manager.service"
+    @echo "systemctl show kmsconvt@tty3.service -p ActiveState -p SubState -p TTYPath"
     @echo "loginctl list-sessions"
-    @echo "journalctl -b -u kmsconvt@tty1.service -u display-manager.service"
+    @echo "loginctl seat-status seat0"
+    @echo "journalctl -b -u kmsconvt@tty3.service -u display-manager.service"
     @echo "journalctl -b -u display-manager.service | rg 'Device or resource busy|No suitable DRM'"
-    @echo "Switch to tty1 with Ctrl+Alt+F1 and confirm the login prompt and Nerd Font glyphs."
+    @echo "Switch to tty3 with Ctrl+Alt+F3 and confirm the login prompt and Nerd Font glyphs."
+    @echo "Return to the Hyprland session on tty2 with Ctrl+Alt+F2."
 
 [doc('Print real-hardware desktop power validation commands')]
 [no-cd]
