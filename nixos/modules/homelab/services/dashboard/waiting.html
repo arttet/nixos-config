@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Homelab — waking up…</title>
+        <link
+            rel="icon"
+            type="image/svg+xml"
+            href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' style='stop-color:%233b82f6'/%3E%3Cstop offset='100%25' style='stop-color:%238b5cf6'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='32' height='32' rx='8' fill='url(%23g)'/%3E%3Cpath d='M8 12h4v8H8zm6-4h4v12h-4zm6 6h4v6h-4z' fill='white' opacity='0.9'/%3E%3C/svg%3E"
+        />
+        <style>
+            body {
+                margin: 0;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                min-height: 100vh;
+                background: #070a0f;
+                color: #e7edf4;
+                font-family: "JetBrains Mono", ui-monospace, monospace;
+                --a1: #5eead4;
+                --a2: #a78bfa;
+                --line: #1c2530;
+                --dim: #5a6572;
+            }
+            body::before {
+                content: "";
+                position: fixed;
+                inset: -20%;
+                z-index: -1;
+                pointer-events: none;
+                background:
+                    radial-gradient(
+                        42% 38% at 78% 6%,
+                        color-mix(in srgb, var(--a1) 13%, transparent),
+                        transparent 70%
+                    ),
+                    radial-gradient(
+                        38% 34% at 10% 92%,
+                        color-mix(in srgb, var(--a2) 11%, transparent),
+                        transparent 70%
+                    );
+                animation: aurora 26s ease-in-out infinite alternate;
+            }
+            @keyframes aurora {
+                0% {
+                    transform: translate3d(-2%, -1%, 0) scale(1);
+                }
+                50% {
+                    transform: translate3d(2%, 1.5%, 0) scale(1.06);
+                }
+                100% {
+                    transform: translate3d(-1%, 2%, 0) scale(1.03);
+                }
+            }
+            main {
+                max-width: 30rem;
+                padding: 2rem;
+                text-align: center;
+            }
+            .spinner {
+                width: 44px;
+                height: 44px;
+                margin: 0 auto 22px;
+                border-radius: 50%;
+                border: 3px solid var(--line);
+                border-top-color: var(--a1);
+                animation: spin 0.9s linear infinite;
+            }
+            @keyframes spin {
+                to {
+                    transform: rotate(360deg);
+                }
+            }
+            h1 {
+                font-size: 1.25rem;
+                letter-spacing: 0.3px;
+                margin-bottom: 0.6rem;
+            }
+            p {
+                color: #8b96a3;
+                line-height: 1.6;
+                font-size: 0.85rem;
+            }
+            code {
+                background: rgba(255, 255, 255, 0.05);
+                border: 1px solid var(--line);
+                border-radius: 0.3rem;
+                padding: 0.15rem 0.4rem;
+                color: var(--a1);
+            }
+            .hint {
+                margin-top: 1.1rem;
+                font-size: 0.75rem;
+                color: var(--dim);
+            }
+            @media (prefers-reduced-motion: reduce) {
+                *,
+                *::before {
+                    animation-duration: 0.001s !important;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <main>
+            <div class="spinner"></div>
+            <h1>Storage not unlocked yet</h1>
+            <p>
+                This service's data lives on the encrypted <code>/srv</code> volume, which isn't
+                mounted yet. Run <code>homelab-storage-unlock</code> on the Pi — this page will
+                pick it up automatically once the service comes online, no refresh needed.
+            </p>
+            <p class="hint" id="hint">checking…</p>
+        </main>
+        <script>
+            const POLL_MS = 5000;
+            const hint = document.getElementById("hint");
+            let remain = Math.round(POLL_MS / 1000);
+
+            function check() {
+                fetch(location.href, { cache: "no-store" })
+                    .then((r) => {
+                        if (r.ok) {
+                            location.reload();
+                            return;
+                        }
+                        remain = Math.round(POLL_MS / 1000);
+                    })
+                    .catch(() => {
+                        remain = Math.round(POLL_MS / 1000);
+                    });
+            }
+
+            setInterval(() => {
+                remain--;
+                hint.textContent =
+                    remain > 0 ? `checking again in ${remain}s…` : "checking…";
+                if (remain <= 0) check();
+            }, 1000);
+        </script>
+    </body>
+</html>
