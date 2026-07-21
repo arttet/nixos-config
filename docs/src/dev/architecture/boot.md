@@ -100,6 +100,14 @@ compositor-based greeter:
 4. SDDM preselects `hyprland-uwsm`. A successful login starts the existing UWSM
    session, whose desktop entry executes `/run/current-system/sw/bin/start-hyprland`.
 
+SDDM keeps its upstream default `tty1`. The graphical target starts `kmscon` on
+`tty2` because the kernel virtual console only supports bitmap PSF fonts, while
+`kmscon` can render the configured `IosevkaTerm Nerd Font`. Separating the
+services avoids a startup race for the same VT and DRM device without rebuilding
+SDDM. The SDDM greeter releases `tty1` after login, the resulting Hyprland
+session is available on `tty2`, and `Ctrl+Alt+F3` opens the Nerd Font login
+console.
+
 The platform keeps `services.xserver.enable = false`. This makes the SDDM
 greeter Wayland-only while retaining XWayland inside the user Hyprland session
 for application compatibility.
@@ -116,6 +124,11 @@ After installation, validate:
 cat /proc/cmdline
 systemctl status systemd-cryptsetup@cryptroot.service
 journalctl -b -p warning
+systemctl show getty.target -p Wants
+systemctl status kmsconvt@tty3.service display-manager.service
+loginctl list-sessions
+loginctl seat-status seat0
+journalctl -b -u display-manager.service | rg 'Device or resource busy|No suitable DRM'
 ```
 
 Expected result:
@@ -125,3 +138,10 @@ Expected result:
 - The LUKS passphrase prompt is visible.
 - Entering the passphrase unlocks the root filesystem.
 - The system continues to the normal login flow.
+- `getty.target` wants `kmsconvt@tty3.service`.
+- `kmsconvt@tty3.service` is active and `Ctrl+Alt+F3` opens a login prompt with
+  Nerd Font glyph support.
+- The SDDM greeter starts on `tty1`, and that VT becomes blank after login.
+- The Hyprland session uses `tty2`; `Ctrl+Alt+F2` returns from kmscon to the
+  desktop.
+- The final journal command produces no output.

@@ -5,6 +5,8 @@ greetd
 hyprctl
 hypridle
 hyprlock
+Iosevka
+kmscon
 ksshaskpass
 mkpasswd
 opensnitch

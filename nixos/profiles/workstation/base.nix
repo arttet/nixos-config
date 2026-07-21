@@ -8,6 +8,7 @@
     ../../modules/core/tuning.nix
     ../../modules/core/power.nix
     ../../modules/core/boot-ux.nix
+    ../../modules/core/virtual-console.nix
     ../../modules/core/grub-theme.nix
     ../../modules/core/cross-build.nix
     ../../modules/storage/disko.nix
