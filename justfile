@@ -26,6 +26,17 @@ help:
 # Development
 # ==============================================================================
 
+[doc('Show outdated tool versions and dependency updates')]
+[group('Development')]
+outdated:
+    mise outdated --bump
+    mise run deps:outdated
+
+[doc('Upgrade outdated tools')]
+[group('Development')]
+upgrade:
+    mise upgrade --bump
+
 [doc('Format source files')]
 [group('Development')]
 fmt:
@@ -46,15 +57,13 @@ lint:
 [doc('Run CI locally')]
 [group('Development')]
 ci:
-    mise exec -- act --list
-    mise exec -- act --bind --artifact-server-path target/act-artifacts \
-        -P ubuntu-26.04=catthehacker/ubuntu:act-latest
+    mise run ci
 
 [doc('Remove local caches artifacts')]
 [group('Development')]
 clean:
     @echo "🧹 Cleaning local caches artifacts..."
-    rm -rf .tools target result .wrangler .lycheecache trivy.json trivy-results.sarif
+    rm -rf .tools target result .wrangler
     @just docs clean
     @echo "✅ Clean!"
 

@@ -33,12 +33,12 @@ jobs:
           egress-policy: audit
 
       - name: Checkout
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
       - name: Install Nix
-        uses: cachix/install-nix-action@a49548c11d9846ad46ecc0115273879b045f001c # v31
+        uses: cachix/install-nix-action@630ae543ea3a38a9a4166f03376c02c50f408342 # v31
         with:
           extra_nix_config: |
             experimental-features = nix-command flakes
@@ -86,12 +86,12 @@ jobs:
           egress-policy: audit
 
       - name: Checkout
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
       - name: Restore tools cache
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v5
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
           path: |
             ${{ env.MISE_DATA_DIR }}
@@ -111,13 +111,19 @@ jobs:
           remove_dotnet: true
           remove_haskell: true
           remove_tool_cache: true
-          remove_packages: "azure-cli google-cloud-cli microsoft-edge-stable google-chrome-stable firefox postgresql* temurin-* *llvm* mysql* dotnet-sdk-*"
+          remove_packages: >-
+            azure-cli google-cloud-cli microsoft-edge-stable google-chrome-stable
+            firefox postgresql* temurin-* *llvm* mysql* dotnet-sdk-*
           remove_packages_one_command: true
-          remove_folders: "/usr/share/swift /usr/share/miniconda /usr/share/az* /usr/local/lib/node_modules /usr/local/share/chromium /usr/local/share/powershell /usr/local/julia /usr/local/aws-cli /usr/local/aws-sam-cli /usr/share/gradle"
+          remove_folders: >-
+            /usr/share/swift /usr/share/miniconda /usr/share/az*
+            /usr/local/lib/node_modules /usr/local/share/chromium
+            /usr/local/share/powershell /usr/local/julia /usr/local/aws-cli
+            /usr/local/aws-sam-cli /usr/share/gradle
           rm_cmd: "rmz"
 
       - name: Install Nix
-        uses: cachix/install-nix-action@a49548c11d9846ad46ecc0115273879b045f001c # v31
+        uses: cachix/install-nix-action@630ae543ea3a38a9a4166f03376c02c50f408342 # v31
         with:
           extra_nix_config: |
             experimental-features = nix-command flakes
@@ -131,7 +137,7 @@ jobs:
         run: nix flake update
 
       - name: Checkout dotfiles
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: ${{ needs.preflight.outputs.dotfiles_repo }}
           ref: ${{ needs.preflight.outputs.dotfiles_ref }}
@@ -212,7 +218,7 @@ jobs:
           egress-policy: audit
 
       - name: Checkout
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
@@ -223,13 +229,19 @@ jobs:
           remove_dotnet: true
           remove_haskell: true
           remove_tool_cache: true
-          remove_packages: "azure-cli google-cloud-cli microsoft-edge-stable google-chrome-stable firefox postgresql* temurin-* *llvm* mysql* dotnet-sdk-*"
+          remove_packages: >-
+            azure-cli google-cloud-cli microsoft-edge-stable google-chrome-stable
+            firefox postgresql* temurin-* *llvm* mysql* dotnet-sdk-*
           remove_packages_one_command: true
-          remove_folders: "/usr/share/swift /usr/share/miniconda /usr/share/az* /usr/local/lib/node_modules /usr/local/share/chromium /usr/local/share/powershell /usr/local/julia /usr/local/aws-cli /usr/local/aws-sam-cli /usr/share/gradle"
+          remove_folders: >-
+            /usr/share/swift /usr/share/miniconda /usr/share/az*
+            /usr/local/lib/node_modules /usr/local/share/chromium
+            /usr/local/share/powershell /usr/local/julia /usr/local/aws-cli
+            /usr/local/aws-sam-cli /usr/share/gradle
           rm_cmd: "rmz"
 
       - name: Install Nix
-        uses: cachix/install-nix-action@a49548c11d9846ad46ecc0115273879b045f001c # v31
+        uses: cachix/install-nix-action@630ae543ea3a38a9a4166f03376c02c50f408342 # v31
         with:
           extra_nix_config: |
             experimental-features = nix-command flakes

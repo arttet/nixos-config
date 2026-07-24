@@ -36,15 +36,25 @@ jobs:
       - name: Harden runner
         uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920 # v2.20.0
         with:
-          egress-policy: audit
+          egress-policy: block
+          allowed-endpoints: >
+            api.github.com:443
+            files.pythonhosted.org:443
+            github.com:443
+            mise-versions.jdx.dev:443
+            plugins.dprint.dev:443
+            pypi.org:443
+            registry.npmjs.org:443
+            release-assets.githubusercontent.com:443
+            tuf-repo-cdn.sigstore.dev:443
 
       - name: Checkout
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
       - name: Restore tools cache
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v5
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
           path: |
             ${{ env.MISE_DATA_DIR }}
@@ -72,15 +82,24 @@ jobs:
       - name: Harden runner
         uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920 # v2.20.0
         with:
-          egress-policy: audit
+          egress-policy: block
+          allowed-endpoints: >
+            api.github.com:443
+            files.pythonhosted.org:443
+            github.com:443
+            mise-versions.jdx.dev:443
+            pypi.org:443
+            registry.npmjs.org:443
+            release-assets.githubusercontent.com:443
+            tuf-repo-cdn.sigstore.dev:443
 
       - name: Checkout
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
       - name: Restore tools cache
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v5
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
           path: |
             ${{ env.MISE_DATA_DIR }}
@@ -108,15 +127,21 @@ jobs:
       - name: Harden runner
         uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920 # v2.20.0
         with:
-          egress-policy: audit
+          egress-policy: block
+          allowed-endpoints: >
+            api.github.com:443
+            cache.nixos.org:443
+            channels.nixos.org:443
+            github.com:443
+            releases.nixos.org:443
 
       - name: Checkout
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
       - name: Install Nix
-        uses: cachix/install-nix-action@a49548c11d9846ad46ecc0115273879b045f001c # v31
+        uses: cachix/install-nix-action@630ae543ea3a38a9a4166f03376c02c50f408342 # v31
         with:
           extra_nix_config: |
             download-attempts = 5
@@ -147,16 +172,33 @@ jobs:
       - name: Harden runner
         uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920 # v2.20.0
         with:
-          egress-policy: audit
+          egress-policy: block
+          allowed-endpoints: >
+            api.github.com:443
+            auth.docker.io:443
+            check.trivy.dev:443
+            database.clamav.net:443
+            files.pythonhosted.org:443
+            github.com:443
+            mirror.gcr.io:443
+            mise-versions.jdx.dev:443
+            oss.trufflehog.org:443
+            production.cloudfront.docker.com:443
+            pypi.org:443
+            registry-1.docker.io:443
+            registry.npmjs.org:443
+            release-assets.githubusercontent.com:443
+            semgrep.dev:443
+            tuf-repo-cdn.sigstore.dev:443
 
       - name: Checkout
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
           persist-credentials: false
 
       - name: Restore tools cache
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v5
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
           path: |
             ${{ env.MISE_DATA_DIR }}
@@ -167,7 +209,7 @@ jobs:
         run: echo "DATE=$(date -u +%Y-%m-%d)" >> "$GITHUB_ENV"
 
       - name: Restore database cache
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v5
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
           path: |
             ${{ env.CLAMAV_DB_DIR }}
@@ -192,21 +234,21 @@ jobs:
 
       - name: Upload Trivy SARIF
         if: ${{ !env.ACT }}
-        uses: github/codeql-action/upload-sarif@99df26d4f13ea111d4ec1a7dddef6063f76b97e9 # v4.37.0
+        uses: github/codeql-action/upload-sarif@e4fba868fa4b1b91e1fdab776edc8cfbe6e9fb81 # v4.37.3
         with:
-          sarif_file: trivy-results.sarif
+          sarif_file: .tools/trivy/trivy-results.sarif
 
-      - name: Trivy gate
-        run: mise run security:trivy:gate
+      - name: Trivy report
+        run: mise run security:trivy:table
 
       - name: SAST scan (OSS rules)
         run: mise run security:semgrep
 
       - name: Update ClamAV database
-        run: mise run security:clamav:update
+        run: mise run antivirus:update
 
       - name: Malware scan
-        run: mise run security:clamav:scan
+        run: mise run antivirus:scan
 
   # ==============================================================================
   # Stage 1: Documentation Gate
@@ -220,16 +262,25 @@ jobs:
       - name: Harden runner
         uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920 # v2.20.0
         with:
-          egress-policy: audit
+          egress-policy: block
+          allowed-endpoints: >
+            api.github.com:443
+            files.pythonhosted.org:443
+            github.com:443
+            mise-versions.jdx.dev:443
+            pypi.org:443
+            registry.npmjs.org:443
+            release-assets.githubusercontent.com:443
+            tuf-repo-cdn.sigstore.dev:443
 
       - name: Checkout
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
           fetch-depth: 0
 
       - name: Restore tools cache
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v5
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
           path: |
             ${{ env.MISE_DATA_DIR }}
@@ -237,14 +288,14 @@ jobs:
           key: ci-tools-${{ env.MISE_VERSION }}-${{ runner.os }}-${{ hashFiles('mise.toml', 'dprint.json') }}
 
       - name: Restore Bun cache
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v5
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
           path: ~/.bun/install/cache
           key: bun-${{ runner.os }}-${{ hashFiles('docs/bun.lock') }}
           restore-keys: bun-${{ runner.os }}-
 
       - name: Restore lychee cache
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v5
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
           path: .lycheecache
           key: lychee-${{ github.sha }}
@@ -308,7 +359,15 @@ jobs:
       - name: Harden runner
         uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920 # v2.20.0
         with:
-          egress-policy: audit
+          egress-policy: block
+          allowed-endpoints: >
+            api.github.com:443
+            fulcio.sigstore.dev:443
+            get.anchore.io:443
+            github.com:443
+            raw.githubusercontent.com:443
+            rekor.sigstore.dev:443
+            release-assets.githubusercontent.com:443
 
       - name: Download docs artifact
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
@@ -334,7 +393,7 @@ jobs:
 
       - name: Attest SBOM
         if: ${{ !env.ACT }}
-        uses: actions/attest@a1948c3f048ba23858d222213b7c278aabede763 # v4.1.1
+        uses: actions/attest@f7c74d28b9d84cb8768d0b8ca14a4bac6ef463e6 # v4.2.0
         with:
           subject-path: docs-build.tar.gz
           sbom-path: sbom.spdx.json
@@ -352,15 +411,21 @@ jobs:
       - name: Harden runner
         uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920 # v2.20.0
         with:
-          egress-policy: audit
+          egress-policy: block
+          allowed-endpoints: >
+            api.github.com:443
+            cache.nixos.org:443
+            channels.nixos.org:443
+            github.com:443
+            releases.nixos.org:443
 
       - name: Checkout
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
       - name: Install Nix
-        uses: cachix/install-nix-action@a49548c11d9846ad46ecc0115273879b045f001c # v31
+        uses: cachix/install-nix-action@630ae543ea3a38a9a4166f03376c02c50f408342 # v31
         with:
           extra_nix_config: |
             download-attempts = 5
@@ -384,15 +449,25 @@ jobs:
       - name: Harden runner
         uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920 # v2.20.0
         with:
-          egress-policy: audit
+          egress-policy: block
+          allowed-endpoints: >
+            *.archive.ubuntu.com:80
+            api.github.com:443
+            cache.nixos.org:443
+            channels.nixos.org:443
+            dl.google.com:443
+            esm.ubuntu.com:443
+            github.com:443
+            packages.microsoft.com:443
+            releases.nixos.org:443
 
       - name: Checkout
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
       - name: Install Nix
-        uses: cachix/install-nix-action@a49548c11d9846ad46ecc0115273879b045f001c # v31
+        uses: cachix/install-nix-action@630ae543ea3a38a9a4166f03376c02c50f408342 # v31
         with:
           extra_nix_config: |
             download-attempts = 5
@@ -426,15 +501,21 @@ jobs:
       - name: Harden runner
         uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920 # v2.20.0
         with:
-          egress-policy: audit
+          egress-policy: block
+          allowed-endpoints: >
+            api.github.com:443
+            cache.nixos.org:443
+            channels.nixos.org:443
+            github.com:443
+            releases.nixos.org:443
 
       - name: Checkout
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
       - name: Install Nix
-        uses: cachix/install-nix-action@a49548c11d9846ad46ecc0115273879b045f001c # v31
+        uses: cachix/install-nix-action@630ae543ea3a38a9a4166f03376c02c50f408342 # v31
         with:
           extra_nix_config: |
             download-attempts = 5
@@ -458,15 +539,21 @@ jobs:
       - name: Harden runner
         uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920 # v2.20.0
         with:
-          egress-policy: audit
+          egress-policy: block
+          allowed-endpoints: >
+            api.github.com:443
+            cache.nixos.org:443
+            channels.nixos.org:443
+            github.com:443
+            releases.nixos.org:443
 
       - name: Checkout
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
       - name: Install Nix
-        uses: cachix/install-nix-action@a49548c11d9846ad46ecc0115273879b045f001c # v31
+        uses: cachix/install-nix-action@630ae543ea3a38a9a4166f03376c02c50f408342 # v31
         with:
           extra_nix_config: |
             download-attempts = 5
@@ -490,15 +577,34 @@ jobs:
       - name: Harden runner
         uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920 # v2.20.0
         with:
-          egress-policy: audit
+          egress-policy: block
+          allowed-endpoints: >
+            api.github.com:443
+            cache.nixos.org:443
+            cdn.zoom.us:443
+            developer.download.nvidia.com:443
+            dl.google.com:443
+            github.com:443
+            launchpad.net:443
+            launchpadlibrarian.net:443
+            obsidian.md:443
+            pkg.cloudflareclient.com:443
+            release-assets.githubusercontent.com:443
+            releases.nixos.org:443
+            repo.yandex.ru:443
+            static.crates.io:443
+            tarballs.nixos.org:443
+            update.code.visualstudio.com:443
+            vscode.download.prss.microsoft.com:443
+            zoom.us:443
 
       - name: Checkout
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
       - name: Install Nix
-        uses: cachix/install-nix-action@a49548c11d9846ad46ecc0115273879b045f001c # v31
+        uses: cachix/install-nix-action@630ae543ea3a38a9a4166f03376c02c50f408342 # v31
         with:
           extra_nix_config: |
             download-attempts = 5
@@ -590,15 +696,21 @@ jobs:
       - name: Harden runner
         uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920 # v2.20.0
         with:
-          egress-policy: audit
+          egress-policy: block
+          allowed-endpoints: >
+            api.cloudflare.com:443
+            api.github.com:443
+            github.com:443
+            registry.npmjs.org:443
+            sparrow.cloudflare.com:443
 
       - name: Checkout
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
       - name: Restore tools cache
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v5
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
           path: |
             ${{ env.MISE_DATA_DIR }}
@@ -671,7 +783,9 @@ jobs:
       - name: Harden runner
         uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920 # v2.20.0
         with:
-          egress-policy: audit
+          egress-policy: block
+          allowed-endpoints: >
+            api.github.com:443
 
       - name: Release on GitHub Pages
         if: ${{ !env.ACT }}

@@ -1,0 +1,81 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "minimumReleaseAge": "7 days",
+  "internalChecksFilter": "strict",
+  "dependencyDashboard": false,
+  "enabledManagers": [
+    "bun",
+    "github-actions",
+    "mise",
+    "nix"
+  ],
+  "nix": {
+    "enabled": true
+  },
+  "ignorePaths": [
+    ".serena/**",
+    ".tools/**",
+    "docs/.vitepress/cache/**",
+    "docs/.vitepress/dist/**",
+    "docs/node_modules/**",
+    "node_modules/**",
+    "out/**",
+    "target/**"
+  ],
+  "labels": [
+    "dependencies"
+  ],
+  "lockFileMaintenance": {
+    "enabled": true
+  },
+  "packageRules": [
+    {
+      "groupName": "GitHub Actions",
+      "matchManagers": [
+        "github-actions"
+      ],
+      "lockFileMaintenance": {
+        "enabled": false
+      }
+    },
+    {
+      "groupName": "mise tools",
+      "matchManagers": [
+        "mise"
+      ],
+      "lockFileMaintenance": {
+        "enabled": false
+      }
+    },
+    {
+      "groupName": "docs dependencies",
+      "matchFileNames": [
+        "docs/package.json",
+        "docs/bun.lock"
+      ],
+      "matchManagers": [
+        "bun"
+      ],
+      "lockFileMaintenance": {
+        "enabled": false
+      }
+    },
+    {
+      "groupName": "Nix flake inputs",
+      "matchManagers": [
+        "nix"
+      ]
+    },
+    {
+      "description": "nixos-raspberrypi pins its own nixpkgs (nixos-25.11) transitively for Pi 5 hardware support; not overridden via follows, and not ours to bump independently",
+      "matchManagers": [
+        "nix"
+      ],
+      "matchDepNames": [
+        "nixpkgs"
+      ],
+      "enabled": false
+    }
+  ],
+  "rangeStrategy": "bump"
+}
