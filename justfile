@@ -63,7 +63,7 @@ ci:
 [group('Development')]
 clean:
     @echo "🧹 Cleaning local caches artifacts..."
-    rm -rf .tools target result .wrangler .lycheecache
+    rm -rf .tools target result .wrangler
     @just docs clean
     @echo "✅ Clean!"
 

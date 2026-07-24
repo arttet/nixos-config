@@ -236,7 +236,13 @@ depends = ["docs:install"]
 
 [tasks."docs:links"]
 description = "Link check over built docs"
-run = 'lychee --config lychee.toml --root-dir "{{config_root}}/docs/.vitepress/dist" docs/.vitepress/dist'
+shell = "bash -c"
+run = '''
+mkdir -p .tools
+cd .tools
+lychee --config "{{config_root}}/lychee.toml" --root-dir "{{config_root}}/docs/.vitepress/dist" "{{config_root}}/docs/.vitepress/dist"
+'''
+depends = ["docs:build"]
 
 [tasks."docs:all"]
 description = "All documentation checks"
