@@ -17,6 +17,9 @@ uv = "0.11.32"
 yamllint = "1.38.0"
 zizmor = "1.28.0"
 
+[settings]
+all_compile = false
+
 [env]
 MSYS_NO_PATHCONV = "1"
 CLAMAV_DB_DIR = "{{config_root}}/.tools/clamav-db"
@@ -28,6 +31,22 @@ npm_config_fetch_retries = "5"
 npm_config_fetch_retry_mintimeout = "20000"
 npm_config_fetch_retry_maxtimeout = "120000"
 npm_config_fetch_timeout = "300000"
+
+# ==============================================================================
+# Development Gate
+# ==============================================================================
+
+[tasks."deps:outdated"]
+description = "Show available dependency updates with Renovate local report"
+shell = "bash -c"
+run = """
+RENOVATE_GITHUB_COM_TOKEN="$(gh auth token)" mise exec node@24 -- npx --yes renovate@43.272.6 \
+  --platform=local \
+  --onboarding=false \
+  --require-config=required \
+  --report-type=logging \
+  --cache-dir=.tools/renovate/cache
+"""
 
 # ==============================================================================
 # Stage 1: Format Quality Gate

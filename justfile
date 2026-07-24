@@ -26,6 +26,17 @@ help:
 # Development
 # ==============================================================================
 
+[doc('Show outdated tool versions and dependency updates')]
+[group('Development')]
+outdated:
+    mise outdated --bump
+    mise run deps:outdated
+
+[doc('Upgrade outdated tools')]
+[group('Development')]
+upgrade:
+    mise upgrade --bump
+
 [doc('Format source files')]
 [group('Development')]
 fmt:
