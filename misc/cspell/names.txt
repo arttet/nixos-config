@@ -1,10 +1,12 @@
 adguardhome
 arttet
+artyom
 Astal
 Beszel
 beszel
 Cachix
 catppuccin
+catthehacker
 Forgejo
 forgejo
 Gatus
