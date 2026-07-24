@@ -57,15 +57,13 @@ lint:
 [doc('Run CI locally')]
 [group('Development')]
 ci:
-    mise exec -- act --list
-    mise exec -- act --bind --artifact-server-path target/act-artifacts \
-        -P ubuntu-26.04=catthehacker/ubuntu:act-latest
+    mise run ci
 
 [doc('Remove local caches artifacts')]
 [group('Development')]
 clean:
     @echo "🧹 Cleaning local caches artifacts..."
-    rm -rf .tools target result .wrangler .lycheecache trivy.json trivy-results.sarif
+    rm -rf .tools target result .wrangler .lycheecache
     @just docs clean
     @echo "✅ Clean!"
 
