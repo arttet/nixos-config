@@ -350,6 +350,8 @@
 
       nixosConfigurations.desktop-aarch64 = mkSystem "aarch64-linux" ./nixos/hosts/desktop/default.nix;
 
+      nixosConfigurations.workstation-aarch64 = mkSystem "aarch64-linux" ./nixos/hosts/workstation/default.nix;
+
       nixosConfigurations.homelab-rpi5 = mkHomelabRpi5 homelabModuleArgs;
 
       checks.${primarySystem} = {
