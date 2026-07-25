@@ -6,16 +6,16 @@ deployment.
 
 ## Automated Checks
 
-| Check          | Tool                     | Description                                                            |
-| :------------- | :----------------------- | :--------------------------------------------------------------------- |
-| Format         | `dprint`, `just`         | Verifies source formatting and Justfile formatting.                    |
-| Lint           | `yamllint`, `actionlint` | Verifies YAML and GitHub Actions syntax.                               |
-| Nix check      | `nix flake check`        | Runs Nix formatting, schema checks, `statix`, `deadnix`, and policies. |
-| Security       | TruffleHog, Trivy        | Scans for verified or unknown secrets and common security issues.      |
-| Antivirus      | ClamAV                   | Scans the repository for malware signatures.                           |
-| Documentation  | Bun, VitePress, Lychee   | Audits docs dependencies, builds docs, and checks generated links.     |
-| Installer      | Nushell tests            | Validates installer and generated local-state contracts.               |
-| Profile builds | Nix                      | Builds VM, workstation, and desktop closures.                          |
+| Check          | Tool                     | Description                                                                                                                    |
+| :------------- | :----------------------- | :----------------------------------------------------------------------------------------------------------------------------- |
+| Format         | `dprint`, `just`         | Verifies source formatting and Justfile formatting.                                                                            |
+| Lint           | `yamllint`, `actionlint` | Verifies YAML and GitHub Actions syntax.                                                                                       |
+| Nix check      | `nix flake check`        | Runs Nix formatting, schema checks, `statix`, `deadnix`, and policies. A matrix job runs x86_64 and aarch64 gates in parallel. |
+| Security       | TruffleHog, Trivy        | Scans for verified or unknown secrets and common security issues.                                                              |
+| Antivirus      | ClamAV                   | Scans the repository for malware signatures.                                                                                   |
+| Documentation  | Bun, VitePress, Lychee   | Audits docs dependencies, builds docs, and checks generated links.                                                             |
+| Installer      | Nushell tests            | Validates installer and generated local-state contracts.                                                                       |
+| Profile builds | Nix                      | Builds VM, workstation, desktop, and homelab (arm64) closures.                                                                 |
 
 ## Job Strategy
 
@@ -27,6 +27,10 @@ deployment.
   same runner.
 - **Resource management**: the desktop job frees preinstalled runner toolchains
   before installing Nix.
+- **ARM64 builds**: the homelab job builds the Raspberry Pi 5 closure on an
+  ARM64 runner. It pulls from the `homelab-rpi5` Cachix cache read-only, so it
+  works on fork pull requests without secrets; only Nightly pushes to the
+  cache.
 - **Caching**: documentation builds use the Bun package cache. Nix jobs rely on
   `cache.nixos.org`; add an authenticated binary cache such as Cachix or Attic
   before enabling repository-level Nix write-back caching.
@@ -53,6 +57,17 @@ generated state.
 Scheduled runs never push changes. Manual runs open a `flake.lock` update pull
 request only when the `deploy` input is `true`, desktop validation passes, and
 `flake.lock` changed.
+
+Nightly also builds the Raspberry Pi 5 microSD image (`sdImage`) and uploads it
+as the `homelab-rpi5-sdimage` workflow artifact, kept for 30 days. The image
+job runs after the homelab toplevel job so it reuses the paths pushed to the
+`homelab-rpi5` Cachix cache.
+
+The `Workstation aarch64` job builds the headless `workstation-aarch64`
+configuration on an ARM64 runner. Packages without an aarch64-linux build
+(zoom, google-chrome, tor-browser, Proton apps, onlyoffice, yandex-disk,
+cloudflare-warp, x86 microcode) are gated to x86_64 hosts in the workstation
+profile, which also keeps the `desktop-aarch64` configuration evaluable.
 
 ## CI Configuration
 
