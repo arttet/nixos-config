@@ -30,7 +30,15 @@ jobs:
       - name: Harden runner
         uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920 # v2.20.0
         with:
-          egress-policy: audit
+          egress-policy: block
+          allowed-endpoints: >
+            api.github.com:443
+            cache.nixos.org:443
+            channels.nixos.org:443
+            github.com:443
+            nixos-raspberrypi.cachix.org:443
+            release-assets.githubusercontent.com:443
+            releases.nixos.org:443
 
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -83,7 +91,37 @@ jobs:
       - name: Harden runner
         uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920 # v2.20.0
         with:
-          egress-policy: audit
+          egress-policy: block
+          allowed-endpoints: >
+            *.archive.ubuntu.com:80
+            api.github.com:443
+            cache.nixos.org:443
+            cdn.zoom.us:443
+            channels.nixos.org:443
+            developer.download.nvidia.com:443
+            dl.google.com:443
+            esm.ubuntu.com:443
+            files.pythonhosted.org:443
+            github.com:443
+            launchpad.net:443
+            launchpadlibrarian.net:443
+            mise-versions.jdx.dev:443
+            nixos-raspberrypi.cachix.org:443
+            obsidian.md:443
+            packages.microsoft.com:443
+            pkg.cloudflareclient.com:443
+            plugins.dprint.dev:443
+            pypi.org:443
+            registry.npmjs.org:443
+            release-assets.githubusercontent.com:443
+            releases.nixos.org:443
+            repo.yandex.ru:443
+            static.crates.io:443
+            tarballs.nixos.org:443
+            tuf-repo-cdn.sigstore.dev:443
+            update.code.visualstudio.com:443
+            vscode.download.prss.microsoft.com:443
+            zoom.us:443
 
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -209,7 +247,21 @@ jobs:
       - name: Harden runner
         uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920 # v2.20.0
         with:
-          egress-policy: audit
+          egress-policy: block
+          allowed-endpoints: >
+            *.archive.ubuntu.com:80
+            api.github.com:443
+            cache.nixos.org:443
+            cachix.org:443
+            channels.nixos.org:443
+            dl.google.com:443
+            esm.ubuntu.com:443
+            github.com:443
+            homelab-rpi5.cachix.org:443
+            nixos-raspberrypi.cachix.org:443
+            packages.microsoft.com:443
+            release-assets.githubusercontent.com:443
+            releases.nixos.org:443
 
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -254,3 +306,165 @@ jobs:
 
       - name: Build Homelab Pi 5
         run: nix build --no-link .#nixosConfigurations.homelab-rpi5.config.system.build.toplevel
+
+  # ==============================================================================
+  # Homelab Raspberry Pi 5 SD Image
+  # ==============================================================================
+
+  homelab-image:
+    name: Homelab PI 5 SD Image
+    runs-on: ubuntu-26.04-arm
+    timeout-minutes: 360
+    needs: [homelab]
+
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920 # v2.20.0
+        with:
+          egress-policy: block
+          allowed-endpoints: >
+            *.archive.ubuntu.com:80
+            api.github.com:443
+            cache.nixos.org:443
+            cachix.org:443
+            channels.nixos.org:443
+            dl.google.com:443
+            esm.ubuntu.com:443
+            github.com:443
+            homelab-rpi5.cachix.org:443
+            nixos-raspberrypi.cachix.org:443
+            packages.microsoft.com:443
+            release-assets.githubusercontent.com:443
+            releases.nixos.org:443
+
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Free Disk Space
+        uses: endersonmenezes/free-disk-space@7901478139cff6e9d44df5972fd8ab8fcade4db1 # v3
+        with:
+          remove_android: true
+          remove_dotnet: true
+          remove_haskell: true
+          remove_tool_cache: true
+          remove_packages: >-
+            azure-cli google-cloud-cli microsoft-edge-stable google-chrome-stable
+            firefox postgresql* temurin-* *llvm* mysql* dotnet-sdk-*
+          remove_packages_one_command: true
+          remove_folders: >-
+            /usr/share/swift /usr/share/miniconda /usr/share/az*
+            /usr/local/lib/node_modules /usr/local/share/chromium
+            /usr/local/share/powershell /usr/local/julia /usr/local/aws-cli
+            /usr/local/aws-sam-cli /usr/share/gradle
+          rm_cmd: "rmz"
+
+      - name: Install Nix
+        uses: cachix/install-nix-action@630ae543ea3a38a9a4166f03376c02c50f408342 # v31
+        with:
+          extra_nix_config: |
+            experimental-features = nix-command flakes
+            download-attempts = 5
+            connect-timeout = 60
+            stalled-download-timeout = 300
+            accept-flake-config = true
+            cores = 0
+
+      - name: Set up Cachix
+        uses: cachix/cachix-action@5f2d7c5294214f71b873db4b969586b980625e71 # v17
+        with:
+          name: homelab-rpi5
+          authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
+          signingKey: ${{ secrets.CACHIX_SIGNING_KEY }}
+
+      - name: Build Homelab Pi 5 SD image
+        run: |
+          nix build .#nixosConfigurations.homelab-rpi5.config.system.build.sdImage \
+            --out-link target/homelab-rpi5-image
+          mkdir -p target/artifacts
+          cp target/homelab-rpi5-image/sd-image/*.img.zst target/artifacts/
+          ls -lh target/artifacts/
+
+      # The image is already zstd-compressed, so skip artifact recompression.
+      - name: Upload SD image artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: homelab-rpi5-sdimage
+          path: target/artifacts/*.img.zst
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 30
+
+  # ==============================================================================
+  # Workstation aarch64
+  # ==============================================================================
+
+  workstation-aarch64:
+    name: Workstation aarch64
+    runs-on: ubuntu-26.04-arm
+    timeout-minutes: 360
+
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920 # v2.20.0
+        with:
+          egress-policy: block
+          allowed-endpoints: >
+            *.archive.ubuntu.com:80
+            api.github.com:443
+            cache.nixos.org:443
+            cachix.org:443
+            channels.nixos.org:443
+            dl.google.com:443
+            esm.ubuntu.com:443
+            github.com:443
+            homelab-rpi5.cachix.org:443
+            nixos-raspberrypi.cachix.org:443
+            packages.microsoft.com:443
+            release-assets.githubusercontent.com:443
+            releases.nixos.org:443
+
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Free Disk Space
+        uses: endersonmenezes/free-disk-space@7901478139cff6e9d44df5972fd8ab8fcade4db1 # v3
+        with:
+          remove_android: true
+          remove_dotnet: true
+          remove_haskell: true
+          remove_tool_cache: true
+          remove_packages: >-
+            azure-cli google-cloud-cli microsoft-edge-stable google-chrome-stable
+            firefox postgresql* temurin-* *llvm* mysql* dotnet-sdk-*
+          remove_packages_one_command: true
+          remove_folders: >-
+            /usr/share/swift /usr/share/miniconda /usr/share/az*
+            /usr/local/lib/node_modules /usr/local/share/chromium
+            /usr/local/share/powershell /usr/local/julia /usr/local/aws-cli
+            /usr/local/aws-sam-cli /usr/share/gradle
+          rm_cmd: "rmz"
+
+      - name: Install Nix
+        uses: cachix/install-nix-action@630ae543ea3a38a9a4166f03376c02c50f408342 # v31
+        with:
+          extra_nix_config: |
+            experimental-features = nix-command flakes
+            download-attempts = 5
+            connect-timeout = 60
+            stalled-download-timeout = 300
+            accept-flake-config = true
+            cores = 0
+
+      - name: Set up Cachix
+        uses: cachix/cachix-action@5f2d7c5294214f71b873db4b969586b980625e71 # v17
+        with:
+          name: homelab-rpi5
+          authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
+          signingKey: ${{ secrets.CACHIX_SIGNING_KEY }}
+
+      - name: Build Workstation aarch64
+        run: nix build --no-link .#nixosConfigurations.workstation-aarch64.config.system.build.toplevel
