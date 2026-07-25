@@ -155,15 +155,9 @@ jobs:
       - name: Validate nightly platform state
         env:
           STATE_FILE: ${{ steps.prepare.outputs.state }}
-        run: |
-          # shellcheck disable=SC2016
-          nix shell --inputs-from . nixpkgs#jsonschema-cli -c sh -c '
-            if command -v jsonschema >/dev/null 2>&1; then
-              jsonschema validate schemas/platform-state.v1.schema.json -i "$STATE_FILE"
-            else
-              jsonschema-cli validate schemas/platform-state.v1.schema.json -i "$STATE_FILE"
-            fi
-          '
+        run: >
+          nix shell --inputs-from . nixpkgs#jsonschema-cli
+          -c jsonschema-cli validate schemas/platform-state.v1.schema.json -i "$STATE_FILE"
 
       - name: Validate desktop
         env:
