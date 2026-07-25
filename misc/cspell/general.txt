@@ -4,6 +4,8 @@ keymaps
 llms
 maxtimeout
 mintimeout
+onlyoffice
 optimise
 passwordless
+sdimage
 toolkits
