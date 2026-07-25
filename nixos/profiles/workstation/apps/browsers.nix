@@ -130,6 +130,9 @@ in
   environment.systemPackages = [
     zenWithPrivacy
     brave-privacy
+  ]
+  # google-chrome and tor-browser publish no aarch64-linux build.
+  ++ lib.optionals pkgs.stdenv.hostPlatform.isx86_64 [
     google-chrome-privacy
     pkgs.tor-browser
   ];

@@ -5,6 +5,8 @@
   ...
 }:
 let
+  inherit (pkgs.stdenv.hostPlatform) isx86_64;
+
   desktopUsers = lib.filterAttrs (
     _name: user: (user.isNormalUser or false) && (builtins.elem "wheel" (user.extraGroups or [ ]))
   ) config.users.users;
@@ -104,10 +106,13 @@ in
     pkgs.mat2
     pkgs.nethogs
     pkgs.opensnitch-ui
-    pkgs.proton-pass
     pkgs.termshark
     pkgs.yara
     pkgs.yubikey-manager
     veracrypt
+  ]
+  # proton-pass publishes no aarch64-linux build.
+  ++ lib.optionals isx86_64 [
+    pkgs.proton-pass
   ];
 }

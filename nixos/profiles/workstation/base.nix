@@ -45,8 +45,10 @@
   };
 
   hardware.enableRedistributableFirmware = true;
-  hardware.cpu.intel.updateMicrocode = true;
-  hardware.cpu.amd.updateMicrocode = true;
+  # Microcode updates exist only on x86_64; the microcode packages do not
+  # evaluate on aarch64-linux.
+  hardware.cpu.intel.updateMicrocode = pkgs.stdenv.hostPlatform.isx86_64;
+  hardware.cpu.amd.updateMicrocode = pkgs.stdenv.hostPlatform.isx86_64;
 
   services.timesyncd.enable = lib.mkDefault true;
   system.autoUpgrade.enable = lib.mkDefault false;
