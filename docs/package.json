@@ -11,7 +11,7 @@
     "@catppuccin/vitepress": "^0.1.2",
     "@types/node": "26.1.1",
     "oxc-minify": "^0.141.0",
-    "vitepress": "^2.0.0-alpha.18",
+    "vitepress": "^2.0.0-alpha.19",
     "vitepress-plugin-llms": "^1.13.3"
   },
   "overrides": {
