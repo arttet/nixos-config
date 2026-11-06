@@ -4,7 +4,6 @@
   "internalChecksFilter": "strict",
   "dependencyDashboard": false,
   "enabledManagers": [
-    "bun",
     "github-actions",
     "mise",
     "nix"
@@ -42,19 +41,6 @@
       "groupName": "mise tools",
       "matchManagers": [
         "mise"
-      ],
-      "lockFileMaintenance": {
-        "enabled": false
-      }
-    },
-    {
-      "groupName": "docs dependencies",
-      "matchFileNames": [
-        "docs/package.json",
-        "docs/bun.lock"
-      ],
-      "matchManagers": [
-        "bun"
       ],
       "lockFileMaintenance": {
         "enabled": false

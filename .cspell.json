@@ -21,8 +21,8 @@
     "target/**",
     ".tools/**",
     ".serena/**",
-    "bun.lock",
-    "**/bun.lock",
+    "aube-lock.yaml",
+    "**/aube-lock.yaml",
     "misc/cspell/**",
     "trivy.json",
     "trivy-results.sarif"

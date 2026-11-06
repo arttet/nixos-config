@@ -299,12 +299,12 @@ jobs:
             ${{ env.DPRINT_CACHE_DIR }}
           key: ci-tools-${{ env.MISE_VERSION }}-${{ runner.os }}-${{ hashFiles('mise.toml', 'dprint.json') }}
 
-      - name: Restore Bun cache
+      - name: Restore aube cache
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
-          path: ~/.bun/install/cache
-          key: bun-${{ runner.os }}-${{ hashFiles('docs/bun.lock') }}
-          restore-keys: bun-${{ runner.os }}-
+          path: ~/.local/share/aube/store
+          key: aube-${{ runner.os }}-${{ hashFiles('docs/aube-lock.yaml') }}
+          restore-keys: aube-${{ runner.os }}-
 
       - name: Restore lychee cache
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
@@ -798,12 +798,12 @@ jobs:
         if: ${{ github.event_name == 'pull_request' }}
         id: cf_docs_preview
         run: |
-          bunx wrangler pages deploy ./docs/.vitepress/dist --project-name "$CF_DOCS_PAGES_PROJECT" --branch "$CF_DOCS_BRANCH"
+          wrangler pages deploy ./docs/.vitepress/dist --project-name "$CF_DOCS_PAGES_PROJECT" --branch "$CF_DOCS_BRANCH"
           echo "docs_preview_url=https://${CF_DOCS_BRANCH}.${CF_DOCS_PAGES_PROJECT}.pages.dev" >> "$GITHUB_OUTPUT"
 
       - name: Deploy docs production to Cloudflare Pages
         if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
-        run: bunx wrangler pages deploy ./docs/.vitepress/dist --project-name "$CF_DOCS_PAGES_PROJECT"
+        run: wrangler pages deploy ./docs/.vitepress/dist --project-name "$CF_DOCS_PAGES_PROJECT"
 
       - name: Update PR comment
         if: ${{ github.event_name == 'pull_request' && !env.ACT }}

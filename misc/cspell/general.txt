@@ -8,4 +8,5 @@ onlyoffice
 optimise
 passwordless
 sdimage
+sidepanel
 toolkits
