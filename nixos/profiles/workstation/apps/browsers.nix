@@ -99,7 +99,7 @@ let
         };
       });
 
-  # Chrome / Chromium / Brave privacy flags
+  # Chrome / Chromium privacy flags
   chromePrivacyFlags = [
     "--enable-features=EncryptedClientHello"
     "--enable-quic"
@@ -111,10 +111,6 @@ let
   ];
 
   google-chrome-privacy = pkgs.google-chrome.override {
-    commandLineArgs = lib.concatStringsSep " " chromePrivacyFlags;
-  };
-
-  brave-privacy = pkgs.brave.override {
     commandLineArgs = lib.concatStringsSep " " chromePrivacyFlags;
   };
 in
@@ -129,7 +125,6 @@ in
 
   environment.systemPackages = [
     zenWithPrivacy
-    brave-privacy
   ]
   # google-chrome and tor-browser publish no aarch64-linux build.
   ++ lib.optionals pkgs.stdenv.hostPlatform.isx86_64 [

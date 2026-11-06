@@ -13,7 +13,7 @@ deployment.
 | Nix check      | `nix flake check`        | Runs Nix formatting, schema checks, `statix`, `deadnix`, and policies. A matrix job runs x86_64 and aarch64 gates in parallel. |
 | Security       | TruffleHog, Trivy        | Scans for verified or unknown secrets and common security issues.                                                              |
 | Antivirus      | ClamAV                   | Scans the repository for malware signatures.                                                                                   |
-| Documentation  | Bun, VitePress, Lychee   | Audits docs dependencies, builds docs, and checks generated links.                                                             |
+| Documentation  | aube, VitePress, Lychee  | Audits docs dependencies, builds docs, and checks generated links.                                                             |
 | Installer      | Nushell tests            | Validates installer and generated local-state contracts.                                                                       |
 | Profile builds | Nix                      | Builds VM, workstation, desktop, and homelab (arm64) closures.                                                                 |
 
@@ -31,7 +31,7 @@ deployment.
   ARM64 runner. It pulls from the `homelab-rpi5` Cachix cache read-only, so it
   works on fork pull requests without secrets; only Nightly pushes to the
   cache.
-- **Caching**: documentation builds use the Bun package cache. Nix jobs rely on
+- **Caching**: documentation builds use the aube global store cache. Nix jobs rely on
   `cache.nixos.org`; add an authenticated binary cache such as Cachix or Attic
   before enabling repository-level Nix write-back caching.
 - **Scheduled refresh**: `Daily Cache Cleanup` clears GitHub Actions caches at

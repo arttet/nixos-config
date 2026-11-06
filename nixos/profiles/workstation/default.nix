@@ -19,7 +19,6 @@
     in
     hasCudaLicense
     || builtins.elem name [
-      "brave"
       "cloudflare-warp"
       "google-chrome"
       "obsidian"
