@@ -25,8 +25,8 @@
     message = "workstation must disable OS prober";
   }
   {
-    assertion = workstation.boot.loader.grub.configurationLimit == 10;
-    message = "workstation GRUB must keep 10 boot generations";
+    assertion = workstation.boot.loader.grub.configurationLimit == 2;
+    message = "workstation GRUB must keep 2 boot generations (initrd ~80M leaves no slack for more on a 512M /boot)";
   }
   {
     assertion = workstation.boot.initrd.systemd.enable;

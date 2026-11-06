@@ -29,7 +29,7 @@
   boot.loader = {
     grub = {
       enable = true;
-      configurationLimit = 10;
+      configurationLimit = 2;
       device = "nodev";
       efiSupport = true;
       useOSProber = false;
