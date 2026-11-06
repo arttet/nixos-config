@@ -17,6 +17,7 @@
   "overrides": {
     "@docsearch/css": "4.7.0",
     "@docsearch/js": "4.7.0",
-    "@docsearch/sidepanel-js": "4.7.0"
+    "@docsearch/sidepanel-js": "4.7.0",
+    "minimatch": "^11.0.1"
   }
 }
