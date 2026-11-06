@@ -42,6 +42,7 @@ jobs:
             files.pythonhosted.org:443
             github.com:443
             mise-versions.jdx.dev:443
+            nodejs.org:443
             plugins.dprint.dev:443
             pypi.org:443
             registry.npmjs.org:443
@@ -88,6 +89,7 @@ jobs:
             files.pythonhosted.org:443
             github.com:443
             mise-versions.jdx.dev:443
+            nodejs.org:443
             pypi.org:443
             registry.npmjs.org:443
             release-assets.githubusercontent.com:443
@@ -194,6 +196,7 @@ jobs:
             github.com:443
             mirror.gcr.io:443
             mise-versions.jdx.dev:443
+            nodejs.org:443
             oss.trufflehog.org:443
             production.cloudfront.docker.com:443
             pypi.org:443
@@ -280,6 +283,7 @@ jobs:
             files.pythonhosted.org:443
             github.com:443
             mise-versions.jdx.dev:443
+            nodejs.org:443
             pypi.org:443
             registry.npmjs.org:443
             release-assets.githubusercontent.com:443
@@ -766,6 +770,7 @@ jobs:
             api.cloudflare.com:443
             api.github.com:443
             github.com:443
+            nodejs.org:443
             registry.npmjs.org:443
             sparrow.cloudflare.com:443
 
