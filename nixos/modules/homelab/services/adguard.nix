@@ -107,10 +107,14 @@ in
       ip saddr ${cfg.lanCidr} tcp dport { 53, 3000 } accept
     '';
 
-    services.resolved.extraConfig = ''
-      DNS=127.0.0.1 1.1.1.1 8.8.8.8
-      DNSStubListener=no
-    '';
+    services.resolved.settings.Resolve = {
+      DNS = [
+        "127.0.0.1"
+        "1.1.1.1"
+        "8.8.8.8"
+      ];
+      DNSStubListener = false;
+    };
     environment.etc."resolv.conf".source = lib.mkForce "/run/systemd/resolve/resolv.conf";
 
     # Without this, systemd-resolved starts before adguardhome.service binds
