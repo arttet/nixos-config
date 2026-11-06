@@ -29,7 +29,6 @@
 
   requiredGuiApplicationPackages = [
     "zen-browser"
-    "brave"
     "google-chrome"
     "tor-browser"
     "ghostty"

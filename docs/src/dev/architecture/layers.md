@@ -15,7 +15,7 @@ is an independent headless composition and does not inherit workstation storage,
 | **Networking**   | NetworkManager + Applet | NetworkManager (CLI)    | NetworkManager (CLI)    |
 | **Security**     | `doas`, Hardened Kernel | `doas`, Hardened Kernel | `doas`, Standard Kernel |
 | **Storage**      | LUKS2 + Btrfs           | LUKS2 + Btrfs           | Ext4 (Disposable)       |
-| **Browsers**     | Zen, Brave, Chrome      | None                    | None                    |
+| **Browsers**     | Zen, Chrome             | None                    | None                    |
 | **Containers**   | Docker enabled          | Optional                | Optional                |
 
 ## 🏗️ The Layering Model

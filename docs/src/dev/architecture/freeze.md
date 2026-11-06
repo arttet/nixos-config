@@ -60,7 +60,7 @@ also part of the editor baseline inherited by `workstation-gui`.
 
 The V1 composition intentionally includes some large application families:
 
-- Firefox/Chromium-derived browsers: Zen Browser, Brave, Google Chrome, and Tor Browser.
+- Firefox/Chromium-derived browsers: Zen Browser, Google Chrome, and Tor Browser.
 - Electron-style applications: VS Code, Obsidian, Zoom, and communication tools.
 - Docker and container tooling.
 - Cloud and vendor account clients.
@@ -105,10 +105,11 @@ wallpapers belong in a dotfiles or desktop-shell repository.
 Browser categories are explicit:
 
 - Zen Browser is the preferred target and is integrated through a pinned flake input.
-- Brave is the stable fallback.
-- Google Chrome is the compatibility browser.
+- Google Chrome is the stable fallback and compatibility browser.
 - Tor Browser is the privacy browser.
 - Yandex Browser is deferred and not part of the V1 baseline.
+- Brave was dropped after upstream removed it from nixpkgs (no maintainers to
+  unblock security issues).
 
 The fallback browser path is mandatory. The workstation must remain usable even
 if an external or optional browser integration is unavailable in the pinned
