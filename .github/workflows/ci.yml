@@ -86,10 +86,13 @@ jobs:
           egress-policy: block
           allowed-endpoints: >
             api.github.com:443
+            api.npmjs.org:443
+            api.osv.dev:443
             files.pythonhosted.org:443
             github.com:443
             mise-versions.jdx.dev:443
             nodejs.org:443
+            npm.jsr.io:443
             pypi.org:443
             registry.npmjs.org:443
             release-assets.githubusercontent.com:443
@@ -280,10 +283,13 @@ jobs:
           egress-policy: block
           allowed-endpoints: >
             api.github.com:443
+            api.npmjs.org:443
+            api.osv.dev:443
             files.pythonhosted.org:443
             github.com:443
             mise-versions.jdx.dev:443
             nodejs.org:443
+            npm.jsr.io:443
             pypi.org:443
             registry.npmjs.org:443
             release-assets.githubusercontent.com:443
