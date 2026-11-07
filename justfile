@@ -29,13 +29,15 @@ help:
 [doc('Show outdated tool versions and dependency updates')]
 [group('Development')]
 outdated:
-    mise outdated --bump
+    mise outdated --bump --no-global
     mise run deps:outdated
 
 [doc('Upgrade outdated tools')]
 [group('Development')]
 upgrade:
-    mise upgrade --bump
+    mise install aube uv node python
+    mise upgrade --bump --no-global --no-prune aube uv node python
+    mise upgrade --bump --no-global --no-prune --exclude aube --exclude uv --exclude node --exclude python
 
 [doc('Format source files')]
 [group('Development')]

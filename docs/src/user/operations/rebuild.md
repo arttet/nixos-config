@@ -37,11 +37,11 @@ nix flake update
 It is highly recommended to build and test the configuration before switching to it. This validates your syntax and logic without touching your running system:
 
 ```sh
-just workstation-gui build
+just desktop build
 ```
 
 ```sh
-just workstation-gui test
+just desktop test
 ```
 
 Once the tests pass, apply the new configuration to your system. This makes the changes live and creates a new bootable generation:

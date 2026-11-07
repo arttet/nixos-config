@@ -1,25 +1,29 @@
 [tools]
-act = "0.2.89"
+act = "0.2.97"
 actionlint = "1.7.12"
-aube = "1.38.0"
-dprint = "0.55.2"
-editorconfig-checker = "3.11.1"
-just = "1.58.0"
+aube = "2.9.0"
+dprint = "0.64.3"
+editorconfig-checker = "4.0.2"
+just = "1.59.0"
 lychee = "0.24.2"
-node = "26.7.0"
-semgrep = "1.172.0"
-trivy = "0.73.0"
-trufflehog = "3.96.0"
-uv = "0.12.3"
+node = "26.13.0"
+python = "3.14.10"
+semgrep = "1.184.0"
+trivy = "0.76.2"
+trufflehog = "3.99.8"
+uv = "0.13.7"
 yamllint = "1.38.0"
-zizmor = "1.29.0"
+zizmor = "1.32.0"
 
-"npm:cspell" = "10.0.1"
-"npm:markdownlint-cli2" = "0.23.2"
-"npm:wrangler" = "4.120.0"
+"npm:cspell" = "10.4.0"
+"npm:markdownlint-cli2" = "0.24.0"
+"npm:wrangler" = "4.158.0"
 
 [settings]
 all_compile = false
+
+[settings.npm]
+package_manager = "aube"
 
 [env]
 MSYS_NO_PATHCONV = "1"
@@ -28,10 +32,9 @@ CLAMAV_IMAGE = "clamav/clamav:1.5.3_base"
 SEMGREP_IMAGE = "semgrep/semgrep:1.169.0"
 CF_DOCS_PAGES_PROJECT = "nixos-config-docs"
 CACHIX_CACHE_NAME = "homelab-rpi5"
-npm_config_fetch_retries = "5"
-npm_config_fetch_retry_mintimeout = "20000"
-npm_config_fetch_retry_maxtimeout = "120000"
-npm_config_fetch_timeout = "300000"
+AUBE_FETCH_RETRIES = "5"
+AUBE_FETCH_RETRY_MINTIMEOUT = "20000"
+AUBE_FETCH_RETRY_MAXTIMEOUT = "120000"
 
 # ==============================================================================
 # Development Gate
@@ -41,7 +44,7 @@ npm_config_fetch_timeout = "300000"
 description = "Show available dependency updates with Renovate local report"
 shell = "bash -c"
 run = """
-RENOVATE_GITHUB_COM_TOKEN="$(gh auth token)" mise exec node@24 -- npx --yes renovate@43.272.6 \
+RENOVATE_GITHUB_COM_TOKEN="$(gh auth token)" mise exec node@24 -- aube dlx --package renovate@43.272.6 renovate \
   --platform=local \
   --onboarding=false \
   --require-config=required \
