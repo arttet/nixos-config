@@ -1,6 +1,6 @@
 # Workstation Freeze
 
-`workstation-gui` is the V1 workstation freeze candidate. It is a product
+`desktop` is the V1 workstation freeze candidate. It is a product
 composition built on top of the headless `workstation` foundation, not a
 replacement for it.
 
@@ -13,7 +13,7 @@ turning the repository into a dotfiles or desktop theme repository.
 The V1 workstation composition freezes these contracts:
 
 - `workstation` remains the secure headless base.
-- `workstation-gui` is the graphical workstation product target.
+- `desktop` is the graphical workstation product target.
 - `vm` remains a disposable local validation target.
 - GUI software lives under `nixos/profiles/workstation/`.
 - Boot, storage, security, DNS, firewall, logging, GC, and upgrade policy are
@@ -54,7 +54,7 @@ Package ownership should stay in the layer that describes the package's primary
 purpose. Cross-layer duplication is avoided unless the headless base needs a
 small operational tool before GUI is installed. Helix is the current intentional
 exception: it exists in the headless base as a recovery-friendly editor and is
-also part of the editor baseline inherited by `workstation-gui`.
+also part of the editor baseline inherited by `desktop`.
 
 ## Dependency Audit
 
@@ -67,7 +67,7 @@ The V1 composition intentionally includes some large application families:
 - Selected security tooling.
 - VLC as the minimal video player.
 
-These dependencies are accepted because `workstation-gui` is a real daily-use
+These dependencies are accepted because `desktop` is a real daily-use
 workstation target. They must remain workstation-scoped and must not leak into
 `workstation`, `vm`, or future service profiles.
 
@@ -183,14 +183,14 @@ just check
 just docs build
 just workstation build
 just workstation test
-just workstation-gui build
-just workstation-gui test
+just desktop build
+just desktop test
 ```
 
 Useful runtime inspection after installation:
 
 ```sh
-nix path-info -Sh .#nixosConfigurations.workstation-gui.config.system.build.toplevel
+nix path-info -Sh .#nixosConfigurations.desktop.config.system.build.toplevel
 systemctl status display-manager
 systemctl --user status pipewire
 journalctl -b

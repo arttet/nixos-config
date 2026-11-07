@@ -16,6 +16,7 @@ const userSidebar = [
     items: [
       { text: "Workstation", link: "/user/installation/workstation" },
       { text: "VM", link: "/user/installation/vm" },
+      { text: "Raspberry Pi 5", link: "/user/installation/homelab-rpi5" },
     ],
   },
   {

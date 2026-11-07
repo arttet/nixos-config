@@ -248,8 +248,8 @@ The default profile points to the graphical workstation. To build or test a
 specific profile explicitly, pass it as an argument:
 
 ```nu
-just build workstation-gui
-just test workstation-gui
+just build desktop
+just test desktop
 ```
 
 The rebuild uses the local repository and creates a new bootable generation.

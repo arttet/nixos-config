@@ -2,6 +2,7 @@
   "name": "docs",
   "private": true,
   "type": "module",
+  "packageManager": "aube@2.9.0",
   "scripts": {
     "docs:dev": "vitepress dev",
     "docs:build": "vitepress build",
@@ -9,15 +10,12 @@
   },
   "devDependencies": {
     "@catppuccin/vitepress": "^0.1.2",
-    "@types/node": "^26.2.0",
-    "oxc-minify": "^0.143.0",
-    "vitepress": "^2.0.0-alpha.19",
+    "@types/node": "^26.6.6",
+    "oxc-minify": "^0.157.0",
+    "vitepress": "^2.0.0-alpha.21",
     "vitepress-plugin-llms": "^1.13.4"
   },
   "overrides": {
-    "@docsearch/css": "4.7.0",
-    "@docsearch/js": "4.7.0",
-    "@docsearch/sidepanel-js": "4.7.0",
     "minimatch": "^11.0.1"
   }
 }

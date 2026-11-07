@@ -4,13 +4,13 @@ Welcome to the comprehensive guide for using and maintaining your NixOS configur
 
 ## 📦 The Profiles
 
-The platform is organized into three primary targets (profiles). `workstation-gui` is the default.
+The platform is organized into three primary targets (profiles). `desktop` is the default.
 
-| Profile               | Description                                                                                                          | When to use it                                                   |
-| --------------------- | -------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
-| **`workstation-gui`** | Full graphical desktop environment using Hyprland (Wayland), complete with browsers, editors, and development tools. | Install this on clean hardware and use it day to day.            |
-| **`workstation`**     | The headless foundation. It includes core security, networking, tuning, and CLI tools, but no graphical session.     | Use this for servers or when you need a pure console experience. |
-| **`vm`**              | A headless, disposable QEMU virtual machine used for local testing and CI validation.                                | Use it to test changes locally without touching real hardware.   |
+| Profile           | Description                                                                                                          | When to use it                                                   |
+| ----------------- | -------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
+| **`desktop`**     | Full graphical desktop environment using Hyprland (Wayland), complete with browsers, editors, and development tools. | Install this on clean hardware and use it day to day.            |
+| **`workstation`** | The headless foundation. It includes core security, networking, tuning, and CLI tools, but no graphical session.     | Use this for servers or when you need a pure console experience. |
+| **`vm`**          | A headless, disposable QEMU virtual machine used for local testing and CI validation.                                | Use it to test changes locally without touching real hardware.   |
 
 ## 🗺️ Documentation Map
 
