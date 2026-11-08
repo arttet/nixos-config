@@ -6,11 +6,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 `AGENTS.md` at the repo root is the canonical short rules sheet — read it first when you arrive cold. Detailed runbooks live in `docs/`; this file only points at them.
 
-- User runbooks: `docs/user/installation/workstation.md`, `docs/user/operations/{rebuild,cleanup,recovery,backups}.md`
-- Engineering: `docs/dev/architecture/{layers,composition,security,storage,boot,tuning}.md`
-- Style: `docs/dev/standards/nix-style.md`
-- Layout: `docs/dev/reference/layouts.md`
-- Validation: `docs/dev/reference/validation.md`
+- User runbooks: `docs/src/user/installation/workstation.md`, `docs/src/user/operations/{rebuild,cleanup,recovery,backups}.md`
+- Engineering: `docs/src/dev/architecture/{layers,composition,security,storage,boot,tuning}.md`
+- Style: `docs/src/dev/standards/nix-style.md`
+- Layout: `docs/src/dev/reference/layouts.md`
+- Validation: `docs/src/dev/reference/validation.md`
 
 ## Commands
 
@@ -29,7 +29,7 @@ just docs build             # VitePress build under docs/
 
 `profile` defaults to `default` (= `desktop`). For runtime install on real hardware the entry point is `./install.sh`, which runs `nu scripts/install/bootstrap.nu --apply`.
 
-Pre-flight before opening a PR (from `docs/dev/reference/validation.md`):
+Pre-flight before opening a PR (from `docs/src/dev/reference/validation.md`):
 
 ```sh
 just check && just docs build && just vm test && just desktop test
@@ -53,7 +53,7 @@ Three flake targets exposed by `flake.nix`. The user-facing product is `desktop`
 
 `desktop` also evaluates on `aarch64-linux` as `desktop-aarch64` (multi-arch readiness; x86-only inputs may need per-arch gating).
 
-Layering (strict, enforced by `docs/dev/architecture/composition.md`):
+Layering (strict, enforced by `docs/src/dev/architecture/composition.md`):
 
 ```text
 nixos/modules/{core,storage}/   →  reusable capability modules (each gated by `platform.<name>.enable`)
@@ -91,7 +91,7 @@ From `AGENTS.md` — load before touching anything:
 - Deferred features (not currently implemented): TPM unlock, YubiKey unlock, automatic snapshots, impermanence, hibernation, automated backups. See `docs/evolution/roadmap/deferred-features.md`.
 - Only the `nixos/` tree is active — do not create parallel root-level `hosts/`, `profiles/`, or `modules/` directories.
 
-## Nix style (see `docs/dev/standards/nix-style.md`)
+## Nix style (see `docs/src/dev/standards/nix-style.md`)
 
 - camelCase option names describing capability/policy: `platform.security.hardenedKernel.enable`, not `platform.enable_linux_hardened`.
 - `default.nix` for directory entry points, kebab-case for specific module files (`local-overlay.nix`, `boot-ux.nix`).

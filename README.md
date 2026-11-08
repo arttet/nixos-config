@@ -2,7 +2,36 @@
 
 [![CI](https://github.com/arttet/nixos-config/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/arttet/nixos-config/actions/workflows/ci.yml)
 
-Personal reproducible NixOS infrastructure for machines that can be destroyed and rebuilt at any time.
+Personal declarative NixOS configuration, paired with a separate
+[dotfiles repository](https://github.com/arttet/dotfiles) for application settings.
+System policy lives here; personal configuration is linked through the existing
+Home Manager integration. Real machine identity and secrets stay outside Git.
+
+| Target         | Purpose                                            |
+| -------------- | -------------------------------------------------- |
+| `desktop`      | Default workstation with Hyprland on real hardware |
+| `workstation`  | Headless workstation foundation                    |
+| `vm`           | Disposable QEMU system for local validation        |
+| `homelab-rpi5` | Independent headless Raspberry Pi 5 system         |
+
+## Getting Started
+
+- [User guide](docs/src/user/index.md)
+- [Hardware installation](docs/src/user/installation/workstation.md)
+- [Rebuilds and updates](docs/src/user/operations/rebuild.md)
+- [Development setup](docs/src/dev/setup/index.md)
+- [Repository layout](docs/src/dev/reference/layouts.md)
+
+Install [mise](https://mise.jdx.dev/getting-started.html), review `mise.toml`, then:
+
+```sh
+mise trust
+mise exec aube@2.9.0 node@26.7.0 -- just docs install
+mise exec aube@2.9.0 node@26.7.0 -- just docs build
+```
+
+Documentation uses aube with a frozen lockfile. NixOS builds require Linux with
+Nix; VM runtime checks also require QEMU. See the setup guide for WSL2.
 
 ## 📚 Project Resources
 
