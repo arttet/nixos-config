@@ -109,6 +109,7 @@ jobs:
             pkg.cloudflareclient.com:443
             plugins.dprint.dev:443
             pypi.org:443
+            raw.githubusercontent.com:443
             registry.npmjs.org:443
             release-assets.githubusercontent.com:443
             releases.nixos.org:443
