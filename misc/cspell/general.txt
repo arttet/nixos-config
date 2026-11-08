@@ -1,5 +1,6 @@
 hostnames
 homelab
+ignorefile
 keymaps
 llms
 maxtimeout
@@ -10,3 +11,4 @@ passwordless
 sdimage
 sidepanel
 toolkits
+yarnpkg

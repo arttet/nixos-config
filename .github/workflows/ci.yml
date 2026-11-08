@@ -41,6 +41,7 @@ jobs:
             nodejs.org:443
             plugins.dprint.dev:443
             pypi.org:443
+            raw.githubusercontent.com:443
             registry.npmjs.org:443
             release-assets.githubusercontent.com:443
             tuf-repo-cdn.sigstore.dev:443
@@ -89,6 +90,7 @@ jobs:
             nodejs.org:443
             npm.jsr.io:443
             pypi.org:443
+            raw.githubusercontent.com:443
             registry.npmjs.org:443
             release-assets.githubusercontent.com:443
             tuf-repo-cdn.sigstore.dev:443
@@ -198,6 +200,7 @@ jobs:
             production.cloudfront.docker.com:443
             pypi.org:443
             registry-1.docker.io:443
+            raw.githubusercontent.com:443
             registry.npmjs.org:443
             release-assets.githubusercontent.com:443
             semgrep.dev:443
@@ -284,6 +287,7 @@ jobs:
             nodejs.org:443
             npm.jsr.io:443
             pypi.org:443
+            raw.githubusercontent.com:443
             registry.npmjs.org:443
             release-assets.githubusercontent.com:443
             tuf-repo-cdn.sigstore.dev:443
@@ -769,6 +773,7 @@ jobs:
             api.github.com:443
             github.com:443
             nodejs.org:443
+            raw.githubusercontent.com:443
             registry.npmjs.org:443
             release-assets.githubusercontent.com:443
             sparrow.cloudflare.com:443
