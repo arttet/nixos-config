@@ -3,7 +3,7 @@ act = "0.2.89"
 actionlint = "1.7.12"
 aube = "1.38.0"
 dprint = "0.55.2"
-editorconfig-checker = "3.11.1"
+editorconfig-checker = "4.0.2"
 just = "1.58.0"
 lychee = "0.24.2"
 node = "26.7.0"
@@ -37,17 +37,31 @@ npm_config_fetch_timeout = "300000"
 # Development Gate
 # ==============================================================================
 
-[tasks."deps:outdated"]
-description = "Show available dependency updates with Renovate local report"
+[tasks."deps:renovate:setup"]
+description = "Create the Renovate cache directory"
+shell = "nu -c"
+run = "mkdir .tools/renovate/cache"
+
+[tasks."deps:renovate"]
 shell = "bash -c"
+description = "Show available dependency updates with Renovate local report"
+depends = ["deps:renovate:setup"]
+env = { LOG_LEVEL = "info", RENOVATE_GITHUB_COM_TOKEN = "{{ exec(command='gh auth token') }}" }
+tools.node = "24.22.2"
+tools."npm:renovate" = "44.221.6"
 run = """
-RENOVATE_GITHUB_COM_TOKEN="$(gh auth token)" mise exec node@24 -- npx --yes renovate@43.272.6 \
+renovate \
   --platform=local \
   --onboarding=false \
   --require-config=required \
-  --report-type=logging \
+  --report-type=file \
+  --report-path=.tools/renovate/renovate-report.json \
   --cache-dir=.tools/renovate/cache
 """
+
+[tasks."deps:outdated"]
+description = "Alias for the Renovate dependency report"
+depends = ["deps:renovate"]
 
 [tasks.check]
 description = "Run all checks"
@@ -76,7 +90,7 @@ run = "just --fmt --check"
 
 [tasks."fmt:editorconfig"]
 description = "EditorConfig check"
-run = "ec"
+run = "editorconfig-checker"
 
 [tasks."fmt:dprint"]
 description = "Source format check"

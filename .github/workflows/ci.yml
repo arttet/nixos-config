@@ -17,10 +17,6 @@ permissions:
   contents: read # Default read-only for all jobs
 
 env:
-  MISE_VERSION: v2026.7.5
-  MISE_SHA256: e04f7a6820a095ca0451a8745a335fc84d8b0656dcec535361a5de788f6b3065 # mise-v2026.7.5-linux-x64-musl.tar.gz
-  MISE_DATA_DIR: ${{ github.workspace }}/.tools/mise
-  MISE_INSTALL_PATH: ${{ github.workspace }}/.tools/mise/bin/mise
   DPRINT_CACHE_DIR: ${{ github.workspace }}/.tools/dprint
 
 jobs:
@@ -54,19 +50,18 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Restore tools cache
+      - name: Restore dprint cache
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
           path: |
-            ${{ env.MISE_DATA_DIR }}
             ${{ env.DPRINT_CACHE_DIR }}
-          key: ci-tools-${{ env.MISE_VERSION }}-${{ runner.os }}-${{ hashFiles('mise.toml', 'dprint.json') }}
+          key: dprint-${{ runner.os }}-${{ hashFiles('dprint.json') }}
 
       - name: Install mise
-        uses: ./.github/actions/setup-mise
+        uses: jdx/mise-action@6612f0ef07ed2a736cd1e00a94a065522dd41195 # v5.2.5
         with:
-          version: ${{ env.MISE_VERSION }}
-          sha256: ${{ env.MISE_SHA256 }}
+          version: 2026.11.2
+          reshim: true
 
       - name: Format Checks
         run: mise run fmt:all
@@ -103,19 +98,18 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Restore tools cache
+      - name: Restore dprint cache
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
           path: |
-            ${{ env.MISE_DATA_DIR }}
             ${{ env.DPRINT_CACHE_DIR }}
-          key: ci-tools-${{ env.MISE_VERSION }}-${{ runner.os }}-${{ hashFiles('mise.toml', 'dprint.json') }}
+          key: dprint-${{ runner.os }}-${{ hashFiles('dprint.json') }}
 
       - name: Install mise
-        uses: ./.github/actions/setup-mise
+        uses: jdx/mise-action@6612f0ef07ed2a736cd1e00a94a065522dd41195 # v5.2.5
         with:
-          version: ${{ env.MISE_VERSION }}
-          sha256: ${{ env.MISE_SHA256 }}
+          version: 2026.11.2
+          reshim: true
 
       - name: Lint Checks
         run: mise run lint:all
@@ -157,7 +151,7 @@ jobs:
           persist-credentials: false
 
       - name: Install Nix
-        uses: cachix/install-nix-action@630ae543ea3a38a9a4166f03376c02c50f408342 # v31
+        uses: cachix/install-nix-action@75c75c31ebece974e48ebc36b4ad125bd97bd97b # v31
         with:
           extra_nix_config: |
             download-attempts = 5
@@ -215,13 +209,12 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
-      - name: Restore tools cache
+      - name: Restore dprint cache
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
           path: |
-            ${{ env.MISE_DATA_DIR }}
             ${{ env.DPRINT_CACHE_DIR }}
-          key: ci-tools-${{ env.MISE_VERSION }}-${{ runner.os }}-${{ hashFiles('mise.toml', 'dprint.json') }}
+          key: dprint-${{ runner.os }}-${{ hashFiles('dprint.json') }}
 
       - name: Resolve date
         run: echo "DATE=$(date -u +%Y-%m-%d)" >> "$GITHUB_ENV"
@@ -236,10 +229,10 @@ jobs:
           restore-keys: security-db-
 
       - name: Install mise
-        uses: ./.github/actions/setup-mise
+        uses: jdx/mise-action@6612f0ef07ed2a736cd1e00a94a065522dd41195 # v5.2.5
         with:
-          version: ${{ env.MISE_VERSION }}
-          sha256: ${{ env.MISE_SHA256 }}
+          version: 2026.11.2
+          reshim: true
 
       - name: Secret scanning
         run: mise run security:secrets
@@ -252,7 +245,7 @@ jobs:
 
       - name: Upload Trivy SARIF
         if: ${{ !env.ACT }}
-        uses: github/codeql-action/upload-sarif@e4fba868fa4b1b91e1fdab776edc8cfbe6e9fb81 # v4.37.3
+        uses: github/codeql-action/upload-sarif@9b3254085494b55a0f7c4c2b3d2d52cc712ce370 # v4.39.1
         with:
           sarif_file: .tools/trivy/trivy-results.sarif
 
@@ -301,13 +294,12 @@ jobs:
           persist-credentials: false
           fetch-depth: 0
 
-      - name: Restore tools cache
+      - name: Restore dprint cache
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
           path: |
-            ${{ env.MISE_DATA_DIR }}
             ${{ env.DPRINT_CACHE_DIR }}
-          key: ci-tools-${{ env.MISE_VERSION }}-${{ runner.os }}-${{ hashFiles('mise.toml', 'dprint.json') }}
+          key: dprint-${{ runner.os }}-${{ hashFiles('dprint.json') }}
 
       - name: Restore aube cache
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
@@ -324,10 +316,10 @@ jobs:
           restore-keys: lychee-
 
       - name: Install mise
-        uses: ./.github/actions/setup-mise
+        uses: jdx/mise-action@6612f0ef07ed2a736cd1e00a94a065522dd41195 # v5.2.5
         with:
-          version: ${{ env.MISE_VERSION }}
-          sha256: ${{ env.MISE_SHA256 }}
+          version: 2026.11.2
+          reshim: true
 
       - name: Install dependencies
         run: mise run docs:install
@@ -342,7 +334,7 @@ jobs:
         run: mise run docs:links
 
       - name: Upload Cloudflare Pages artifact
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: cloudflare-docs-pages
           path: docs/.vitepress/dist/
@@ -363,7 +355,7 @@ jobs:
   # ==============================================================================
   attest:
     name: Attest Build
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 5
     needs: [docs]
 
@@ -392,7 +384,7 @@ jobs:
             release-assets.githubusercontent.com:443
 
       - name: Download docs artifact
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: cloudflare-docs-pages
           path: docs/.vitepress/dist
@@ -402,12 +394,12 @@ jobs:
 
       - name: Attest build provenance
         if: ${{ !env.ACT }}
-        uses: actions/attest-build-provenance@0f67c3f4856b2e3261c31976d6725780e5e4c373 # v4.1.1
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
         with:
           subject-path: docs-build.tar.gz
 
       - name: Generate SBOM
-        uses: anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610 # v0.24.0
+        uses: anchore/sbom-action@66cbf4bc1f1c0d2edc94016e65bc221b6bb0ad6c # v0.24.3
         with:
           path: docs/.vitepress/dist
           format: spdx-json
@@ -415,7 +407,7 @@ jobs:
 
       - name: Attest SBOM
         if: ${{ !env.ACT }}
-        uses: actions/attest@f7c74d28b9d84cb8768d0b8ca14a4bac6ef463e6 # v4.2.0
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
         with:
           subject-path: docs-build.tar.gz
           sbom-path: sbom.spdx.json
@@ -447,7 +439,7 @@ jobs:
           persist-credentials: false
 
       - name: Install Nix
-        uses: cachix/install-nix-action@630ae543ea3a38a9a4166f03376c02c50f408342 # v31
+        uses: cachix/install-nix-action@75c75c31ebece974e48ebc36b4ad125bd97bd97b # v31
         with:
           extra_nix_config: |
             download-attempts = 5
@@ -489,7 +481,7 @@ jobs:
           persist-credentials: false
 
       - name: Install Nix
-        uses: cachix/install-nix-action@630ae543ea3a38a9a4166f03376c02c50f408342 # v31
+        uses: cachix/install-nix-action@75c75c31ebece974e48ebc36b4ad125bd97bd97b # v31
         with:
           extra_nix_config: |
             download-attempts = 5
@@ -537,7 +529,7 @@ jobs:
           persist-credentials: false
 
       - name: Install Nix
-        uses: cachix/install-nix-action@630ae543ea3a38a9a4166f03376c02c50f408342 # v31
+        uses: cachix/install-nix-action@75c75c31ebece974e48ebc36b4ad125bd97bd97b # v31
         with:
           extra_nix_config: |
             download-attempts = 5
@@ -575,7 +567,7 @@ jobs:
           persist-credentials: false
 
       - name: Install Nix
-        uses: cachix/install-nix-action@630ae543ea3a38a9a4166f03376c02c50f408342 # v31
+        uses: cachix/install-nix-action@75c75c31ebece974e48ebc36b4ad125bd97bd97b # v31
         with:
           extra_nix_config: |
             download-attempts = 5
@@ -627,7 +619,7 @@ jobs:
           persist-credentials: false
 
       - name: Install Nix
-        uses: cachix/install-nix-action@630ae543ea3a38a9a4166f03376c02c50f408342 # v31
+        uses: cachix/install-nix-action@75c75c31ebece974e48ebc36b4ad125bd97bd97b # v31
         with:
           extra_nix_config: |
             download-attempts = 5
@@ -677,7 +669,7 @@ jobs:
           persist-credentials: false
 
       - name: Install Nix
-        uses: cachix/install-nix-action@630ae543ea3a38a9a4166f03376c02c50f408342 # v31
+        uses: cachix/install-nix-action@75c75c31ebece974e48ebc36b4ad125bd97bd97b # v31
         with:
           extra_nix_config: |
             download-attempts = 5
@@ -687,7 +679,7 @@ jobs:
             cores = 0
 
       - name: Set up Cachix
-        uses: cachix/cachix-action@5f2d7c5294214f71b873db4b969586b980625e71 # v17
+        uses: cachix/cachix-action@38b082610b782e7e93e209c35fd730d399dee866 # v17
         with:
           name: homelab-rpi5
 
@@ -786,22 +778,21 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Restore tools cache
+      - name: Restore dprint cache
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
           path: |
-            ${{ env.MISE_DATA_DIR }}
             ${{ env.DPRINT_CACHE_DIR }}
-          key: ci-tools-${{ env.MISE_VERSION }}-${{ runner.os }}-${{ hashFiles('mise.toml', 'dprint.json') }}
+          key: dprint-${{ runner.os }}-${{ hashFiles('dprint.json') }}
 
       - name: Install mise
-        uses: ./.github/actions/setup-mise
+        uses: jdx/mise-action@6612f0ef07ed2a736cd1e00a94a065522dd41195 # v5.2.5
         with:
-          version: ${{ env.MISE_VERSION }}
-          sha256: ${{ env.MISE_SHA256 }}
+          version: 2026.11.2
+          reshim: true
 
       - name: Download docs artifact
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: cloudflare-docs-pages
           path: docs/.vitepress/dist
@@ -867,6 +858,6 @@ jobs:
       - name: Release on GitHub Pages
         if: ${{ !env.ACT }}
         id: github_pages
-        uses: actions/deploy-pages@cd2ce8fcbc39b97be8ca5fce6e763baed58fa128 # v5
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5
         with:
           artifact_name: github-docs-pages

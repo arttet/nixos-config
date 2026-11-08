@@ -15,7 +15,7 @@ concurrency:
 jobs:
   preflight:
     name: Preflight
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 5
 
     outputs:
@@ -46,7 +46,7 @@ jobs:
           persist-credentials: false
 
       - name: Install Nix
-        uses: cachix/install-nix-action@630ae543ea3a38a9a4166f03376c02c50f408342 # v31
+        uses: cachix/install-nix-action@75c75c31ebece974e48ebc36b4ad125bd97bd97b # v31
         with:
           extra_nix_config: |
             experimental-features = nix-command flakes
@@ -73,15 +73,11 @@ jobs:
 
   desktop:
     name: Desktop Nightly
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 30
     needs: preflight
 
     env:
-      MISE_VERSION: v2026.7.5
-      MISE_SHA256: e04f7a6820a095ca0451a8745a335fc84d8b0656dcec535361a5de788f6b3065 # mise-v2026.7.5-linux-x64-musl.tar.gz
-      MISE_DATA_DIR: ${{ github.workspace }}/.tools/mise
-      MISE_INSTALL_PATH: ${{ github.workspace }}/.tools/mise/bin/mise
       DPRINT_CACHE_DIR: ${{ github.workspace }}/.tools/dprint
 
     outputs:
@@ -107,6 +103,7 @@ jobs:
             launchpadlibrarian.net:443
             mise-versions.jdx.dev:443
             nixos-raspberrypi.cachix.org:443
+            nodejs.org:443
             obsidian.md:443
             packages.microsoft.com:443
             pkg.cloudflareclient.com:443
@@ -128,22 +125,21 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Restore tools cache
+      - name: Restore dprint cache
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
           path: |
-            ${{ env.MISE_DATA_DIR }}
             ${{ env.DPRINT_CACHE_DIR }}
-          key: ci-tools-${{ env.MISE_VERSION }}-${{ runner.os }}-${{ hashFiles('mise.toml', 'dprint.json') }}
+          key: dprint-${{ runner.os }}-${{ hashFiles('dprint.json') }}
 
       - name: Install mise
-        uses: ./.github/actions/setup-mise
+        uses: jdx/mise-action@6612f0ef07ed2a736cd1e00a94a065522dd41195 # v5.2.5
         with:
-          version: ${{ env.MISE_VERSION }}
-          sha256: ${{ env.MISE_SHA256 }}
+          version: 2026.11.2
+          reshim: true
 
       - name: Free Disk Space
-        uses: endersonmenezes/free-disk-space@7901478139cff6e9d44df5972fd8ab8fcade4db1 # v3
+        uses: endersonmenezes/free-disk-space@8b8cd4e2277836962939a8f3b4ea0ee4bc006156 # v4
         with:
           remove_android: true
           remove_dotnet: true
@@ -159,9 +155,10 @@ jobs:
             /usr/local/share/powershell /usr/local/julia /usr/local/aws-cli
             /usr/local/aws-sam-cli /usr/share/gradle
           rm_cmd: "rmz"
+          rmz_version: "3.2.0"
 
       - name: Install Nix
-        uses: cachix/install-nix-action@630ae543ea3a38a9a4166f03376c02c50f408342 # v31
+        uses: cachix/install-nix-action@75c75c31ebece974e48ebc36b4ad125bd97bd97b # v31
         with:
           extra_nix_config: |
             experimental-features = nix-command flakes
@@ -228,7 +225,7 @@ jobs:
           fi
 
       - name: Upload lockfile update
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         if: ${{ steps.lock.outputs.changed == 'true' }}
         with:
           name: nightly-flake-update
@@ -269,7 +266,7 @@ jobs:
           persist-credentials: false
 
       - name: Free Disk Space
-        uses: endersonmenezes/free-disk-space@7901478139cff6e9d44df5972fd8ab8fcade4db1 # v3
+        uses: endersonmenezes/free-disk-space@8b8cd4e2277836962939a8f3b4ea0ee4bc006156 # v4
         with:
           remove_android: true
           remove_dotnet: true
@@ -285,9 +282,10 @@ jobs:
             /usr/local/share/powershell /usr/local/julia /usr/local/aws-cli
             /usr/local/aws-sam-cli /usr/share/gradle
           rm_cmd: "rmz"
+          rmz_version: "3.2.0"
 
       - name: Install Nix
-        uses: cachix/install-nix-action@630ae543ea3a38a9a4166f03376c02c50f408342 # v31
+        uses: cachix/install-nix-action@75c75c31ebece974e48ebc36b4ad125bd97bd97b # v31
         with:
           extra_nix_config: |
             experimental-features = nix-command flakes
@@ -298,7 +296,7 @@ jobs:
             cores = 0
 
       - name: Set up Cachix
-        uses: cachix/cachix-action@5f2d7c5294214f71b873db4b969586b980625e71 # v17
+        uses: cachix/cachix-action@38b082610b782e7e93e209c35fd730d399dee866 # v17
         with:
           name: homelab-rpi5
           authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
@@ -343,7 +341,7 @@ jobs:
           persist-credentials: false
 
       - name: Free Disk Space
-        uses: endersonmenezes/free-disk-space@7901478139cff6e9d44df5972fd8ab8fcade4db1 # v3
+        uses: endersonmenezes/free-disk-space@8b8cd4e2277836962939a8f3b4ea0ee4bc006156 # v4
         with:
           remove_android: true
           remove_dotnet: true
@@ -359,9 +357,10 @@ jobs:
             /usr/local/share/powershell /usr/local/julia /usr/local/aws-cli
             /usr/local/aws-sam-cli /usr/share/gradle
           rm_cmd: "rmz"
+          rmz_version: "3.2.0"
 
       - name: Install Nix
-        uses: cachix/install-nix-action@630ae543ea3a38a9a4166f03376c02c50f408342 # v31
+        uses: cachix/install-nix-action@75c75c31ebece974e48ebc36b4ad125bd97bd97b # v31
         with:
           extra_nix_config: |
             experimental-features = nix-command flakes
@@ -372,7 +371,7 @@ jobs:
             cores = 0
 
       - name: Set up Cachix
-        uses: cachix/cachix-action@5f2d7c5294214f71b873db4b969586b980625e71 # v17
+        uses: cachix/cachix-action@38b082610b782e7e93e209c35fd730d399dee866 # v17
         with:
           name: homelab-rpi5
           authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
@@ -388,7 +387,7 @@ jobs:
 
       # The image is already zstd-compressed, so skip artifact recompression.
       - name: Upload SD image artifact
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: homelab-rpi5-sdimage
           path: target/artifacts/*.img.zst
@@ -431,7 +430,7 @@ jobs:
           persist-credentials: false
 
       - name: Free Disk Space
-        uses: endersonmenezes/free-disk-space@7901478139cff6e9d44df5972fd8ab8fcade4db1 # v3
+        uses: endersonmenezes/free-disk-space@8b8cd4e2277836962939a8f3b4ea0ee4bc006156 # v4
         with:
           remove_android: true
           remove_dotnet: true
@@ -447,9 +446,10 @@ jobs:
             /usr/local/share/powershell /usr/local/julia /usr/local/aws-cli
             /usr/local/aws-sam-cli /usr/share/gradle
           rm_cmd: "rmz"
+          rmz_version: "3.2.0"
 
       - name: Install Nix
-        uses: cachix/install-nix-action@630ae543ea3a38a9a4166f03376c02c50f408342 # v31
+        uses: cachix/install-nix-action@75c75c31ebece974e48ebc36b4ad125bd97bd97b # v31
         with:
           extra_nix_config: |
             experimental-features = nix-command flakes
@@ -460,7 +460,7 @@ jobs:
             cores = 0
 
       - name: Set up Cachix
-        uses: cachix/cachix-action@5f2d7c5294214f71b873db4b969586b980625e71 # v17
+        uses: cachix/cachix-action@38b082610b782e7e93e209c35fd730d399dee866 # v17
         with:
           name: homelab-rpi5
           authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
