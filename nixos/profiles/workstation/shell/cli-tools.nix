@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ pkgs, unstablePkgs, ... }:
 {
   environment.systemPackages = with pkgs; [
     fzf
@@ -25,7 +25,7 @@
     litecli
     lnav
     micro
-    mise
+    unstablePkgs.mise
     moor
     navi
     nmap
