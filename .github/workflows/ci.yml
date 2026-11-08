@@ -778,6 +778,7 @@ jobs:
             github.com:443
             nodejs.org:443
             registry.npmjs.org:443
+            release-assets.githubusercontent.com:443
             sparrow.cloudflare.com:443
 
       - name: Checkout
