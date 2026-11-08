@@ -30,7 +30,7 @@ help:
 [group('Development')]
 outdated:
     mise outdated --bump
-    mise run deps:outdated
+    mise run deps:renovate
 
 [doc('Upgrade outdated tools')]
 [group('Development')]
