@@ -10,3 +10,4 @@ passwordless
 sdimage
 sidepanel
 toolkits
+yarnpkg

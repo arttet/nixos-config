@@ -4,6 +4,7 @@ extends: default
 ignore: |
   .serena/
   .tools/
+  .mise/locks/
   docs/node_modules/
   docs/.vitepress/cache/
   docs/.vitepress/dist/

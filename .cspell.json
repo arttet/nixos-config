@@ -20,6 +20,7 @@
     "docs/.vitepress/cache/**",
     "target/**",
     ".tools/**",
+    ".mise/locks/**",
     ".serena/**",
     "aube-lock.yaml",
     "**/aube-lock.yaml",

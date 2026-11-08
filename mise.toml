@@ -1,22 +1,23 @@
 [tools]
-act = "0.2.89"
+act = "0.2.97"
 actionlint = "1.7.12"
-aube = "1.38.0"
-dprint = "0.55.2"
+aube = "2.9.0"
+dprint = "0.64.3"
 editorconfig-checker = "4.0.2"
-just = "1.58.0"
+just = "1.59.0"
 lychee = "0.24.2"
-node = "26.7.0"
-semgrep = "1.172.0"
-trivy = "0.73.0"
-trufflehog = "3.96.0"
-uv = "0.12.3"
+node = ["26.13.0", "24.22.2"]
+semgrep = "1.184.0"
+trivy = "0.76.2"
+trufflehog = "3.99.8"
+uv = "0.13.7"
 yamllint = "1.38.0"
-zizmor = "1.29.0"
+zizmor = "1.32.0"
 
-"npm:cspell" = "10.0.1"
-"npm:markdownlint-cli2" = "0.23.2"
-"npm:wrangler" = "4.120.0"
+"npm:cspell" = "10.4.1"
+"npm:markdownlint-cli2" = "0.24.0"
+"npm:renovate" = { version = "44.222.1", trust_policy_excludes = ["@yarnpkg/libzip@3.2.2"] }
+"npm:wrangler" = "4.158.0"
 
 [settings]
 all_compile = false
@@ -48,7 +49,6 @@ description = "Show available dependency updates with Renovate local report"
 depends = ["deps:renovate:setup"]
 env = { LOG_LEVEL = "info", RENOVATE_GITHUB_COM_TOKEN = "{{ exec(command='gh auth token') }}" }
 tools.node = "24.22.2"
-tools."npm:renovate" = "44.221.6"
 run = """
 renovate \
   --platform=local \
