@@ -7,7 +7,7 @@ In this platform, a "system" is not a static list of packages. It is a dynamic *
 We follow a strict "No Leakage" policy between layers:
 
 1. **Headless Baseline**: The `workstation` profile must remain fully functional without any X11 or Wayland dependencies. It owns security, filesystem, and network stack logic.
-2. **Graphical Layer**: `workstation-gui` imports the headless baseline and adds the UI stack (Hyprland, Wayland tools, fonts).
+2. **Graphical Layer**: `desktop` imports the headless baseline and adds the UI stack (Hyprland, Wayland tools, fonts).
 3. **Application Layer**: Desktop applications (Browsers, Office, Communication) are scoped strictly to the GUI profile. They must not appear in the core system modules.
 
 ## 🧩 Module Structure
@@ -33,4 +33,4 @@ We prioritize software that aligns with the following criteria:
 
 - **Wayland Native**: Preferred over X11 whenever possible.
 - **Minimal State**: Favor tools that keep configuration in the user's home (managed by dotfiles) rather than system-wide global state.
-- **Explicit Unfree**: Unfree packages (like Chrome or Zoom) are permitted in `workstation-gui` but must be declared explicitly to maintain awareness of the system's licensing posture.
+- **Explicit Unfree**: Unfree packages (like Chrome or Zoom) are permitted in `desktop` but must be declared explicitly to maintain awareness of the system's licensing posture.

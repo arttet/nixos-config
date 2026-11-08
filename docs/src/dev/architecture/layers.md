@@ -7,7 +7,7 @@ The NixOS Configuration is a layered infrastructure designed to separate public 
 The platform includes workstation, disposable VM, and dedicated Raspberry Pi targets. The Pi target
 is an independent headless composition and does not inherit workstation storage, boot, GUI, or tuning.
 
-| Feature          | `workstation-gui`       | `workstation`           | `vm`                    |
+| Feature          | `desktop`               | `workstation`           | `vm`                    |
 | :--------------- | :---------------------- | :---------------------- | :---------------------- |
 | **Primary Goal** | Daily productivity      | Headless foundation     | Local validation        |
 | **Graphics**     | Hyprland (Wayland)      | Headless (Console)      | Headless / Serial       |

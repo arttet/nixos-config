@@ -10,7 +10,7 @@ Run the flake checks and build the system closures explicitly to verify evaluati
 just check
 just vm build
 just workstation build
-just workstation-gui build
+just desktop build
 ```
 
 `just check` is the production static validation gate. It runs:
@@ -37,7 +37,7 @@ Workstation profiles can also be validated without real hardware:
 
 ```sh
 just workstation test
-just workstation-gui test
+just desktop test
 NIX_CONFIG_LOCAL_STATE=/absolute/path/to/homelab-rpi5.json just homelab check
 ```
 
@@ -45,7 +45,7 @@ The homelab check also validates stable LUKS UUID paths, a non-empty LAN CIDR an
 list, ephemeral-root policy, SSD service gating, source-aware firewall rules, the absence of
 Nix-managed WireGuard profiles, and the fixed `25.11` migration baseline.
 
-`workstation-gui test` validates the graphical configuration without launching Hyprland or requiring a GPU.
+`desktop test` validates the graphical configuration without launching Hyprland or requiring a GPU.
 
 ## ✅ Pre-Flight Checklist
 
@@ -55,7 +55,7 @@ For a full local validation pass before opening or merging a change, run:
 just check
 just docs build
 just vm test
-just workstation-gui test
+just desktop test
 ```
 
 The workstation storage layout is evaluated with an example disk path only. Tests do not partition, format, or encrypt real disks.

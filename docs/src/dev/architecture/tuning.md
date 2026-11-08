@@ -234,7 +234,7 @@ just workstation runtime-checks
 Print the graphical workstation power command list with:
 
 ```sh
-just workstation-gui power-checks
+just desktop power-checks
 ```
 
 ## Overrides

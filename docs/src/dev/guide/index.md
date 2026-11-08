@@ -35,7 +35,7 @@ just vm test
 To verify that the full workstation product builds without errors (without launching a VM or applying it):
 
 ```sh
-just workstation-gui build
+just desktop build
 ```
 
 The build output is stored in the `target/` directory, which is ignored by Git.

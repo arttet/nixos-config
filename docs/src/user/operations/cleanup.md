@@ -37,7 +37,7 @@ Two common causes of a bloated store to look out for in the results:
   channel, you'll often see two separate copies of `glibc`/`gcc` and their
   dependents — nothing is shared between the two channels' closures.
 - **Retained build-time dependencies.** `nix.settings.keep-outputs` and
-  `keep-derivations` (see `docs/dev/architecture/tuning.md`) intentionally
+  `keep-derivations` (see `docs/src/dev/architecture/tuning.md`) intentionally
   keep build dependencies around for faster rebuilds, at the cost of store
   size.
 
