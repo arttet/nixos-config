@@ -3,7 +3,7 @@ act = "0.2.89"
 actionlint = "1.7.12"
 aube = "1.38.0"
 dprint = "0.55.2"
-editorconfig-checker = "3.11.1"
+editorconfig-checker = "4.0.2"
 just = "1.58.0"
 lychee = "0.24.2"
 node = "26.7.0"
@@ -90,7 +90,7 @@ run = "just --fmt --check"
 
 [tasks."fmt:editorconfig"]
 description = "EditorConfig check"
-run = "ec"
+run = "editorconfig-checker"
 
 [tasks."fmt:dprint"]
 description = "Source format check"
