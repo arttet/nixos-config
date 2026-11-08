@@ -1,0 +1,36 @@
+vulnerabilities:
+  - id: CVE-2026-59951
+    paths:
+      - ".mise/locks/semgrep/1.184.0~48b0d19e/uv.lock"
+    statement: >-
+      Temporary acceptance for dependencies pinned by the Semgrep development tool.
+      Review upstream dependency fixes and remove this exception by 2026-11-22.
+    expired_at: 2026-11-22
+  - id: CVE-2026-116684
+    paths:
+      - ".mise/locks/semgrep/1.184.0~48b0d19e/uv.lock"
+    statement: >-
+      Temporary acceptance for dependencies pinned by the Semgrep development tool.
+      Review upstream dependency fixes and remove this exception by 2026-11-22.
+    expired_at: 2026-11-22
+  - id: CVE-2026-116685
+    paths:
+      - ".mise/locks/semgrep/1.184.0~48b0d19e/uv.lock"
+    statement: >-
+      Temporary acceptance for dependencies pinned by the Semgrep development tool.
+      Review upstream dependency fixes and remove this exception by 2026-11-22.
+    expired_at: 2026-11-22
+  - id: CVE-2026-116686
+    paths:
+      - ".mise/locks/semgrep/1.184.0~48b0d19e/uv.lock"
+    statement: >-
+      Temporary acceptance for dependencies pinned by the Semgrep development tool.
+      Review upstream dependency fixes and remove this exception by 2026-11-22.
+    expired_at: 2026-11-22
+  - id: CVE-2026-114603
+    paths:
+      - ".mise/locks/semgrep/1.184.0~48b0d19e/uv.lock"
+    statement: >-
+      Temporary acceptance for dependencies pinned by the Semgrep development tool.
+      Review upstream dependency fixes and remove this exception by 2026-11-22.
+    expired_at: 2026-11-22
